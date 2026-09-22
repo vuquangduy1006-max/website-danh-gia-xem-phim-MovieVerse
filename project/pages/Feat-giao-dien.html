@@ -205,7 +205,21 @@
               </div>
             </div>
 
-            <button class="vote-button">Đánh giá của bạn</button>
+            <button class="vote-button" type="button">Đánh giá của bạn</button>
+
+            <div class="rating-widget" id="ratingWidget">
+              <div class="star-rating" aria-label="Chọn mức độ hài lòng">
+                <button class="star" type="button" data-value="1" aria-label="1 sao">★</button>
+                <button class="star" type="button" data-value="2" aria-label="2 sao">★</button>
+                <button class="star" type="button" data-value="3" aria-label="3 sao">★</button>
+                <button class="star" type="button" data-value="4" aria-label="4 sao">★</button>
+                <button class="star" type="button" data-value="5" aria-label="5 sao">★</button>
+              </div>
+              <div class="rating-feedback">
+                <span id="ratingMessage">Chưa có đánh giá</span>
+                <strong id="ratingValue">0.0/10</strong>
+              </div>
+            </div>
           </div>
 
           <div class="panel cast-panel" id="cast">
@@ -237,5 +251,91 @@
         </aside>
       </section>
     </main>
+
+    <script>
+      const stars = document.querySelectorAll('.star');
+      const voteButton = document.querySelector('.vote-button');
+      const ratingMessage = document.getElementById('ratingMessage');
+      const ratingValue = document.getElementById('ratingValue');
+      const scoreRingStrong = document.querySelector('.score-ring strong');
+      const ratingPill = document.querySelector('.rating-pill');
+
+      const STORAGE_KEY = 'movieverse-user-rating';
+      let selectedRating = Number(localStorage.getItem(STORAGE_KEY)) || 0;
+
+      function updateRating(value) {
+        selectedRating = value;
+        localStorage.setItem(STORAGE_KEY, String(value));
+
+        stars.forEach((star) => {
+          const starValue = Number(star.dataset.value);
+          const isActive = starValue <= value;
+          star.classList.toggle('active', isActive);
+          star.classList.remove('preview');
+          star.setAttribute('aria-pressed', String(isActive));
+        });
+
+        if (!value) {
+          ratingMessage.textContent = 'Chưa có đánh giá';
+          ratingValue.textContent = '0.0/10';
+          return;
+        }
+
+        const score = (value * 2).toFixed(1);
+        if (value >= 5) {
+          ratingMessage.textContent = 'Xuất sắc';
+        } else if (value >= 4) {
+          ratingMessage.textContent = 'Rất hay';
+        } else if (value >= 3) {
+          ratingMessage.textContent = 'Khá tốt';
+        } else if (value >= 2) {
+          ratingMessage.textContent = 'Trung bình';
+        } else {
+          ratingMessage.textContent = 'Cần cải thiện';
+        }
+
+        ratingValue.textContent = `${score}/10`;
+
+        if (scoreRingStrong) {
+          scoreRingStrong.textContent = score;
+        }
+
+        if (ratingPill) {
+          ratingPill.innerHTML = `★ ${score}`;
+        }
+      }
+
+      if (selectedRating) {
+        updateRating(selectedRating);
+      }
+
+      stars.forEach((star) => {
+        star.addEventListener('mouseenter', () => {
+          const hoverValue = Number(star.dataset.value);
+          stars.forEach((item) => {
+            const itemValue = Number(item.dataset.value);
+            item.classList.toggle('preview', itemValue <= hoverValue);
+          });
+        });
+
+        star.addEventListener('mouseleave', () => {
+          stars.forEach((item) => item.classList.remove('preview'));
+        });
+
+        star.addEventListener('click', () => {
+          updateRating(Number(star.dataset.value));
+        });
+      });
+
+      voteButton.addEventListener('click', () => {
+        if (!selectedRating) {
+          updateRating(4);
+          return;
+        }
+
+        ratingMessage.textContent = 'Cảm ơn bạn đã đánh giá!';
+        ratingValue.textContent = `${(selectedRating * 2).toFixed(1)}/10`;
+      });
+    </script>
   </body>
 </html>
