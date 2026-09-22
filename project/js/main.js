@@ -97,6 +97,48 @@ const movies = [
   },
 ];
 const heroMovies = movies.slice(0, 3);
+const newMovies = [
+  {
+    title: "Midnight Signal",
+    year: "2024",
+    genre: "Bí ẩn",
+    rating: "8.4",
+    poster:
+      "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=85",
+    description:
+      "Một tín hiệu lạ xuất hiện giữa đêm và kéo một kỹ sư trẻ vào bí mật bị chôn vùi nhiều năm.",
+  },
+  {
+    title: "Blue Summer",
+    year: "2024",
+    genre: "Tâm lý",
+    rating: "8.0",
+    poster:
+      "https://images.unsplash.com/photo-1507525422872-b6696d73aee5?w=600&q=85",
+    description:
+      "Một mùa hè ngắn ngủi khiến ba người xa lạ nhìn lại những lựa chọn của mình.",
+  },
+  {
+    title: "Rogue Planet",
+    year: "2024",
+    genre: "Khoa học viễn tưởng",
+    rating: "8.6",
+    poster:
+      "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=85",
+    description:
+      "Phi hành đoàn cuối cùng của nhân loại tìm thấy một hành tinh có thể là ngôi nhà mới.",
+  },
+  {
+    title: "Paper Hearts",
+    year: "2024",
+    genre: "Tâm lý",
+    rating: "7.9",
+    poster:
+      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&q=85",
+    description:
+      "Những lá thư chưa gửi kết nối hai thế hệ trong một câu chuyện dịu dàng về gia đình.",
+  },
+];
 let currentSlide = 0;
 let slideTimer;
 const posterStyle = (movie) => `background-image:url('${movie.poster}')`;
@@ -169,6 +211,34 @@ function renderRanking() {
     )
     .join("");
 }
+function renderNewMovies() {
+  const newMovieGrid = document.querySelector("#newMovieGrid");
+  newMovieGrid.innerHTML = newMovies
+    .map(
+      (movie, index) =>
+        `<article class="movie-card" style="animation-delay:${index * 0.05}s"><div class="poster" style="${posterStyle(movie)}"><button class="play-circle" aria-label="Xem ${movie.title}" data-new-movie="${movie.title}">▶</button></div><h3>${movie.title}<span class="card-rating">★ ${movie.rating}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+    )
+    .join("");
+  newMovieGrid
+    .querySelectorAll("[data-new-movie]")
+    .forEach((button) =>
+      button.addEventListener("click", () =>
+        openNewMovieModal(button.dataset.newMovie),
+      ),
+    );
+}
+function openNewMovieModal(title) {
+  const movie = newMovies.find((item) => item.title === title);
+  if (!movie) return;
+  document.querySelector("#modalTitle").textContent = movie.title;
+  document.querySelector("#modalDescription").textContent = movie.description;
+  document.querySelector("#modalMeta").textContent =
+    `${movie.year} · ${movie.genre} · Phim mới`;
+  document.querySelector("#modalRating").textContent = movie.rating;
+  document.querySelector("#modalArt").style.backgroundImage =
+    `url('${movie.poster}')`;
+  document.querySelector("#movieModal").classList.add("open");
+}
 function openModal(title) {
   const movie = movies.find((item) => item.title === title);
   if (!movie) return;
@@ -211,6 +281,7 @@ function renderSearch(query = "") {
 renderHero();
 renderMovies();
 renderRanking();
+renderNewMovies();
 document
   .querySelector("#prevSlide")
   .addEventListener("click", () => goToSlide(currentSlide - 1));

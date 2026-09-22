@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="MovieVerse - Kho phim điện ảnh chọn lọc, xem phim online chất lượng cao."
+    />
+    <title>MovieVerse | Xem phim trực tuyến</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="brand" href="Feat-giao-dien.html" aria-label="MovieVerse trang chủ"
+          ><span class="brand-mark">M</span
+          ><span>movie<span>verse</span></span></a
+        >
+        <nav class="main-nav" aria-label="Điều hướng chính">
+          <a class="active" href="#home">Trang chủ</a
+          ><a href="#newMovies">Phim mới</a><a href="#genres">Thể loại</a
+          ><a href="#ranking">Top phim</a>
+        </nav>
+        <div class="nav-actions">
+          <button
+            class="icon-button search-trigger"
+            aria-label="Tìm kiếm"
+            title="Tìm kiếm"
+          >
+            ⌕</button
+          ><a class="login-link" href="login.html">Đăng nhập</a
+          ><button class="menu-toggle" aria-label="Mở menu">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="hero" aria-label="Phim nổi bật">
+        <div class="hero-slides" id="heroSlides"></div>
+        <div class="hero-controls container">
+          <button class="slider-arrow" id="prevSlide" aria-label="Phim trước">
+            ←
+          </button>
+          <div class="slider-dots" id="sliderDots"></div>
+          <button
+            class="slider-arrow"
+            id="nextSlide"
+            aria-label="Phim tiếp theo"
+          >
+            →
+          </button>
+        </div>
+      </section>
+      <section class="content-section container" id="movies">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Dành cho bạn</p>
+            <h2>Khám phá điện ảnh</h2>
+          </div>
+          <a class="text-link" href="#movies">Xem tất cả <span>→</span></a>
+        </div>
+        <div class="genre-pills" id="genres">
+          <button class="pill active" data-filter="all">Tất cả</button
+          ><button class="pill" data-filter="Hành động">Hành động</button
+          ><button class="pill" data-filter="Khoa học viễn tưởng">
+            Khoa học viễn tưởng</button
+          ><button class="pill" data-filter="Tâm lý">Tâm lý</button
+          ><button class="pill" data-filter="Hoạt hình">Hoạt hình</button>
+        </div>
+        <div class="movie-grid" id="movieGrid"></div>
+      </section>
+      <section class="content-section container" id="newMovies">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Vừa cập nhật</p>
+            <h2>Phim mới ra mắt</h2>
+          </div>
+          <span class="text-link">4 phim mới</span>
+        </div>
+        <div class="movie-grid" id="newMovieGrid"></div>
+      </section>
+      <section class="content-section container" id="ranking">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Được yêu thích nhất</p>
+            <h2>Top phim tuần này</h2>
+          </div>
+          <div class="select-wrap">
+            <select id="rankFilter" aria-label="Chọn bảng xếp hạng">
+              <option>Tuần này</option>
+              <option>Tháng này</option>
+            </select>
+          </div>
+        </div>
+        <div class="ranking-list" id="rankingList"></div>
+      </section>
+      <section class="newsletter container">
+        <div>
+          <p class="eyebrow">MovieVerse weekly</p>
+          <h2>Đừng bỏ lỡ những thước phim hay.</h2>
+          <p>Nhận thông báo về phim mới và đề xuất được chọn riêng cho bạn.</p>
+        </div>
+        <form class="subscribe-form" id="subscribeForm">
+          <label class="sr-only" for="email">Email của bạn</label
+          ><input
+            id="email"
+            type="email"
+            placeholder="Email của bạn"
+            required
+          /><button type="submit">Đăng ký <span>→</span></button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-main">
+        <div class="footer-brand">
+          <a class="brand" href="#home"
+            ><span class="brand-mark">M</span
+            ><span>movie<span>verse</span></span></a
+          >
+          <p>Nơi những câu chuyện điện ảnh<br />được kể theo cách của bạn.</p>
+        </div>
+        <div>
+          <h3>Khám phá</h3>
+          <a href="#newMovies">Phim mới</a><a href="#ranking">Top phim</a
+          ><a href="#genres">Thể loại</a>
+        </div>
+        <div>
+          <h3>MovieVerse</h3>
+          <a href="#home">Về chúng tôi</a><a href="#home">Trợ giúp</a
+          ><a href="#home">Điều khoản</a>
+        </div>
+        <div>
+          <h3>Theo dõi chúng tôi</h3>
+          <div class="socials">
+            <a href="#home" aria-label="Facebook">f</a
+            ><a href="#home" aria-label="Instagram">◎</a
+            ><a href="#home" aria-label="Youtube">▶</a>
+          </div>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <span>© 2024 MovieVerse. Made for movie lovers.</span
+        ><span>Việt Nam <span class="flag">●</span></span>
+      </div>
+    </footer>
+    <div class="search-overlay" id="searchOverlay">
+      <div class="search-box">
+        <button class="close-search" aria-label="Đóng tìm kiếm">×</button>
+        <p class="eyebrow">Tìm kiếm</p>
+        <h2>Bạn muốn xem gì hôm nay?</h2>
+        <input id="searchInput" type="search" placeholder="Nhập tên phim..." />
+        <div id="searchResults"></div>
+      </div>
+    </div>
+    <div class="modal" id="movieModal" aria-hidden="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-card">
+        <button class="modal-close" aria-label="Đóng">×</button>
+        <div class="modal-art" id="modalArt"></div>
+        <div class="modal-info">
+          <p class="eyebrow">MovieVerse Originals</p>
+          <h2 id="modalTitle"></h2>
+          <p id="modalDescription"></p>
+          <div class="meta">
+            <span id="modalMeta"></span
+            ><span class="rating">★ <b id="modalRating"></b></span>
+          </div>
+          <button class="watch-button">▶ Xem ngay</button>
+        </div>
+      </div>
+    </div>
+    <script src="../js/main.js"></script>
+  </body>
+</html>
