@@ -1,4 +1,4 @@
-import "../css/admin.css";
+import "../admin/admin.css";
 import { getMovieDB, saveMovieDB, genreList } from "./data.js";
 
 const DB_KEY = "movieverse_db";
@@ -38,7 +38,7 @@ document.querySelector("#app").innerHTML = `
     <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
     <nav class="admin-nav" aria-label="Điều hướng quản trị">
       <a href="/" class="back-link">← Trang chủ</a>
-      <a class="active" href="/admin.html">Quản lý phim</a>
+      <a class="active" href="/admin/admin.html">Quản lý phim</a>
     </nav>
     <div class="header-actions">
       <button class="btn btn-primary" id="addMovieBtn">+ Thêm phim</button>

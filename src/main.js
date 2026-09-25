@@ -1,5 +1,5 @@
-import "../css/style.css";
-import { getMovieDB, genreList } from "./data.js";
+import "./style.css";
+import { getMovieDB, genreList } from "./data/data.js";
 
 const movies = getMovieDB();
 const heroMovies = [...movies]
@@ -214,7 +214,7 @@ document.querySelector("#app").innerHTML = `
     </div>
     <div>
       <h3>Quản trị</h3>
-      <a href="/admin.html">Quản lý phim</a><a href="/admin.html">Thêm phim mới</a>
+      <a href="/admin/admin.html">Quản lý phim</a><a href="/admin/admin.html">Thêm phim mới</a>
     </div>
     <div>
       <h3>Theo dõi chúng tôi</h3>
