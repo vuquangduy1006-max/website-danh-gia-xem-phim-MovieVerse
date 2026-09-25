@@ -100,7 +100,7 @@ document.querySelector("#app").innerHTML = `
   <div class="container nav-wrap">
     <a class="brand" href="#home" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
     <nav class="main-nav" aria-label="Điều hướng chính">
-      <a class="active" href="#home">Trang chủ</a><a href="#newMovies">Phim mới</a><a href="#genres">Thể loại</a><a href="#communityReviews">Đánh giá</a><a href="#ranking">Top phim</a>
+      <a class="active" href="#home">Trang chủ</a><a href="#newMovies">Phim mới</a><a href="#genres">Thể loại</a><a href="/review.html">Đánh giá</a><a href="#ranking">Top phim</a>
     </nav>
     <div class="nav-actions">
       <button class="icon-button search-trigger" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button><a class="login-link" href="#home">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>
@@ -162,7 +162,7 @@ document.querySelector("#app").innerHTML = `
         <p class="eyebrow">Cộng đồng</p>
         <h2>Đánh giá từ khán giả</h2>
       </div>
-      <a class="text-link" href="#home">Xem thêm <span>→</span></a>
+      <a class="text-link" href="/review.html">Xem thêm <span>→</span></a>
     </div>
     <div class="review-summary">
       <div class="review-stat">
