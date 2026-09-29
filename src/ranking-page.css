@@ -1,0 +1,40 @@
+.ranking-page { padding-top: 76px; background: #101214; min-height: 70vh; }
+.ranking-intro { border-bottom: 1px solid var(--line); background: radial-gradient(circle at 82% 15%, rgba(243,195,92,.16), transparent 28%), linear-gradient(115deg,#171a1d,#101214 65%,#1d1917); }
+.ranking-intro-inner { min-height: 350px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+.ranking-intro h1 { margin: 0 0 17px; font: 700 clamp(44px,6vw,76px)/.98 var(--display); letter-spacing: -3px; }
+.ranking-intro h1 em { color: #f3c35c; font-style: normal; }
+.ranking-intro p:not(.eyebrow) { max-width: 430px; margin: 0; color: var(--muted); line-height: 1.7; }
+.ranking-mark { color: rgba(243,195,92,.58); font: 600 31px/ .8 var(--display); letter-spacing: 2px; text-align: right; }
+.ranking-mark strong { color: #f3c35c; font-size: 142px; letter-spacing: -11px; }
+.ranking-content { padding-top: 62px; padding-bottom: 95px; }
+.ranking-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.ranking-heading h2 { margin: 0; font: 600 28px var(--display); letter-spacing: -1px; }
+.ranking-heading > span { color: var(--muted); font-size: 12px; }
+.ranking-podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-bottom: 36px; }
+.podium-item { position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 16px; border: 1px solid var(--line); background: var(--surface); transition: transform 180ms ease,border-color 180ms ease; }
+.podium-item:hover { transform: translateY(-3px); border-color: rgba(243,195,92,.55); }
+.podium-1 { border-color: rgba(243,195,92,.45); background: linear-gradient(135deg,rgba(243,195,92,.1),var(--surface) 58%); }
+.podium-rank { color: #686a70; font: 600 25px var(--display); }
+.podium-1 .podium-rank { color: #f3c35c; }
+.podium-poster { flex: 0 0 55px; width: 55px; aspect-ratio: 2/3; background-position:center; background-size:cover; border-radius:3px; }
+.podium-info { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.podium-info strong { overflow:hidden; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.podium-info small { color:var(--muted); font-size:10px; }
+.podium-info b { color:#f3c35c; font-size:12px; }
+.ranking-tools { display:flex; gap:10px; margin-bottom:14px; }
+.ranking-tools input,.ranking-tools select { min-height:42px; border:1px solid var(--line); border-radius:4px; outline:0; background:var(--surface); color:var(--text); padding:0 13px; font:inherit; font-size:12px; }
+.ranking-tools input { width:min(360px,100%); }
+.ranking-tools select { min-width:180px; color:var(--muted); }
+.ranking-tools input:focus,.ranking-tools select:focus { border-color:var(--accent); }
+.ranking-table { display:grid; gap:1px; background:var(--line); }
+.ranking-row { display:grid; grid-template-columns:42px 44px minmax(0,1fr) 80px 95px; align-items:center; gap:14px; padding:13px 16px; background:var(--surface); transition:background 180ms ease; }
+.ranking-row:hover { background:#1b1d20; }
+.ranking-number { color:#686a70; font:600 19px var(--display); }
+.ranking-row-poster { width:44px; aspect-ratio:2/3; background-position:center; background-size:cover; border-radius:2px; }
+.ranking-row-title { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.ranking-row-title strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.ranking-row-title small,.ranking-row-reviews { color:var(--muted); font-size:11px; }
+.ranking-row-score { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+.ranking-row-score b { color:#f3c35c; font-size:12px; }
+.ranking-row-score small { color:#a47c29; font-size:10px; letter-spacing:1px; }
+@media (max-width:700px) { .ranking-page { padding-top:64px; } .ranking-intro-inner { min-height:350px; align-items:flex-start; padding-top:68px; } .ranking-mark { display:none; } .ranking-content { width:min(100% - 36px,600px); padding-top:46px; } .ranking-heading { display:block; } .ranking-heading > span { display:block; margin-top:8px; } .ranking-podium { grid-template-columns:1fr; } .ranking-item { min-width:0; } .ranking-tools { flex-direction:column; } .ranking-tools input,.ranking-tools select { width:100%; } .ranking-row { grid-template-columns:28px 38px minmax(0,1fr) 64px; gap:9px; padding:11px 10px; } .ranking-row-poster { width:38px; } .ranking-row-reviews { display:none; } .ranking-row-score small { display:none; } }

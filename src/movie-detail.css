@@ -541,6 +541,24 @@
   font-size: 14px;
   line-height: 1.7;
 }
+.detail-admin-reply {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--accent);
+  background: rgba(240, 91, 60, 0.08);
+}
+.detail-admin-reply strong {
+  color: #ff907a;
+  font-size: 11px;
+}
+.detail-admin-reply p {
+  margin: 3px 0;
+  font-size: 12px;
+}
+.detail-admin-reply small {
+  color: var(--muted);
+  font-size: 10px;
+}
 .detail-review-actions {
   display: flex;
   justify-content: space-between;

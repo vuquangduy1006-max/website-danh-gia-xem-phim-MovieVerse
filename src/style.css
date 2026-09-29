@@ -220,6 +220,73 @@ button {
 .login-link:hover {
   border-color: var(--accent);
 }
+.account-chip {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  list-style: none;
+  padding: 5px 8px 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+.account-chip:hover,
+.account-menu[open] .account-chip {
+  border-color: rgba(240, 91, 60, 0.55);
+  background: rgba(240, 91, 60, 0.1);
+}
+.account-chip::-webkit-details-marker { display: none; }
+.account-menu { position: relative; }
+.account-chevron { color: var(--muted); font-size: 15px; line-height: 1; }
+.account-dropdown {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 12px);
+  right: 0;
+  display: grid;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, .42);
+}
+.account-dropdown a,
+.account-dropdown .logout-button {
+  display: block;
+  width: 100%;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
+}
+.account-dropdown a:hover,
+.account-dropdown .logout-button:hover {
+  background: rgba(240, 91, 60, .1);
+  color: var(--text);
+}
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: rgba(240, 91, 60, 0.18);
+  color: #ff907a;
+  font-size: 11px;
+  font-weight: 700;
+}
+.logout-button {
+  cursor: pointer;
+}
 .menu-toggle {
   display: none;
 }

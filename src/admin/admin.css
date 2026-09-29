@@ -556,3 +556,48 @@ button {
     overflow-x: auto;
   }
 }
+.comment-admin-panel {
+  margin-top: 30px;
+}
+.comment-admin-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 18px 0;
+}
+.comment-admin-head h2 {
+  margin: 0;
+  font: 600 23px var(--display);
+  letter-spacing: -0.7px;
+}
+.comment-admin-head .eyebrow {
+  margin-bottom: 5px;
+}
+.comment-admin-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+.comment-table .comment-table-text {
+  max-width: 360px;
+  color: #d5d7d9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 800px) {
+  .comment-table thead { display: none; }
+  .comment-table,
+  .comment-table tbody,
+  .comment-table tr,
+  .comment-table td { display: block; width: 100%; }
+  .comment-table tr { position: relative; padding: 14px 16px 52px; border-bottom: 1px solid var(--line); }
+  .comment-table tbody td { display: inline-block; width: auto; padding: 0 14px 6px 0; border: 0; font-size: 13px; }
+  .comment-table tbody td:nth-child(1)::before { content: "Người dùng: "; color: var(--muted); font-size: 11px; }
+  .comment-table tbody td:nth-child(2)::before { content: "Phim: "; color: var(--muted); font-size: 11px; }
+  .comment-table tbody td:nth-child(4) { display: block; width: 100%; padding: 4px 0 0; white-space: normal; }
+  .comment-table tbody td:nth-child(4)::before { content: "Bình luận: "; display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+  .comment-table tbody td:nth-child(5) { color: var(--muted); font-size: 11px; }
+  .comment-table tbody td:nth-child(6) { position: absolute; left: 16px; bottom: 14px; padding: 0; }
+  .comment-table .comment-table-text { max-width: none; overflow: visible; text-overflow: clip; }
+}

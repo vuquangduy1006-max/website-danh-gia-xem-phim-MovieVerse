@@ -7,6 +7,7 @@ import {
   getSimilarMovies,
 } from "./data/media.js";
 import { addReview, deleteReview, getMovieReviews } from "./data/reviews.js";
+import { isAdmin } from "./data/auth.js";
 import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
@@ -37,7 +38,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -65,7 +66,7 @@ function renderDetailPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
@@ -527,7 +528,8 @@ function renderDetailPage(current) {
             <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
             <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
             <p>${escapeHtml(review.comment)}</p>
-            <div class="detail-review-actions"><span></span><button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button></div>
+            ${review.adminReply ? `<div class="detail-admin-reply"><strong>MovieVerse Admin</strong><p>${escapeHtml(review.adminReply.comment)}</p><small>${escapeHtml(review.adminReply.date)}</small></div>` : ""}
+            <div class="detail-review-actions"><span></span>${isAdmin() ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div>
           </div>
         </article>`,
           )
@@ -583,7 +585,7 @@ function renderDetailPage(current) {
 
   document.querySelector("#detailReviewList").addEventListener("click", (event) => {
     const deleteButton = event.target.closest("[data-delete-review]");
-    if (!deleteButton) return;
+    if (!deleteButton || !isAdmin()) return;
     const review = getMovieReviews(current.title).find(
       (item) => item.id === deleteButton.dataset.deleteReview,
     );

@@ -1,4 +1,5 @@
 const REVIEWS_KEY = "movieverse_reviews";
+import { isAdmin } from "./auth.js";
 
 const reviewSeed = [
   {
@@ -93,8 +94,27 @@ export function addReview(review) {
 }
 
 export function deleteReview(id) {
+  if (!isAdmin()) return false;
   const remaining = loadReviews().filter((review) => review.id !== id);
   localStorage.setItem(REVIEWS_KEY, JSON.stringify(remaining));
+  return true;
+}
+
+export function replyToReview(id, comment) {
+  if (!isAdmin() || !comment.trim()) return false;
+  const reviews = loadReviews();
+  const index = reviews.findIndex((review) => review.id === id);
+  if (index === -1) return false;
+  reviews[index] = {
+    ...reviews[index],
+    adminReply: {
+      author: "MovieVerse Admin",
+      comment: comment.trim(),
+      date: formatDate(new Date()),
+    },
+  };
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+  return true;
 }
 
 function formatDate(date) {

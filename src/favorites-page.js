@@ -2,11 +2,11 @@ import "./style.css";
 import "./favorites-page.css";
 import { getMovieDB } from "./data/data.js";
 import { loadFavorites, removeFavorite } from "./data/favorites.js";
-import { renderFooter, renderHeader } from "./components/index.js";
+import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
 const movies = getMovieDB();
 
-const headerActions = `<a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>`;
+const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
@@ -24,7 +24,9 @@ document.querySelector("#app").innerHTML = `
     favoritesHref: "/favorites.html",
     favoritesActive: "active",
     favoritesCurrent: 'aria-current="page"',
-    rankingHref: "/#ranking",
+    rankingHref: "/ranking.html",
+    rankingActive: "",
+    rankingCurrent: "",
     headerActions,
   })}
   <main class="favorites-page">
@@ -45,6 +47,8 @@ document.querySelector("#app").innerHTML = `
   </main>
   ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/#genres", aboutHref: "/" })}
 `;
+
+bindAccountActions();
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);

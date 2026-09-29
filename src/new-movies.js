@@ -1,6 +1,6 @@
 import "./style.css";
 import { getMovieDB } from "./data/data.js";
-import { renderFooter, renderHeader } from "./components/index.js";
+import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
 const newMovies = getMovieDB().filter((movie) => movie.isNew);
 
@@ -18,9 +18,10 @@ ${renderHeader({
   favoritesHref: "/favorites.html",
   favoritesActive: "",
   favoritesCurrent: "",
-  rankingHref: "/#ranking",
-  headerActions:
-    '<a class="login-link" href="/">Về trang chủ <span aria-hidden="true">→</span></a><button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>',
+  rankingHref: "/ranking.html",
+  rankingActive: "",
+  rankingCurrent: "",
+  headerActions: `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>`,
 })}
 
   <main class="new-page-main">
@@ -61,6 +62,8 @@ ${renderFooter({
   aboutHref: "/#home",
 })}
 `;
+
+bindAccountActions();
 
 const grid = document.querySelector("#newMovieGrid");
 const searchInput = document.querySelector("#newMovieSearch");
