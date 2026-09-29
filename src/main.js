@@ -43,6 +43,9 @@ ${renderHeader({
   newMoviesCurrent: "",
   genresHref: "#genres",
   reviewsHref: "/reviews.html",
+  favoritesHref: "/favorites.html",
+  favoritesActive: "",
+  favoritesCurrent: "",
   rankingHref: "#ranking",
   headerActions,
 })}

@@ -57,6 +57,8 @@
 .review-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 18px; }
 .review-filter { flex: 0 0 auto; padding: 8px 13px; border: 1px solid var(--line); border-radius: 20px; background: transparent; color: var(--muted); font-size: 12px; }
 .review-filter:hover, .review-filter.active { border-color: rgba(240, 91, 60, .55); color: #ff907a; background: rgba(240, 91, 60, .1); }
+.comment-list-meta { margin: 3px 0 12px; color: var(--muted); font-size: 11px; }
+.comment-list-meta span { color: var(--accent); font-weight: 700; }
 .community-review-list { display: grid; gap: 12px; }
 .community-review-card { display: flex; gap: 18px; padding: 15px; border: 1px solid var(--line); background: #17191c; transition: border-color 180ms ease, transform 180ms ease; }
 .community-review-card:hover { border-color: rgba(240, 91, 60, .45); transform: translateY(-2px); }
@@ -70,9 +72,12 @@
 .community-rating span { color: #f3c35c; letter-spacing: 2px; font-size: 12px; }
 .community-rating b { color: #f3c35c; font-size: 12px; }
 .community-review-content p { margin: 0 0 10px; color: #d5d7d9; font-size: 13px; line-height: 1.6; }
-.community-review-content a { color: var(--muted); font-size: 11px; }
+.community-review-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.community-review-content a, .delete-review { color: var(--muted); font-size: 11px; }
 .community-review-content a:hover { color: var(--accent); }
 .community-review-content a span { color: var(--accent); margin-left: 4px; }
+.delete-review { padding: 0; background: transparent; }
+.delete-review:hover { color: #ff6b5c; }
 .review-compose { position: sticky; top: 100px; padding: 25px; border: 1px solid rgba(240, 91, 60, .35); background: linear-gradient(160deg, #211a18, #17191c 58%); }
 .compose-top { display: flex; gap: 8px; align-items: center; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
 .compose-mark { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid rgba(240, 91, 60, .5); border-radius: 50%; }
@@ -82,7 +87,14 @@
 .review-compose label { color: #d8d8d4; font-size: 11px; margin-top: 7px; }
 .review-compose select, .review-compose input, .review-compose textarea { width: 100%; border: 1px solid var(--line); border-radius: 3px; outline: 0; background: #101214; color: var(--text); padding: 11px 12px; font: inherit; font-size: 12px; }
 .review-compose select:focus, .review-compose input:focus, .review-compose textarea:focus { border-color: var(--accent); }
+.selected-movie-rating { display: flex; align-items: center; gap: 8px; min-height: 25px; padding: 4px 0 0; }
+.selected-rating-stars { color: #f3c35c; font-size: 12px; letter-spacing: 1px; }
+.selected-movie-rating strong { color: #f3c35c; font-size: 13px; }
+.selected-movie-rating small { color: var(--muted); font-size: 10px; }
 .review-compose textarea { resize: vertical; min-height: 110px; }
+.comment-field { position: relative; }
+.comment-field textarea { padding-bottom: 28px; }
+.comment-field > span { position: absolute; right: 10px; bottom: 8px; color: #777a80; font-size: 10px; pointer-events: none; }
 .compose-rating-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .compose-stars { display: flex; gap: 4px; padding: 3px 0 5px; }
 .compose-stars button { padding: 0; background: transparent; color: #4c4f55; font-size: 25px; line-height: 1; }

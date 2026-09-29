@@ -92,6 +92,11 @@ export function addReview(review) {
   localStorage.setItem(REVIEWS_KEY, JSON.stringify(all));
 }
 
+export function deleteReview(id) {
+  const remaining = loadReviews().filter((review) => review.id !== id);
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(remaining));
+}
+
 function formatDate(date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
