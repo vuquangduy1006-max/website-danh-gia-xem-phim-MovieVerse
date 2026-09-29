@@ -84,7 +84,7 @@ function renderMovies() {
     ? filteredMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/#movies" aria-label="Xem ${movie.title} trên trang chủ"><div class="poster" style="background-image:url('${movie.poster}')"><span class="new-movie-badge">Mới</span></div></a><h3>${movie.title}<span class="card-rating">★ ${Number(movie.rating).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/watch.html?id=${movie.id}" aria-label="Xem phim ${movie.title}"><div class="poster" style="background-image:url('${movie.poster}')"><span class="new-movie-badge">Mới</span></div></a><h3><a href="/movie-detail.html?id=${movie.id}">${movie.title}</a><span class="card-rating">★ ${Number(movie.rating).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Không tìm thấy phim phù hợp.</p>';

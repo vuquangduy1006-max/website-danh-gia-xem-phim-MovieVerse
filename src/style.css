@@ -362,6 +362,12 @@ button {
 .movie-card:hover .poster:after {
   opacity: 1;
 }
+.poster-link {
+  display: block;
+}
+.movie-card h3 a:hover {
+  color: var(--accent);
+}
 .play-circle {
   position: absolute;
   z-index: 1;
