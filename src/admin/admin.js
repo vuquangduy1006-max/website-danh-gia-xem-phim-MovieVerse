@@ -1,4 +1,4 @@
-import "./admin.css";
+import "../css/admin.css";
 import { getMovieDB, saveMovieDB, genreList } from "../data/data.js";
 
 const DB_KEY = "movieverse_db";

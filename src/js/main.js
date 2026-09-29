@@ -10,6 +10,9 @@ const newMovies = movies.filter((movie) => movie.isNew);
 const REVIEWS_KEY = "movieverse_reviews";
 let selectedRating = 0;
 let currentMovieTitle = null;
+let currentSlide = 0;
+let slideTimer;
+const posterStyle = (movie) => `background-image:url('${movie.poster}')`;
 
 const reviewSeed = [
   {
@@ -335,10 +338,6 @@ document.addEventListener("keydown", (event) => {
     closeSearch();
   }
 });
-
-let currentSlide = 0;
-let slideTimer;
-const posterStyle = (movie) => `background-image:url('${movie.poster}')`;
 
 function renderGenrePills() {
   const pills = ["all", ...genreList];
