@@ -1,7 +1,7 @@
 import "./style.css";
 import { getMovieDB, genreList } from "./data/data.js";
 import { loadReviews } from "./data/reviews.js";
-import { renderFooter, renderHeader } from "./components/index.js";
+import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
 const movies = getMovieDB();
 const heroMovies = [...movies]
@@ -30,7 +30,7 @@ const headerActions = `<form class="header-search" id="headerSearch" role="searc
   <button class="header-search-button" type="submit" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button>
   <div class="search-results" id="searchResults" aria-live="polite"></div>
 </form>
-<a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>`;
+${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
 document.querySelector("#app").innerHTML = `
 ${renderHeader({
@@ -150,6 +150,8 @@ ${renderFooter({
 })}
 
 `;
+
+bindAccountActions();
 
 renderGenrePills();
 renderHero();

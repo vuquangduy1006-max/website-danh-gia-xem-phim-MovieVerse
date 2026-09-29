@@ -3,14 +3,14 @@ import "./reviews-page.css";
 import { getMovieDB, genreList } from "./data/data.js";
 import { isAdmin } from "./data/auth.js";
 import { addReview, deleteReview, getMovieReviews, loadReviews } from "./data/reviews.js";
-import { renderFooter, renderHeader } from "./components/index.js";
+import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
 const movies = getMovieDB();
 let reviews = loadReviews();
 let selectedRating = 0;
 const adminUser = isAdmin();
 
-const headerActions = `<a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>`;
+const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
@@ -89,6 +89,8 @@ document.querySelector("#app").innerHTML = `
   </main>
   ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/#genres", aboutHref: "/" })}
 `;
+
+bindAccountActions();
 
 const movieSelect = document.querySelector("#reviewMovie");
 movieSelect.innerHTML = movies.map((movie) => `<option value="${escapeHtml(movie.title)}">${escapeHtml(movie.title)}</option>`).join("");
