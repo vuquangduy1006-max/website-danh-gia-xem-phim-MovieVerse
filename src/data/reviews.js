@@ -1,4 +1,5 @@
 const REVIEWS_KEY = "movieverse_reviews";
+import { isAdmin } from "./auth.js";
 
 const reviewSeed = [
   {
@@ -93,8 +94,10 @@ export function addReview(review) {
 }
 
 export function deleteReview(id) {
+  if (!isAdmin()) return false;
   const remaining = loadReviews().filter((review) => review.id !== id);
   localStorage.setItem(REVIEWS_KEY, JSON.stringify(remaining));
+  return true;
 }
 
 function formatDate(date) {

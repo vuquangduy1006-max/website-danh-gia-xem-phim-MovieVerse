@@ -1,6 +1,7 @@
 import "../admin/admin.css";
 import { getMovieDB, saveMovieDB, genreList } from "./data.js";
 import { isAdmin } from "./auth.js";
+import { deleteReview, loadReviews } from "./reviews.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
@@ -36,6 +37,8 @@ let currentFilter = "all";
 let currentQuery = "";
 let editingId = null;
 let deleteId = null;
+let reviewQuery = "";
+let reviews = loadReviews();
 
 document.querySelector("#app").innerHTML = `
 <header class="admin-header">
@@ -44,10 +47,12 @@ document.querySelector("#app").innerHTML = `
     <nav class="admin-nav" aria-label="Điều hướng quản trị">
       <a href="/" class="back-link">← Trang chủ</a>
       <a class="active" href="/admin/admin.html">Quản lý phim</a>
+      <a href="/admin/comments.html">Bình luận</a>
     </nav>
     <div class="header-actions">
       <button class="btn btn-primary" id="addMovieBtn">+ Thêm phim</button>
     </div>
+
   </div>
 </header>
 
@@ -84,6 +89,25 @@ document.querySelector("#app").innerHTML = `
         </table>
       </div>
     </div>
+
+    <section class="admin-panel comment-admin-panel" aria-labelledby="commentAdminTitle">
+      <div class="comment-admin-head">
+        <div>
+          <p class="eyebrow">Kiểm duyệt cộng đồng</p>
+          <h2 id="commentAdminTitle">Quản lý bình luận</h2>
+        </div>
+        <span class="comment-admin-count" id="commentAdminCount"></span>
+      </div>
+      <div class="panel-toolbar">
+        <input class="toolbar-input" id="commentSearchInput" type="search" placeholder="Tìm theo phim hoặc người dùng...">
+      </div>
+      <div class="table-wrap">
+        <table class="movie-table comment-table">
+          <thead><tr><th>Người dùng</th><th>Phim</th><th>Đánh giá</th><th>Bình luận</th><th>Ngày</th><th style="text-align:right">Hành động</th></tr></thead>
+          <tbody id="commentTableBody"></tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </main>
 
@@ -194,6 +218,10 @@ function bindEvents() {
     currentFilter = event.target.value;
     renderAll();
   });
+  document.querySelector("#commentSearchInput").addEventListener("input", (event) => {
+    reviewQuery = event.target.value;
+    renderComments();
+  });
   document.querySelectorAll("[data-close]").forEach((button) =>
     button.addEventListener("click", () =>
       closeOverlay(button.dataset.close),
@@ -215,6 +243,32 @@ function bindEvents() {
 function renderAll() {
   renderStats();
   renderTable();
+  renderComments();
+}
+
+function renderComments() {
+  const query = reviewQuery.trim().toLocaleLowerCase("vi");
+  const shown = reviews.filter((review) =>
+    !query || `${review.author} ${review.movieTitle} ${review.comment}`.toLocaleLowerCase("vi").includes(query),
+  );
+  document.querySelector("#commentAdminCount").textContent = `${shown.length}/${reviews.length} bình luận`;
+  document.querySelector("#commentTableBody").innerHTML = shown.length
+    ? shown.map((review) => `<tr><td><strong>${escapeHtml(review.author)}</strong></td><td>${escapeHtml(review.movieTitle)}</td><td><span class="badge rating">★ ${review.rating}/5</span></td><td class="comment-table-text">${escapeHtml(review.comment)}</td><td>${escapeHtml(review.date)}</td><td><div class="row-actions"><button class="btn btn-danger btn-sm" data-delete-comment="${escapeHtml(review.id)}">Xóa</button></div></td></tr>`).join("")
+    : `<tr><td colspan="6"><div class="empty-state"><h3>Không tìm thấy bình luận</h3><p>Thử thay đổi từ khóa tìm kiếm.</p></div></td></tr>`;
+  document.querySelectorAll("[data-delete-comment]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const review = reviews.find((item) => item.id === button.dataset.deleteComment);
+      if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`)) return;
+      deleteReview(review.id);
+      reviews = loadReviews();
+      renderComments();
+      showToast("Đã xóa bình luận.", "success");
+    });
+  });
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
 function renderStats() {

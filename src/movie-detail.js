@@ -7,6 +7,7 @@ import {
   getSimilarMovies,
 } from "./data/media.js";
 import { addReview, deleteReview, getMovieReviews } from "./data/reviews.js";
+import { isAdmin } from "./data/auth.js";
 import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
@@ -527,7 +528,7 @@ function renderDetailPage(current) {
             <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
             <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
             <p>${escapeHtml(review.comment)}</p>
-            <div class="detail-review-actions"><span></span><button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button></div>
+            <div class="detail-review-actions"><span></span>${isAdmin() ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div>
           </div>
         </article>`,
           )
@@ -583,7 +584,7 @@ function renderDetailPage(current) {
 
   document.querySelector("#detailReviewList").addEventListener("click", (event) => {
     const deleteButton = event.target.closest("[data-delete-review]");
-    if (!deleteButton) return;
+    if (!deleteButton || !isAdmin()) return;
     const review = getMovieReviews(current.title).find(
       (item) => item.id === deleteButton.dataset.deleteReview,
     );

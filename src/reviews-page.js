@@ -1,12 +1,14 @@
 import "./style.css";
 import "./reviews-page.css";
 import { getMovieDB, genreList } from "./data/data.js";
+import { isAdmin } from "./data/auth.js";
 import { addReview, deleteReview, getMovieReviews, loadReviews } from "./data/reviews.js";
 import { renderFooter, renderHeader } from "./components/index.js";
 
 const movies = getMovieDB();
 let reviews = loadReviews();
 let selectedRating = 0;
+const adminUser = isAdmin();
 
 const headerActions = `<a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
@@ -133,7 +135,7 @@ function renderReviews() {
 
   document.querySelector("#communityReviewList").innerHTML = shown.length ? shown.map((review) => {
     const movie = movieForReview(review);
-    return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p><div class="community-review-actions"><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a><button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button></div></div></article>`;
+    return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p><div class="community-review-actions"><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a>${adminUser ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div></div></article>`;
   }).join("") : '<p class="review-empty-note">Không tìm thấy review phù hợp. Thử đổi bộ lọc hoặc viết một review mới.</p>';
   document.querySelector("#visibleCommentCount").textContent = shown.length;
 }
@@ -169,7 +171,7 @@ document.querySelector("#reviewSort").addEventListener("change", renderReviews);
 movieSelect.addEventListener("change", renderSelectedMovieRating);
 document.querySelector("#communityReviewList").addEventListener("click", (event) => {
   const deleteButton = event.target.closest("[data-delete-review]");
-  if (!deleteButton) return;
+  if (!deleteButton || !isAdmin()) return;
   const review = reviews.find((item) => item.id === deleteButton.dataset.deleteReview);
   if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`)) return;
   deleteReview(review.id);
