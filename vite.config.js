@@ -6,10 +6,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL("./index.html", import.meta.url)),
-        newMovies: fileURLToPath(new URL("./new-movies.html", import.meta.url)),
-        login: fileURLToPath(new URL("./login.html", import.meta.url)),
-        register: fileURLToPath(new URL("./register.html", import.meta.url)),
-        admin: fileURLToPath(new URL("./admin/admin.html", import.meta.url)),
+        admin: fileURLToPath(new URL("./admin.html", import.meta.url)),
       },
     },
   },
