@@ -1,25 +1,24 @@
 import "./style.css";
 import { getMovieDB } from "./data/data.js";
+import { renderFooter, renderHeader } from "./components/index.js";
 
 const newMovies = getMovieDB().filter((movie) => movie.isNew);
 
 document.querySelector("#app").innerHTML = `
-  <header class="site-header new-page-header">
-    <div class="container nav-wrap">
-      <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-      <nav class="main-nav" aria-label="Điều hướng chính">
-        <a href="/">Trang chủ</a>
-        <a class="active" href="/new-movies.html" aria-current="page">Phim mới</a>
-        <a href="/#genres">Thể loại</a>
-        <a href="/#communityReviews">Đánh giá</a>
-        <a href="/#ranking">Top phim</a>
-      </nav>
-      <div class="nav-actions">
-        <a class="login-link" href="/">Về trang chủ <span aria-hidden="true">→</span></a>
-        <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>
-      </div>
-    </div>
-  </header>
+${renderHeader({
+  headerClass: " new-page-header",
+  homeHref: "/",
+  homeActive: "",
+  homeCurrent: "",
+  newMoviesHref: "/new-movies.html",
+  newMoviesActive: "active",
+  newMoviesCurrent: 'aria-current="page"',
+  genresHref: "/#genres",
+  reviewsHref: "/#communityReviews",
+  rankingHref: "/#ranking",
+  headerActions:
+    '<a class="login-link" href="/">Về trang chủ <span aria-hidden="true">→</span></a><button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>',
+})}
 
   <main class="new-page-main">
     <section class="new-page-intro">
@@ -50,12 +49,14 @@ document.querySelector("#app").innerHTML = `
     </section>
   </main>
 
-  <footer class="site-footer new-page-footer">
-    <div class="container footer-bottom">
-      <a href="/">← Quay về MovieVerse</a>
-      <span>© 2024 MovieVerse</span>
-    </div>
-  </footer>
+${renderFooter({
+  footerClass: " new-page-footer",
+  homeHref: "/",
+  newMoviesHref: "/new-movies.html",
+  rankingHref: "/#ranking",
+  genresHref: "/#genres",
+  aboutHref: "/#home",
+})}
 `;
 
 const grid = document.querySelector("#newMovieGrid");
