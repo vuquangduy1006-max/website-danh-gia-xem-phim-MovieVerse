@@ -64,12 +64,30 @@ export function getMovieReviews(title) {
   return loadReviews().filter((review) => review.movieTitle === title);
 }
 
+export function getRatingSummary(title) {
+  const list = getMovieReviews(title);
+  const total = list.length;
+  const average = total
+    ? Number((list.reduce((sum, review) => sum + Number(review.rating), 0) / total).toFixed(1))
+    : 0;
+  const distribution = [1, 2, 3, 4, 5].map((rating) => ({
+    rating,
+    count: list.filter((review) => Number(review.rating) === rating).length,
+  }));
+  return { total, average, distribution };
+}
+
 export function addReview(review) {
+  const rating = Number(review.rating);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new Error("Rating must be an integer from 1 to 5");
+  }
   const all = loadReviews();
   all.unshift({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
     date: formatDate(new Date()),
     ...review,
+    rating,
   });
   localStorage.setItem(REVIEWS_KEY, JSON.stringify(all));
 }

@@ -42,7 +42,7 @@ ${renderHeader({
   newMoviesActive: "",
   newMoviesCurrent: "",
   genresHref: "#genres",
-  reviewsHref: "#communityReviews",
+  reviewsHref: "/reviews.html",
   rankingHref: "#ranking",
   headerActions,
 })}

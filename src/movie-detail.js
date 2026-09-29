@@ -36,7 +36,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/#communityReviews">Đánh giá</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/#ranking">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -64,7 +64,7 @@ function renderDetailPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/#communityReviews">Đánh giá</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/#ranking">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
@@ -146,19 +146,31 @@ function renderDetailPage(current) {
           <section class="detail-block" id="detailReviews" aria-labelledby="reviewsHeading">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Cộng đồng</p>
+                <p class="eyebrow">Góc nhìn cộng đồng</p>
                 <h2 id="reviewsHeading">Đánh giá phim</h2>
               </div>
               <span class="detail-review-badge" id="reviewBadge"></span>
             </div>
             <div id="reviewSummary"></div>
             <form class="detail-review-form" id="detailReviewForm" novalidate>
-              <div class="star-input" id="detailStarInput"></div>
-              <input id="detailAuthor" type="text" maxlength="30" placeholder="Tên của bạn">
-              <textarea id="detailComment" rows="3" placeholder="Cảm nhận của bạn về bộ phim này..."></textarea>
+              <div class="review-form-heading">
+                <div>
+                  <span class="review-form-kicker">Đã xem phim?</span>
+                  <h3>Chia sẻ góc nhìn của bạn</h3>
+                </div>
+                <span class="review-form-note">Mất chưa đến 1 phút</span>
+              </div>
+              <div class="review-form-rating">
+                <span class="review-field-label">Bạn chấm phim này thế nào?</span>
+                <div class="star-input" id="detailStarInput" aria-label="Chọn số sao"></div>
+              </div>
+              <label class="sr-only" for="detailAuthor">Tên của bạn</label>
+              <input id="detailAuthor" type="text" maxlength="30" placeholder="Tên hiển thị của bạn">
+              <label class="sr-only" for="detailComment">Cảm nhận của bạn</label>
+              <textarea id="detailComment" rows="3" placeholder="Điều gì khiến bạn nhớ nhất về bộ phim này?"></textarea>
               <div class="detail-review-foot">
                 <p id="detailReviewHint" aria-live="polite"></p>
-                <button type="submit" class="tb-btn tb-btn-primary">Gửi đánh giá</button>
+                <button type="submit" class="tb-btn tb-btn-primary">Đăng đánh giá <span aria-hidden="true">→</span></button>
               </div>
             </form>
             <div class="detail-review-list" id="detailReviewList"></div>

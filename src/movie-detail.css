@@ -337,7 +337,9 @@
   margin-bottom: 26px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--surface);
+  background:
+    radial-gradient(circle at 0 0, rgba(240, 91, 60, 0.15), transparent 42%),
+    linear-gradient(135deg, #1b1d20, #131518 68%);
 }
 .review-overview-score strong {
   display: block;
@@ -385,8 +387,47 @@
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--surface);
+  background: #17191c;
   margin-bottom: 26px;
+}
+.review-form-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 5px;
+}
+.review-form-kicker,
+.review-field-label {
+  display: block;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.review-form-heading h3 {
+  margin: 5px 0 0;
+  font: 600 20px var(--display);
+  letter-spacing: -0.5px;
+}
+.review-form-note {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.review-form-rating {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 13px 0 3px;
+}
+.review-field-label {
+  color: var(--muted);
+  letter-spacing: 0.6px;
+  font-weight: 500;
+  text-transform: none;
 }
 .detail-review-form input,
 .detail-review-form textarea {
@@ -399,10 +440,12 @@
   outline: none;
   resize: vertical;
   font: inherit;
+  transition: border-color 180ms ease, background 180ms ease;
 }
 .detail-review-form input:focus,
 .detail-review-form textarea:focus {
   border-color: var(--accent);
+  background: #101214;
 }
 .star-input {
   display: flex;
@@ -423,6 +466,13 @@
 }
 .star-input .star.filled {
   color: #f3c35c;
+}
+.star-input .star:focus-visible,
+.detail-review-form input:focus-visible,
+.detail-review-form textarea:focus-visible,
+.detail-review-form .tb-btn:focus-visible {
+  outline: 2px solid #f3c35c;
+  outline-offset: 3px;
 }
 .detail-review-form input::placeholder,
 .detail-review-form textarea::placeholder {
@@ -450,6 +500,11 @@
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+.review-item:hover {
+  border-color: rgba(240, 91, 60, 0.38);
+  transform: translateY(-2px);
 }
 .review-avatar {
   flex: 0 0 40px;
@@ -732,6 +787,14 @@
   }
   .detail-review-form {
     padding: 18px;
+  }
+  .review-form-rating {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .review-form-note {
+    display: none;
   }
   .detail-review-foot {
     flex-direction: column;
