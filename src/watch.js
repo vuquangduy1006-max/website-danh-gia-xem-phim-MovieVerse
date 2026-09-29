@@ -8,9 +8,9 @@ import {
   getSimilarMovies,
 } from "./data/media.js";
 import { getMovieReviews } from "./data/reviews.js";
+import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
-const FAVORITES_KEY = "movieverse_favorites";
 const PROGRESS_KEY = "movieverse_watch_progress";
 
 const movieList = getMovieDB();
@@ -896,10 +896,7 @@ function renderWatchPage(current) {
     };
 
     favoriteBtn.addEventListener("click", () => {
-      const next = favorites.includes(current.id)
-        ? favorites.filter((id) => id !== current.id)
-        : [...favorites, current.id];
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      const next = toggleFavoriteStorage(current.id);
       favorites.length = 0;
       favorites.push(...next);
       syncState();
@@ -1079,14 +1076,6 @@ function bindMenuToggle() {
 function loadWatchlist() {
   try {
     const parsed = JSON.parse(localStorage.getItem(WATCHLIST_KEY));
-    if (Array.isArray(parsed)) return parsed;
-  } catch (_) {}
-  return [];
-}
-
-function loadFavorites() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(FAVORITES_KEY));
     if (Array.isArray(parsed)) return parsed;
   } catch (_) {}
   return [];

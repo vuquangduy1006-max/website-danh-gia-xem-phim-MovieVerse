@@ -1,19 +1,10 @@
 import "./style.css";
 import "./favorites-page.css";
 import { getMovieDB } from "./data/data.js";
+import { loadFavorites, removeFavorite } from "./data/favorites.js";
 import { renderFooter, renderHeader } from "./components/index.js";
 
-const FAVORITES_KEY = "movieverse_favorites";
 const movies = getMovieDB();
-
-function loadFavorites() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(FAVORITES_KEY));
-    return Array.isArray(saved) ? saved : [];
-  } catch (_) {
-    return [];
-  }
-}
 
 const headerActions = `<a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
@@ -70,8 +61,7 @@ function renderFavorites() {
 document.querySelector("#favoritesGrid").addEventListener("click", (event) => {
   const button = event.target.closest("[data-remove-favorite]");
   if (!button) return;
-  const remaining = loadFavorites().filter((id) => id !== button.dataset.removeFavorite);
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(remaining));
+  removeFavorite(button.dataset.removeFavorite);
   renderFavorites();
 });
 document.querySelector(".menu-toggle").addEventListener("click", () => document.querySelector(".main-nav").classList.toggle("mobile-open"));
