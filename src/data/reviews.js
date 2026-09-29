@@ -100,6 +100,23 @@ export function deleteReview(id) {
   return true;
 }
 
+export function replyToReview(id, comment) {
+  if (!isAdmin() || !comment.trim()) return false;
+  const reviews = loadReviews();
+  const index = reviews.findIndex((review) => review.id === id);
+  if (index === -1) return false;
+  reviews[index] = {
+    ...reviews[index],
+    adminReply: {
+      author: "MovieVerse Admin",
+      comment: comment.trim(),
+      date: formatDate(new Date()),
+    },
+  };
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+  return true;
+}
+
 function formatDate(date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");

@@ -72,6 +72,9 @@
 .community-rating span { color: #f3c35c; letter-spacing: 2px; font-size: 12px; }
 .community-rating b { color: #f3c35c; font-size: 12px; }
 .community-review-content p { margin: 0 0 10px; color: #d5d7d9; font-size: 13px; line-height: 1.6; }
+.community-admin-reply { margin: 12px 0; padding: 10px 12px; border-left: 2px solid var(--accent); background: rgba(240, 91, 60, .08); }
+.community-admin-reply strong { color: #ff907a; font-size: 11px; }
+.community-admin-reply p { margin: 3px 0 0; font-size: 12px; }
 .community-review-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .community-review-content a, .delete-review { color: var(--muted); font-size: 11px; }
 .community-review-content a:hover { color: var(--accent); }

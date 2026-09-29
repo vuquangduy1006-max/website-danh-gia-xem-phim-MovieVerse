@@ -19,4 +19,9 @@
 .admin-comment-rating { margin: 8px 0 6px; color: var(--gold); font-size: 12px; letter-spacing: 1px; }
 .admin-comment-rating b { margin-left: 9px; letter-spacing: 0; font-size: 11px; }
 .admin-comment-body p { margin: 0; color: #d5d7d9; font-size: 13px; line-height: 1.65; }
+.admin-reply { margin-top: 13px; padding: 10px 12px; border-left: 2px solid var(--accent); background: var(--accent-soft); }
+.admin-reply strong { color: #ff907a; font-size: 11px; }
+.admin-reply p { margin: 3px 0; font-size: 12px; }
+.admin-reply small { color: var(--muted); font-size: 10px; }
+.admin-comment-actions { display: flex; flex-direction: column; gap: 7px; }
 @media (max-width: 700px) { .comment-overview { grid-template-columns: 1fr 1fr; } .comment-overview > div:first-child { grid-column: 1 / -1; } .admin-comment-card { grid-template-columns: 34px minmax(0, 1fr); gap: 11px; } .admin-comment-avatar { width: 34px; height: 34px; } .admin-comment-card > .btn { grid-column: 2; justify-self: start; } .admin-comment-head time { display: none; } }
