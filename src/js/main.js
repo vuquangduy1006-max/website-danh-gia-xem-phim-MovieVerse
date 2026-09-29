@@ -38,7 +38,21 @@ document.querySelector("#app").innerHTML = `
       </div>
       <a class="text-link" href="#movies">Xem tất cả <span>→</span></a>
     </div>
+    <div class="catalog-toolbar">
+      <label class="catalog-search">
+        <span>⌕</span>
+        <input id="catalogSearch" type="search" placeholder="Tìm phim theo tên..." aria-label="Tìm phim theo tên">
+      </label>
+      <select id="yearFilter" aria-label="Lọc theo năm"><option value="all">Tất cả năm</option></select>
+      <select id="sortMovies" aria-label="Sắp xếp phim">
+        <option value="default">Sắp xếp mặc định</option>
+        <option value="rating-desc">Rating cao nhất</option>
+        <option value="year-desc">Năm mới nhất</option>
+        <option value="title-asc">Tên A → Z</option>
+      </select>
+    </div>
     <div class="genre-pills" id="genres"></div>
+    <p class="catalog-count" id="catalogCount"></p>
     <div class="movie-grid" id="movieGrid"></div>
   </section>
 
@@ -142,6 +156,7 @@ document.querySelector("#app").innerHTML = `
 `;
 
 renderGenrePills();
+setupCatalogControls();
 renderHero();
 renderMovies();
 renderRanking();
@@ -156,15 +171,6 @@ document
   .querySelector("#nextSlide")
   .addEventListener("click", () => goToSlide(currentSlide + 1));
 
-document.querySelectorAll(".pill").forEach((pill) =>
-  pill.addEventListener("click", () => {
-    document
-      .querySelectorAll(".pill")
-      .forEach((item) => item.classList.remove("active"));
-    pill.classList.add("active");
-    renderMovies(pill.dataset.filter);
-  }),
-);
 
 document.querySelector(".search-trigger").addEventListener("click", () => {
   document.querySelector("#searchOverlay").classList.add("open");
@@ -204,6 +210,34 @@ let currentSlide = 0;
 let slideTimer;
 const posterStyle = (movie) => `background-image:url('${movie.poster}')`;
 
+const catalogState = { genre: "all", year: "all", query: "", sort: "default" };
+
+function setupCatalogControls() {
+  const years = [...new Set(movies.map((movie) => movie.year))].sort((a, b) => Number(b) - Number(a));
+  document.querySelector("#yearFilter").innerHTML += years.map((year) => `<option value="${year}">${year}</option>`).join("");
+  document.querySelector("#catalogSearch").addEventListener("input", (event) => {
+    catalogState.query = event.target.value.trim();
+    renderMovies();
+  });
+  document.querySelector("#yearFilter").addEventListener("change", (event) => {
+    catalogState.year = event.target.value;
+    renderMovies();
+  });
+  document.querySelector("#sortMovies").addEventListener("change", (event) => {
+    catalogState.sort = event.target.value;
+    renderMovies();
+  });
+}
+
+function resetCatalogFilters() {
+  catalogState.genre = "all"; catalogState.year = "all"; catalogState.query = ""; catalogState.sort = "default";
+  document.querySelector("#catalogSearch").value = "";
+  document.querySelector("#yearFilter").value = "all";
+  document.querySelector("#sortMovies").value = "default";
+  document.querySelectorAll(".pill").forEach((pill) => pill.classList.toggle("active", pill.dataset.filter === "all"));
+  renderMovies();
+}
+
 function renderGenrePills() {
   const pills = ["all", ...genreList];
   document.querySelector("#genres").innerHTML = pills
@@ -216,7 +250,8 @@ function renderGenrePills() {
     pill.addEventListener("click", () => {
       document.querySelectorAll(".pill").forEach((item) => item.classList.remove("active"));
       pill.classList.add("active");
-      renderMovies(pill.dataset.filter);
+      catalogState.genre = pill.dataset.filter;
+      renderMovies();
     }),
   );
 }
@@ -267,25 +302,35 @@ function startSlider() {
   slideTimer = setInterval(() => goToSlide(currentSlide + 1), 6500);
 }
 
-function renderMovies(filter = "all") {
-  const shown =
-    filter === "all"
-      ? movies
-      : movies.filter((movie) => movie.genre === filter);
+function renderMovies() {
+  let shown = movies.filter((movie) => {
+    const matchesGenre = catalogState.genre === "all" || movie.genre === catalogState.genre;
+    const matchesYear = catalogState.year === "all" || movie.year === catalogState.year;
+    const matchesQuery = movie.title.toLowerCase().includes(catalogState.query.toLowerCase());
+    return matchesGenre && matchesYear && matchesQuery;
+  });
+
+  if (catalogState.sort === "rating-desc") shown.sort((a, b) => Number(b.rating) - Number(a.rating));
+  if (catalogState.sort === "year-desc") shown.sort((a, b) => Number(b.year) - Number(a.year));
+  if (catalogState.sort === "title-asc") shown.sort((a, b) => a.title.localeCompare(b.title, "vi"));
+
+  document.querySelector("#catalogCount").textContent = `Hiển thị ${shown.length}/${movies.length} phim`;
   const grid = document.querySelector("#movieGrid");
   grid.innerHTML = shown.length
-    ? shown
-        .map(
-          (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><div class="poster" style="${posterStyle(movie)}"><button class="play-circle" aria-label="Xem ${movie.title}" data-movie="${movie.title}">▶</button></div><h3>${movie.title}<span class="card-rating">★ ${movie.rating}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
-        )
-        .join("")
-    : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
-  document
-    .querySelectorAll("#movieGrid [data-movie]")
-    .forEach((button) =>
-      button.addEventListener("click", () => openModal(button.dataset.movie)),
-    );
+    ? shown.map((movie, index) =>
+        `<article class="movie-card" data-id="${movie.id}" tabindex="0" role="link" style="animation-delay:${index * 0.05}s">
+          <div class="poster" style="${posterStyle(movie)}"><span class="play-circle">▶</span></div>
+          <h3>${movie.title}<span class="card-rating">★ ${movie.rating}</span></h3>
+          <p>${movie.year} · ${movie.genre}</p>
+        </article>`).join("")
+    : `<div class="empty-note catalog-empty"><strong>Không tìm thấy phim</strong><br><span>Hãy thử từ khóa hoặc bộ lọc khác.</span><br><button id="resetFilters" class="reset-filter">Xóa bộ lọc</button></div>`;
+
+  grid.querySelectorAll(".movie-card").forEach((card) => {
+    const go = () => { window.location.href = `/detail.html?id=${encodeURIComponent(card.dataset.id)}`; };
+    card.addEventListener("click", go);
+    card.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); go(); } });
+  });
+  document.querySelector("#resetFilters")?.addEventListener("click", resetCatalogFilters);
 }
 
 function renderRanking() {
