@@ -1,5 +1,6 @@
 import "./style.css";
 import { getMovieDB, genreList } from "./data/data.js";
+import { renderFooter, renderHeader } from "./components/index.js";
 
 const movies = getMovieDB();
 const heroMovies = [...movies]
@@ -102,18 +103,28 @@ function escapeHtml(str) {
   );
 }
 
+const headerActions = `<form class="header-search" id="headerSearch" role="search">
+  <label class="sr-only" for="searchInput">Tìm phim</label>
+  <input id="searchInput" type="search" placeholder="Tìm phim..." autocomplete="off" aria-controls="searchResults">
+  <button class="header-search-button" type="submit" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button>
+  <div class="search-results" id="searchResults" aria-live="polite"></div>
+</form>
+<a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>`;
+
 document.querySelector("#app").innerHTML = `
-<header class="site-header">
-  <div class="container nav-wrap">
-    <a class="brand" href="#home" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-    <nav class="main-nav" aria-label="Điều hướng chính">
-      <a class="active" href="#home">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="#genres">Thể loại</a><a href="#communityReviews">Đánh giá</a><a href="#ranking">Top phim</a>
-    </nav>
-    <div class="nav-actions">
-      <button class="icon-button search-trigger" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button><a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>
-    </div>
-  </div>
-</header>
+${renderHeader({
+  headerClass: "",
+  homeHref: "#home",
+  homeActive: "active",
+  homeCurrent: 'aria-current="page"',
+  newMoviesHref: "/new-movies.html",
+  newMoviesActive: "",
+  newMoviesCurrent: "",
+  genresHref: "#genres",
+  reviewsHref: "#communityReviews",
+  rankingHref: "#ranking",
+  headerActions,
+})}
 
 <main id="home">
   <section class="hero" aria-label="Phim nổi bật">
@@ -205,45 +216,14 @@ document.querySelector("#app").innerHTML = `
   </section>
 </main>
 
-<footer class="site-footer">
-  <div class="container footer-main">
-    <div class="footer-brand">
-      <a class="brand" href="#home"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-      <p>Nơi những câu chuyện điện ảnh<br>được kể theo cách của bạn.</p>
-    </div>
-    <div>
-      <h3>Khám phá</h3>
-      <a href="/new-movies.html">Phim mới</a><a href="#ranking">Top phim</a><a href="#genres">Thể loại</a>
-    </div>
-    <div>
-      <h3>MovieVerse</h3>
-      <a href="#home">Về chúng tôi</a><a href="#home">Trợ giúp</a><a href="#home">Điều khoản</a>
-    </div>
-    <div>
-      <h3>Quản trị</h3>
-      <a href="/admin/admin.html">Quản lý phim</a><a href="/admin/admin.html">Thêm phim mới</a>
-    </div>
-    <div>
-      <h3>Theo dõi chúng tôi</h3>
-      <div class="socials">
-        <a href="#home" aria-label="Facebook">f</a><a href="#home" aria-label="Instagram">◎</a><a href="#home" aria-label="Youtube">▶</a>
-      </div>
-    </div>
-  </div>
-  <div class="container footer-bottom">
-    <span>© 2024 MovieVerse. Made for movie lovers.</span><span>Việt Nam <span class="flag">●</span></span>
-  </div>
-</footer>
-
-<div class="search-overlay" id="searchOverlay">
-  <div class="search-box">
-    <button class="close-search" aria-label="Đóng tìm kiếm">×</button>
-    <p class="eyebrow">Tìm kiếm</p>
-    <h2>Bạn muốn xem gì hôm nay?</h2>
-    <input id="searchInput" type="search" placeholder="Nhập tên phim...">
-    <div id="searchResults"></div>
-  </div>
-</div>
+${renderFooter({
+  footerClass: "",
+  homeHref: "#home",
+  newMoviesHref: "/new-movies.html",
+  rankingHref: "#ranking",
+  genresHref: "#genres",
+  aboutHref: "#home",
+})}
 
 <div class="modal" id="movieModal" aria-hidden="true">
   <div class="modal-backdrop"></div>
@@ -309,16 +289,14 @@ document.querySelectorAll(".pill").forEach((pill) =>
   }),
 );
 
-document.querySelector(".search-trigger").addEventListener("click", () => {
-  document.querySelector("#searchOverlay").classList.add("open");
-  document.querySelector("#searchInput").focus();
+document.querySelector("#headerSearch").addEventListener("submit", (event) => {
+  event.preventDefault();
 });
-document.querySelector(".close-search").addEventListener("click", closeSearch);
 document
   .querySelector("#searchInput")
   .addEventListener("input", (event) => renderSearch(event.target.value));
-document.querySelector("#searchOverlay").addEventListener("click", (event) => {
-  if (event.target.id === "searchOverlay") closeSearch();
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".header-search")) closeSearch();
 });
 
 document.querySelector(".modal-backdrop").addEventListener("click", closeModal);
@@ -561,23 +539,27 @@ function closeModal() {
 }
 
 function closeSearch() {
-  document.querySelector("#searchOverlay").classList.remove("open");
+  document.querySelector(".header-search").classList.remove("has-results");
 }
 
 function renderSearch(query = "") {
+  const normalizedQuery = query.trim().toLocaleLowerCase("vi");
   const results = movies.filter((movie) =>
-    movie.title.toLowerCase().includes(query.toLowerCase()),
+    movie.title.toLocaleLowerCase("vi").includes(normalizedQuery),
   );
-  document.querySelector("#searchResults").innerHTML = query
+  const searchForm = document.querySelector(".header-search");
+  searchForm.classList.toggle("has-results", Boolean(normalizedQuery));
+  document.querySelector("#searchResults").innerHTML = normalizedQuery
     ? results
         .map(
           (movie) =>
             `<button class="search-result" data-movie="${movie.title}"><img src="${movie.poster}" alt=""><p>${movie.title}<br><small>${movie.year} · ${movie.genre}</small></p></button>`,
         )
-        .join("")
-    : '<p style="color:var(--muted);margin-top:22px">Nhập tên phim để bắt đầu tìm kiếm.</p>';
+        .join("") || '<p class="search-empty">Không tìm thấy phim phù hợp.</p>'
+    : "";
   document.querySelectorAll("#searchResults [data-movie]").forEach((button) =>
     button.addEventListener("click", () => {
+      document.querySelector("#searchInput").value = "";
       closeSearch();
       openModal(button.dataset.movie);
     }),

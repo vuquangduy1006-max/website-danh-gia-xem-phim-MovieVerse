@@ -1,0 +1,22 @@
+<header class="site-header{{headerClass}}">
+  <div class="container nav-wrap">
+    <a class="brand" href="{{homeHref}}" aria-label="MovieVerse trang chủ"
+      ><span class="brand-mark">M</span><span>movie<span>verse</span></span></a
+    >
+    <nav class="main-nav" aria-label="Điều hướng chính">
+      <a class="{{homeActive}}" href="{{homeHref}}" {{homeCurrent}}
+        >Trang chủ</a
+      >
+      <a
+        class="{{newMoviesActive}}"
+        href="{{newMoviesHref}}"
+        {{newMoviesCurrent}}
+        >Phim mới</a
+      >
+      <a href="{{genresHref}}">Thể loại</a>
+      <a href="{{reviewsHref}}">Đánh giá</a>
+      <a href="{{rankingHref}}">Top phim</a>
+    </nav>
+    <div class="nav-actions">{{headerActions}}</div>
+  </div>
+</header>
