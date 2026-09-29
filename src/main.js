@@ -107,10 +107,10 @@ document.querySelector("#app").innerHTML = `
   <div class="container nav-wrap">
     <a class="brand" href="#home" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
     <nav class="main-nav" aria-label="Điều hướng chính">
-      <a class="active" href="#home">Trang chủ</a><a href="#newMovies">Phim mới</a><a href="#genres">Thể loại</a><a href="#communityReviews">Đánh giá</a><a href="#ranking">Top phim</a>
+      <a class="active" href="#home">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="#genres">Thể loại</a><a href="#communityReviews">Đánh giá</a><a href="#ranking">Top phim</a>
     </nav>
     <div class="nav-actions">
-      <button class="icon-button search-trigger" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button><a class="login-link" href="#home">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>
+      <button class="icon-button search-trigger" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button><a class="login-link" href="/login.html">Đăng nhập</a><button class="menu-toggle" aria-label="Mở menu">☰</button>
     </div>
   </div>
 </header>
@@ -131,7 +131,7 @@ document.querySelector("#app").innerHTML = `
         <p class="eyebrow">Dành cho bạn</p>
         <h2>Khám phá điện ảnh</h2>
       </div>
-      <a class="text-link" href="#movies">Xem tất cả <span>→</span></a>
+      <a class="text-link" href="/new-movies.html">Phim mới <span>→</span></a>
     </div>
     <div class="genre-pills" id="genres"></div>
     <div class="movie-grid" id="movieGrid"></div>
@@ -213,7 +213,7 @@ document.querySelector("#app").innerHTML = `
     </div>
     <div>
       <h3>Khám phá</h3>
-      <a href="#newMovies">Phim mới</a><a href="#ranking">Top phim</a><a href="#genres">Thể loại</a>
+      <a href="/new-movies.html">Phim mới</a><a href="#ranking">Top phim</a><a href="#genres">Thể loại</a>
     </div>
     <div>
       <h3>MovieVerse</h3>
