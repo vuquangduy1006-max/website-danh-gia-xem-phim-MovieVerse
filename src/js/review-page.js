@@ -1,5 +1,5 @@
 import "../css/style.css";
-import { getMovieDB } from "./data.js";
+import { getMovieDB } from "../data/data.js";
 
 const movies = getMovieDB();
 const REVIEWS_KEY = "movieverse_reviews";
@@ -103,16 +103,16 @@ const app = document.querySelector("#app");
 app.innerHTML = `
   <header class="site-header review-page-header">
     <div class="container nav-wrap">
-      <a class="brand" href="/index.html" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
+      <a class="brand" href="./index.html" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
       <nav class="main-nav" aria-label="Điều hướng chính">
-        <a href="/index.html">Trang chủ</a>
-        <a href="/index.html#newMovies">Phim mới</a>
-        <a href="/index.html#genres">Thể loại</a>
-        <a class="active" href="/review.html">Đánh giá</a>
-        <a href="/index.html#ranking">Top phim</a>
+        <a href="./index.html">Trang chủ</a>
+        <a href="./index.html#newMovies">Phim mới</a>
+        <a href="./index.html#genres">Thể loại</a>
+        <a class="active" href="./review.html">Đánh giá</a>
+        <a href="./index.html#ranking">Top phim</a>
       </nav>
       <div class="nav-actions">
-        <a class="login-link" href="/index.html">Về trang chủ</a>
+        <a class="login-link" href="./index.html">Về trang chủ</a>
       </div>
     </div>
   </header>
