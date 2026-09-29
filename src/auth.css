@@ -260,6 +260,17 @@ body.auth-page {
   font-size: 18px;
 }
 
+.auth-message {
+  margin: 13px 0 0;
+  color: #87d6a2;
+  font-size: 12px;
+  text-align: center;
+}
+
+.auth-message.is-error {
+  color: #ff7968;
+}
+
 .auth-switch {
   margin: 25px 0 0;
   color: var(--auth-muted);

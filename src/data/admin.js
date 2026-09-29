@@ -1,5 +1,10 @@
 import "../admin/admin.css";
 import { getMovieDB, saveMovieDB, genreList } from "./data.js";
+import { isAdmin } from "./auth.js";
+
+if (!isAdmin()) {
+  window.location.replace("/login.html?next=/admin/admin.html");
+}
 
 const DB_KEY = "movieverse_db";
 let movies = loadDB();
