@@ -1,7 +1,7 @@
 import "./style.css";
 import "./reviews-page.css";
 import { getMovieDB, genreList } from "./data/data.js";
-import { addReview, loadReviews } from "./data/reviews.js";
+import { addReview, deleteReview, getMovieReviews, loadReviews } from "./data/reviews.js";
 import { renderFooter, renderHeader } from "./components/index.js";
 
 const movies = getMovieDB();
@@ -23,6 +23,9 @@ document.querySelector("#app").innerHTML = `
     reviewsHref: "/reviews.html",
     reviewsActive: "active",
     reviewsCurrent: 'aria-current="page"',
+    favoritesHref: "/favorites.html",
+    favoritesActive: "",
+    favoritesCurrent: "",
     rankingHref: "/#ranking",
     headerActions,
   })}
@@ -44,7 +47,7 @@ document.querySelector("#app").innerHTML = `
         <div class="reviews-toolbar">
           <div>
             <p class="eyebrow">Bảng tin cộng đồng</p>
-            <h2>Review mới nhất</h2>
+            <h2>Bình luận gần đây</h2>
           </div>
           <div class="review-controls">
             <label class="review-search"><span aria-hidden="true">⌕</span><input id="reviewSearch" type="search" placeholder="Tìm theo tên phim..." /></label>
@@ -52,6 +55,7 @@ document.querySelector("#app").innerHTML = `
           </div>
         </div>
         <div class="review-filters" id="reviewFilters"></div>
+        <div class="comment-list-meta"><span id="visibleCommentCount">0</span> bình luận được tìm thấy</div>
         <div class="community-review-list" id="communityReviewList"></div>
       </div>
 
@@ -62,6 +66,7 @@ document.querySelector("#app").innerHTML = `
         <form id="communityReviewForm" novalidate>
           <label for="reviewMovie">Chọn phim</label>
           <select id="reviewMovie" required></select>
+          <div class="selected-movie-rating" id="selectedMovieRating" aria-live="polite"></div>
           <label for="communityAuthor">Tên hiển thị</label>
           <input id="communityAuthor" type="text" maxlength="30" placeholder="Ví dụ: Minh Anh" required />
           <label>Điểm của bạn</label>
@@ -70,7 +75,10 @@ document.querySelector("#app").innerHTML = `
             <span class="compose-rating-value" id="composeRatingValue">Chưa chọn</span>
           </div>
           <label for="communityComment">Cảm nhận</label>
-          <textarea id="communityComment" rows="5" maxlength="280" placeholder="Điều gì khiến bạn thích hoặc chưa thích bộ phim?" required></textarea>
+          <div class="comment-field">
+            <textarea id="communityComment" rows="5" maxlength="280" placeholder="Điều gì khiến bạn thích hoặc chưa thích bộ phim?" required></textarea>
+            <span id="commentCount">0/280</span>
+          </div>
           <p class="compose-hint" id="composeHint" aria-live="polite">Chia sẻ ngắn gọn, chân thật và tôn trọng.</p>
           <button class="tb-btn tb-btn-primary compose-submit" type="submit">Đăng đánh giá <span aria-hidden="true">→</span></button>
         </form>
@@ -97,6 +105,15 @@ function stars(rating) {
   const score = Number(rating);
   return `${"★".repeat(score)}${"☆".repeat(5 - score)}`;
 }
+function renderSelectedMovieRating() {
+  const movieReviews = getMovieReviews(movieSelect.value);
+  const movie = movies.find((item) => item.title === movieSelect.value);
+  const average = movieReviews.length
+    ? (movieReviews.reduce((sum, review) => sum + Number(review.rating), 0) / movieReviews.length).toFixed(1)
+    : Number(movie?.rating || 0).toFixed(1);
+  const countLabel = movieReviews.length ? `${movieReviews.length} lượt đánh giá` : "Chưa có đánh giá từ cộng đồng";
+  document.querySelector("#selectedMovieRating").innerHTML = `<span class="selected-rating-stars">${stars(Math.round(Number(average)))}</span><strong>${average}</strong><small>${countLabel}</small>`;
+}
 function renderStats() {
   const average = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating), 0) / reviews.length : 0;
   const fiveStar = reviews.length ? Math.round((reviews.filter((item) => Number(item.rating) === 5).length / reviews.length) * 100) : 0;
@@ -116,8 +133,9 @@ function renderReviews() {
 
   document.querySelector("#communityReviewList").innerHTML = shown.length ? shown.map((review) => {
     const movie = movieForReview(review);
-    return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a></div></article>`;
+    return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p><div class="community-review-actions"><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a><button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button></div></div></article>`;
   }).join("") : '<p class="review-empty-note">Không tìm thấy review phù hợp. Thử đổi bộ lọc hoặc viết một review mới.</p>';
+  document.querySelector("#visibleCommentCount").textContent = shown.length;
 }
 function paintComposeStars(count) {
   document.querySelectorAll("#composeStars button").forEach((star) => {
@@ -148,6 +166,21 @@ document.querySelectorAll(".review-filter").forEach((button) => button.addEventL
 }));
 document.querySelector("#reviewSearch").addEventListener("input", renderReviews);
 document.querySelector("#reviewSort").addEventListener("change", renderReviews);
+movieSelect.addEventListener("change", renderSelectedMovieRating);
+document.querySelector("#communityReviewList").addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-review]");
+  if (!deleteButton) return;
+  const review = reviews.find((item) => item.id === deleteButton.dataset.deleteReview);
+  if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`)) return;
+  deleteReview(review.id);
+  reviews = loadReviews();
+  renderStats();
+  renderReviews();
+  renderSelectedMovieRating();
+});
+document.querySelector("#communityComment").addEventListener("input", (event) => {
+  document.querySelector("#commentCount").textContent = `${event.target.value.length}/280`;
+});
 document.querySelector("#communityReviewForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const hint = document.querySelector("#composeHint");
@@ -163,6 +196,7 @@ document.querySelector("#communityReviewForm").addEventListener("submit", (event
   event.target.reset();
   selectedRating = 0;
   paintComposeStars(0);
+  document.querySelector("#commentCount").textContent = "0/280";
   hint.textContent = "Đã đăng review. Cảm ơn bạn đã chia sẻ!";
   hint.classList.remove("is-error");
   renderStats();
@@ -171,3 +205,4 @@ document.querySelector("#communityReviewForm").addEventListener("submit", (event
 document.querySelector(".menu-toggle").addEventListener("click", () => document.querySelector(".main-nav").classList.toggle("mobile-open"));
 renderStats();
 renderReviews();
+renderSelectedMovieRating();

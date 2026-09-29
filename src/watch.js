@@ -8,6 +8,7 @@ import {
   getSimilarMovies,
 } from "./data/media.js";
 import { getMovieReviews } from "./data/reviews.js";
+import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 const PROGRESS_KEY = "movieverse_watch_progress";
@@ -38,7 +39,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/#ranking">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -78,7 +79,7 @@ function renderWatchPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/#ranking">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">Chi tiết phim <span aria-hidden="true">→</span></a>
@@ -883,24 +884,21 @@ function renderWatchPage(current) {
   }
 
   function bindToolbar() {
-    const watchlist = loadWatchlist();
+    const favorites = loadFavorites();
     const favoriteBtn = document.querySelector('[data-tool="favorite"]');
     const shareTrigger = document.querySelector('[data-tool="share"]');
 
     const syncState = () => {
-      const saved = watchlist.includes(current.id);
+      const saved = favorites.includes(current.id);
       favoriteBtn.setAttribute("aria-pressed", String(saved));
       favoriteBtn.classList.toggle("is-active", saved);
       favoriteBtn.querySelector("span").textContent = saved ? "Đã lưu" : "Yêu thích";
     };
 
     favoriteBtn.addEventListener("click", () => {
-      const next = watchlist.includes(current.id)
-        ? watchlist.filter((id) => id !== current.id)
-        : [...watchlist, current.id];
-      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next));
-      watchlist.length = 0;
-      watchlist.push(...next);
+      const next = toggleFavoriteStorage(current.id);
+      favorites.length = 0;
+      favorites.push(...next);
       syncState();
       showToast(
         next.includes(current.id)

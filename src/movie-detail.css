@@ -541,6 +541,21 @@
   font-size: 14px;
   line-height: 1.7;
 }
+.detail-review-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+.delete-review {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+.delete-review:hover {
+  color: #ff6b5c;
+}
 .review-empty {
   color: var(--muted);
   padding: 26px 0;

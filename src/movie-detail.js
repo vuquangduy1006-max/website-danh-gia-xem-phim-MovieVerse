@@ -6,7 +6,8 @@ import {
   getMovieCredits,
   getSimilarMovies,
 } from "./data/media.js";
-import { addReview, getMovieReviews } from "./data/reviews.js";
+import { addReview, deleteReview, getMovieReviews } from "./data/reviews.js";
+import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 
@@ -36,7 +37,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/#ranking">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -64,7 +65,7 @@ function renderDetailPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/#ranking">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/#ranking">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
@@ -354,22 +355,25 @@ function renderDetailPage(current) {
 
   function bindToolbar() {
     const watchlist = loadWatchlist();
+    const favorites = loadFavorites();
     const sharePanelEl = document.querySelector("#toolbarSharePanel");
     const shareTrigger = document.querySelector('[data-tool="share"]');
     const favoriteBtn = document.querySelector('[data-tool="favorite"]');
     const watchlistBtn = document.querySelector('[data-tool="watchlist"]');
 
     const syncState = () => {
+      const favorite = favorites.includes(current.id);
       const saved = watchlist.includes(current.id);
-      favoriteBtn.setAttribute("aria-pressed", String(saved));
-      favoriteBtn.classList.toggle("is-active", saved);
-      favoriteBtn.querySelector("span").textContent = saved
+      favoriteBtn.setAttribute("aria-pressed", String(favorite));
+      favoriteBtn.classList.toggle("is-active", favorite);
+      favoriteBtn.querySelector("span").textContent = favorite
         ? "Đã lưu"
         : "Yêu thích";
+      watchlistBtn.setAttribute("aria-pressed", String(saved));
       watchlistBtn.classList.toggle("is-active", saved);
     };
 
-    const toggleSaved = () => {
+    const toggleWatchlist = () => {
       const next = watchlist.includes(current.id)
         ? watchlist.filter((id) => id !== current.id)
         : [...watchlist, current.id];
@@ -381,6 +385,18 @@ function renderDetailPage(current) {
         next.includes(current.id)
           ? `Đã thêm "${current.title}" vào danh sách xem.`
           : `Đã xoá "${current.title}" khỏi danh sách xem.`,
+      );
+    };
+
+    const toggleFavorite = () => {
+      const next = toggleFavoriteStorage(current.id);
+      favorites.length = 0;
+      favorites.push(...next);
+      syncState();
+      showToast(
+        next.includes(current.id)
+          ? `Đã thêm "${current.title}" vào yêu thích.`
+          : `Đã bỏ "${current.title}" khỏi yêu thích.`,
       );
     };
 
@@ -397,7 +413,8 @@ function renderDetailPage(current) {
         renderTrailer(media.main, true);
         scrollToPlayer();
       }
-      if (tool === "favorite" || tool === "watchlist") toggleSaved();
+      if (tool === "favorite") toggleFavorite();
+      if (tool === "watchlist") toggleWatchlist();
       if (tool === "share") {
         const isOpen = sharePanelEl.hasAttribute("hidden");
         sharePanelEl.toggleAttribute("hidden", !isOpen);
@@ -510,6 +527,7 @@ function renderDetailPage(current) {
             <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
             <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
             <p>${escapeHtml(review.comment)}</p>
+            <div class="detail-review-actions"><span></span><button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button></div>
           </div>
         </article>`,
           )
@@ -562,6 +580,18 @@ function renderDetailPage(current) {
       renderMetrics();
       renderReviews();
     });
+
+  document.querySelector("#detailReviewList").addEventListener("click", (event) => {
+    const deleteButton = event.target.closest("[data-delete-review]");
+    if (!deleteButton) return;
+    const review = getMovieReviews(current.title).find(
+      (item) => item.id === deleteButton.dataset.deleteReview,
+    );
+    if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`)) return;
+    deleteReview(review.id);
+    renderMetrics();
+    renderReviews();
+  });
 }
 
 function bindShareButtons(pageUrl, shareText) {

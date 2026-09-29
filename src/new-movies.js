@@ -15,6 +15,9 @@ ${renderHeader({
   newMoviesCurrent: 'aria-current="page"',
   genresHref: "/#genres",
   reviewsHref: "/reviews.html",
+  favoritesHref: "/favorites.html",
+  favoritesActive: "",
+  favoritesCurrent: "",
   rankingHref: "/#ranking",
   headerActions:
     '<a class="login-link" href="/">Về trang chủ <span aria-hidden="true">→</span></a><button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>',
