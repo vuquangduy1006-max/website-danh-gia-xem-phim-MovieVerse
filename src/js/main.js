@@ -1,5 +1,5 @@
-import "../css/style.css";
-import { getMovieDB, genreList } from "./data.js";
+import "../style.css";
+import { getMovieDB, genreList } from "../data/data.js";
 
 const movies = getMovieDB();
 const heroMovies = [...movies]
@@ -155,12 +155,7 @@ document.querySelector("#app").innerHTML = `
 </div>
 `;
 
-renderGenrePills();
-setupCatalogControls();
-renderHero();
-renderMovies();
-renderRanking();
-renderNewMovies();
+
 
 document.querySelector("#newCount").textContent = `${newMovies.length} phim mới`;
 
@@ -404,3 +399,9 @@ function renderSearch(query = "") {
     }),
   );
 }
+renderGenrePills();
+setupCatalogControls();
+renderHero();
+renderMovies();
+renderRanking();
+renderNewMovies();

@@ -1,4 +1,4 @@
-import "../css/style.css";
+import "../style.css";
 import { getMovieDB } from "./data.js";
 const movies = getMovieDB();
 const id = new URLSearchParams(location.search).get("id");
