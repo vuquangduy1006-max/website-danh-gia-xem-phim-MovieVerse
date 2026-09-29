@@ -7,7 +7,11 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL("./index.html", import.meta.url)),
         admin: fileURLToPath(new URL("./admin.html", import.meta.url)),
-        detail: fileURLToPath(new URL("./detail.html", import.meta.url)),
+        newMovies: fileURLToPath(new URL("./new-movies.html", import.meta.url)),
+        movieDetail: fileURLToPath(
+          new URL("./movie-detail.html", import.meta.url),
+        ),
+        watch: fileURLToPath(new URL("./watch.html", import.meta.url)),
       },
     },
   },
