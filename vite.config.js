@@ -10,6 +10,7 @@ export default defineConfig({
         adminComments: fileURLToPath(new URL("./admin/comments.html", import.meta.url)),
         newMovies: fileURLToPath(new URL("./new-movies.html", import.meta.url)),
         reviews: fileURLToPath(new URL("./reviews.html", import.meta.url)),
+        ranking: fileURLToPath(new URL("./ranking.html", import.meta.url)),
         favorites: fileURLToPath(new URL("./favorites.html", import.meta.url)),
         movieDetail: fileURLToPath(
           new URL("./movie-detail.html", import.meta.url),

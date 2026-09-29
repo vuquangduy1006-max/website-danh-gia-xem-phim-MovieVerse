@@ -28,7 +28,9 @@ document.querySelector("#app").innerHTML = `
     favoritesHref: "/favorites.html",
     favoritesActive: "",
     favoritesCurrent: "",
-    rankingHref: "/#ranking",
+    rankingHref: "/ranking.html",
+    rankingActive: "",
+    rankingCurrent: "",
     headerActions,
   })}
   <main class="reviews-page">

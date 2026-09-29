@@ -24,7 +24,9 @@ document.querySelector("#app").innerHTML = `
     favoritesHref: "/favorites.html",
     favoritesActive: "active",
     favoritesCurrent: 'aria-current="page"',
-    rankingHref: "/#ranking",
+    rankingHref: "/ranking.html",
+    rankingActive: "",
+    rankingCurrent: "",
     headerActions,
   })}
   <main class="favorites-page">

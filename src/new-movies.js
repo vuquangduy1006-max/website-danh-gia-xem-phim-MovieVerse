@@ -18,7 +18,9 @@ ${renderHeader({
   favoritesHref: "/favorites.html",
   favoritesActive: "",
   favoritesCurrent: "",
-  rankingHref: "/#ranking",
+  rankingHref: "/ranking.html",
+  rankingActive: "",
+  rankingCurrent: "",
   headerActions: `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>`,
 })}
 
