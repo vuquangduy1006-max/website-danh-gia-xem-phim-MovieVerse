@@ -185,6 +185,22 @@ export function getMovieDB() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed.movies) && parsed.movies.length) {
+        if (localStorage.getItem("movieverse_seed_migration_v2") === "done") {
+          const addedTitles = new Map([
+            ["n5", "Oppenheimer"],
+            ["n6", "Spider-Man: Across the Spider-Verse"],
+            ["n7", "The Batman"],
+            ["n8", "Interstellar"],
+          ]);
+          const cleanedMovies = parsed.movies.filter(
+            (movie) => addedTitles.get(movie.id) !== movie.title,
+          );
+          if (cleanedMovies.length !== parsed.movies.length) {
+            saveMovieDB(cleanedMovies);
+          }
+          parsed.movies = cleanedMovies;
+          localStorage.removeItem("movieverse_seed_migration_v2");
+        }
         return parsed.movies;
       }
     }

@@ -10,6 +10,8 @@ const newMovies = movies.filter((movie) => movie.isNew);
 const REVIEWS_KEY = "movieverse_reviews";
 let selectedRating = 0;
 let currentMovieTitle = null;
+let currentSlide = 0;
+let slideTimer;
 
 const reviewSeed = [
   {
@@ -17,7 +19,8 @@ const reviewSeed = [
     movieTitle: "Dune: Part Two",
     author: "Minh Anh",
     rating: 5,
-    comment: "Visual mãn nhãn, âm thanh vang dội. Đúng là bom tấn điện ảnh năm nay!",
+    comment:
+      "Visual mãn nhãn, âm thanh vang dội. Đúng là bom tấn điện ảnh năm nay!",
     date: "12/06/2025",
   },
   {
@@ -90,8 +93,12 @@ function formatDate(date) {
 }
 
 function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (char) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]),
+  return String(str).replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
   );
 }
 
@@ -282,7 +289,8 @@ renderNewMovies();
 renderHomeReviews();
 renderStarInput();
 
-document.querySelector("#newCount").textContent = `${newMovies.length} phim mới`;
+document.querySelector("#newCount").textContent =
+  `${newMovies.length} phim mới`;
 
 document
   .querySelector("#prevSlide")
@@ -336,9 +344,9 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-let currentSlide = 0;
-let slideTimer;
-const posterStyle = (movie) => `background-image:url('${movie.poster}')`;
+function posterStyle(movie) {
+  return `background-image:url('${movie.poster}')`;
+}
 
 function renderGenrePills() {
   const pills = ["all", ...genreList];
@@ -350,7 +358,9 @@ function renderGenrePills() {
     .join("");
   document.querySelectorAll(".pill").forEach((pill) =>
     pill.addEventListener("click", () => {
-      document.querySelectorAll(".pill").forEach((item) => item.classList.remove("active"));
+      document
+        .querySelectorAll(".pill")
+        .forEach((item) => item.classList.remove("active"));
       pill.classList.add("active");
       renderMovies(pill.dataset.filter);
     }),
@@ -439,7 +449,11 @@ function getMovieReviewAverage(title) {
 
 function renderRanking() {
   const top = [...movies]
-    .sort((a, b) => Number(getMovieReviewAverage(b.title)) - Number(getMovieReviewAverage(a.title)))
+    .sort(
+      (a, b) =>
+        Number(getMovieReviewAverage(b.title)) -
+        Number(getMovieReviewAverage(a.title)),
+    )
     .slice(0, 6);
   document.querySelector("#rankingList").innerHTML = top
     .map(
@@ -469,14 +483,15 @@ function renderNewMovies() {
 function renderHomeReviews() {
   const list = [...reviews]
     .sort((a, b) => {
-      const dateA = new Date(String(a.date).split('/').reverse().join('-'));
-      const dateB = new Date(String(b.date).split('/').reverse().join('-'));
+      const dateA = new Date(String(a.date).split("/").reverse().join("-"));
+      const dateB = new Date(String(b.date).split("/").reverse().join("-"));
       return dateB - dateA;
     })
     .slice(0, 3);
 
   const average = reviews.length
-    ? reviews.reduce((sum, review) => sum + Number(review.rating), 0) / reviews.length
+    ? reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
+      reviews.length
     : 0;
 
   const movieCounts = reviews.reduce((acc, review) => {
@@ -489,8 +504,11 @@ function renderHomeReviews() {
   document.querySelector("#avgRatingStat").textContent = average
     ? average.toFixed(1)
     : "0.0";
-  document.querySelector("#reviewCountStat").textContent = `${reviews.length} đánh giá`;
-  document.querySelector("#topReviewMovie").textContent = topMovie ? topMovie[0] : "-";
+  document.querySelector("#reviewCountStat").textContent =
+    `${reviews.length} đánh giá`;
+  document.querySelector("#topReviewMovie").textContent = topMovie
+    ? topMovie[0]
+    : "-";
   document.querySelector("#homeReviewGrid").innerHTML = list.length
     ? list
         .map(
@@ -524,7 +542,9 @@ function openModal(title) {
   document.querySelector("#modalDescription").textContent = movie.description;
   document.querySelector("#modalMeta").textContent =
     `${movie.year} · ${movie.genre} · 2h 14m`;
-  document.querySelector("#modalRating").textContent = getMovieReviewAverage(movie.title).toFixed(1);
+  document.querySelector("#modalRating").textContent = getMovieReviewAverage(
+    movie.title,
+  ).toFixed(1);
   document.querySelector("#modalArt").style.backgroundImage =
     `url('${movie.poster}')`;
   document.querySelector("#reviewForm").reset();
@@ -586,9 +606,9 @@ function renderStarInput() {
       hint.style.color = "var(--accent)";
     }),
   );
-  document.querySelector("#starInput").addEventListener("mouseleave", () =>
-    setStars(selectedRating),
-  );
+  document
+    .querySelector("#starInput")
+    .addEventListener("mouseleave", () => setStars(selectedRating));
 }
 
 function setStars(count) {
