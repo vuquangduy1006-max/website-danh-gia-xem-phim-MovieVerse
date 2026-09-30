@@ -28,6 +28,13 @@ export function renderAccountActions() {
 }
 
 export function bindAccountActions() {
+  const genreNav = document.querySelector(".genre-nav");
+  if (genreNav) {
+    document.addEventListener("click", (event) => {
+      if (!genreNav.contains(event.target)) genreNav.removeAttribute("open");
+    });
+  }
+
   document.querySelector("#logoutButton")?.addEventListener("click", () => {
     logoutUser();
     window.location.href = "/login.html";
