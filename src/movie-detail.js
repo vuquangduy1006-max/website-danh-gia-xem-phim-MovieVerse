@@ -262,18 +262,25 @@ function renderDetailPage(current) {
     document.querySelector("#playerNote").textContent = isMain
       ? clip.kind === "youtube"
         ? `Trailer chính thức của ${current.title}, phát trên kênh ${clip.meta}.`
-        : `Kho phim chưa có trailer cho ${current.title}.`
+        : `Trailer chính thức của ${current.title}, phát từ kho cục bộ MovieVerse.`
       : `Đang xem ${clip.title} — cũng của ${current.title}. Nhấn "Trailer" trên thanh công cụ để quay lại trailer chính.`;
 
     if (clip.kind === "youtube") {
       playerFrame.innerHTML = `
         <iframe
-          src="https://www.youtube-nocookie.com/embed/${clip.videoId}?rel=0&amp;modestbranding=1"
+          src="https://www.youtube-nocookie.com/embed/${clip.videoId}?autoplay=1&amp;mute=1&amp;rel=0&amp;modestbranding=1"
           title="${escapeHtml(clip.title)}"
           loading="lazy"
           referrerpolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowfullscreen></iframe>`;
+    } else if (clip.kind === "file") {
+      playerFrame.innerHTML = `
+        <video controls autoplay muted playsinline preload="metadata" poster="${current.backdrop}" title="${escapeHtml(clip.title)}">
+          <source src="${clip.url}" type="video/mp4">
+          Trình duyệt của bạn không hỗ trợ phát video.
+        </video>`;
+      playerFrame.querySelector("video")?.play().catch(() => {});
     } else {
       playerFrame.innerHTML = `
         <div class="video-placeholder">

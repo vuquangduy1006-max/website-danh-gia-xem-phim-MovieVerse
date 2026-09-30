@@ -100,6 +100,7 @@ function renderWatchPage(current) {
           <div class="watch-primary">
             <div class="player-shell" id="playerShell">
               <div class="player-stage" id="playerStage"></div>
+              <button type="button" class="player-screen-toggle" id="playerScreenToggle" aria-label="Phát hoặc tạm dừng"></button>
 
               <div class="player-empty" id="playerEmpty" hidden>
                 <span class="player-empty-mark" aria-hidden="true">▶</span>
@@ -260,11 +261,13 @@ function renderWatchPage(current) {
   const errorBox = document.querySelector("#playerError");
   const openLink = document.querySelector("#playerOpenLink");
   const sharePanel = document.querySelector("#watchSharePanel");
+  const screenToggle = document.querySelector("#playerScreenToggle");
 
   let video = null;
   let ytPlayer = null;
   let activeSource = 0;
   let resumeAt = 0;
+  let isSeeking = false;
   const errorTried = new Set();
   let ytReady = false;
   const ytPending = [];
@@ -409,12 +412,14 @@ function renderWatchPage(current) {
   function renderPlaylist() {
     document.querySelector("#playlistList").innerHTML = playlist
       .map(
-        (item) => `
+        (item, index) => `
         <a class="similar-item ${item.id === current.id ? "is-current" : ""}" href="/watch.html?id=${encodeURIComponent(item.id)}">
+          <span class="playlist-index">${String(index + 1).padStart(2, "0")}</span>
           <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">${item.id === current.id ? "▮▮" : "▶"}</span></span>
           <span class="similar-copy">
             <strong>${item.title}</strong>
             <span>${item.year} · ${item.genre}</span>
+            ${item.id === current.id ? '<em class="current-label">Đang xem</em>' : ""}
             <span class="similar-progress" data-progress-for="${item.id}"></span>
           </span>
         </a>`,
@@ -467,6 +472,7 @@ function renderWatchPage(current) {
   function showEmptyState() {
     teardownMedia();
     stage.innerHTML = "";
+    screenToggle.hidden = true;
     emptyBox.hidden = false;
     controls.hidden = true;
     document.querySelector("#playerHint").hidden = true;
@@ -481,6 +487,7 @@ function renderWatchPage(current) {
     openLink.hidden = false;
     document.querySelector("#playerHint").hidden = false;
     spinner.hidden = false;
+    screenToggle.hidden = false;
 
     stage.innerHTML = '<div id="ytHost" class="watch-embed"></div>';
     ytPlayer = createYouTubePlayer(source);
@@ -533,8 +540,9 @@ function renderWatchPage(current) {
             rel: 0,
             modestbranding: 1,
             playsinline: 1,
-            modestbranding: 1,
-            controls: 1,
+            autoplay: 1,
+            mute: 1,
+            controls: 0,
             enablejsapi: 1,
           },
           events: {
@@ -557,7 +565,8 @@ function renderWatchPage(current) {
     applyPrefsToPlayer(player);
     player.api.setVolume(player.volume * 100);
     player.api.setPlaybackRate(player.playbackRate);
-    if (player.muted) player.api.mute();
+    player.api.mute();
+    player.muted = true;
 
     player.duration = player.api.getDuration() || 0;
     document.querySelector("#totalTime").textContent = formatTime(player.duration);
@@ -568,6 +577,7 @@ function renderWatchPage(current) {
       showResumeBar(resumeAt);
     }
     resumeAt = 0;
+    player.api.playVideo();
   }
 
   function onYouTubeState(player, event) {
@@ -610,10 +620,12 @@ function renderWatchPage(current) {
       player.currentTime = time;
       player.duration = duration;
 
-      const ratio = time / duration;
-      seek.value = String(Math.round(ratio * 1000));
-      seek.style.setProperty("--seek", `${ratio * 100}%`);
-      document.querySelector("#currentTime").textContent = formatTime(time);
+      if (!isSeeking) {
+        const ratio = time / duration;
+        seek.value = String(Math.round(ratio * 1000));
+        seek.style.setProperty("--seek", `${ratio * 100}%`);
+        document.querySelector("#currentTime").textContent = formatTime(time);
+      }
       saveProgress(time, duration);
     }, 250);
   }
@@ -630,9 +642,12 @@ function renderWatchPage(current) {
     openLink.hidden = false;
     document.querySelector("#playerHint").hidden = false;
     spinner.hidden = false;
+    screenToggle.hidden = false;
 
     video = document.createElement("video");
     video.className = "watch-video";
+    video.autoplay = true;
+    video.muted = true;
     video.playsInline = true;
     video.preload = "metadata";
     video.poster = current.backdrop;
@@ -671,6 +686,7 @@ function renderWatchPage(current) {
         showResumeBar(resumeAt);
       }
       resumeAt = 0;
+      media.play().catch(() => {});
     };
 
     media.addEventListener("loadedmetadata", onMetadata);
@@ -706,11 +722,13 @@ function renderWatchPage(current) {
 
     media.addEventListener("timeupdate", () => {
       if (!Number.isFinite(media.duration) || media.duration <= 0) return;
-      const ratio = media.currentTime / media.duration;
-      seek.value = String(Math.round(ratio * 1000));
-      seek.style.setProperty("--seek", `${ratio * 100}%`);
-      document.querySelector("#currentTime").textContent =
-        formatTime(media.currentTime);
+      if (!isSeeking) {
+        const ratio = media.currentTime / media.duration;
+        seek.value = String(Math.round(ratio * 1000));
+        seek.style.setProperty("--seek", `${ratio * 100}%`);
+        document.querySelector("#currentTime").textContent =
+          formatTime(media.currentTime);
+      }
       updateBuffered(media);
       saveProgress(media.currentTime, media.duration);
     });
@@ -747,6 +765,8 @@ function renderWatchPage(current) {
   }
 
   function bindSharedControls() {
+    screenToggle.addEventListener("click", () => backend.toggle());
+
     document
       .querySelector("#playToggle")
       .addEventListener("click", () => backend.toggle());
@@ -794,16 +814,37 @@ function renderWatchPage(current) {
       hideResumeBar();
     });
 
+    const seekToSliderPosition = () => {
+      const total = backend.duration;
+      if (!Number.isFinite(total) || total <= 0) return;
+      const ratio = Number(seek.value) / 1000;
+      seek.style.setProperty("--seek", `${ratio * 100}%`);
+      document.querySelector("#currentTime").textContent =
+        formatTime(ratio * total);
+      backend.seekTo(ratio * total);
+    };
+
+    seek.addEventListener("pointerdown", () => {
+      isSeeking = true;
+    });
+    seek.addEventListener("pointerup", () => {
+      isSeeking = false;
+    });
+    seek.addEventListener("pointercancel", () => {
+      isSeeking = false;
+    });
+    seek.addEventListener("blur", () => {
+      isSeeking = false;
+    });
     seek.addEventListener("input", () => {
       seek.style.setProperty(
         "--seek",
         `${(Number(seek.value) / 1000) * 100}%`,
       );
+      seekToSliderPosition();
     });
     seek.addEventListener("change", () => {
-      const total = backend.duration;
-      if (!Number.isFinite(total) || total <= 0) return;
-      backend.seekTo((Number(seek.value) / 1000) * total);
+      seekToSliderPosition();
     });
 
     document
@@ -969,10 +1010,12 @@ function renderWatchPage(current) {
       if (!entry || !entry.duration) {
         node.textContent = "";
         node.style.width = "0%";
+        node.style.removeProperty("--progress");
         return;
       }
       const percent = Math.min((entry.time / entry.duration) * 100, 100);
-      node.style.width = `${percent}%`;
+      node.style.width = "100%";
+      node.style.setProperty("--progress", `${percent}%`);
       node.textContent = `Đã xem ${formatTime(entry.time)}`;
     });
   }
