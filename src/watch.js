@@ -221,20 +221,26 @@ function renderWatchPage(current) {
                 <div><dt>Ngày phát hành</dt><dd>${credits.releaseDate}</dd></div>
                 <div><dt>Quốc gia</dt><dd>${credits.country}</dd></div>
                 <div><dt>Hãng phim</dt><dd>${credits.studio}</dd></div>
-                <div><dt>Nguồn phát</dt><dd>${sources.length ? `${sources.length} nguồn chính thức` : "Chưa cập nhật"}</dd></div>
+                <div><dt>Nguồn phát</dt><dd>${sources.length ? `${sources.length} nguồn phát` : "Chưa cập nhật"}</dd></div>
               </dl>
             </section>
           </div>
 
           <aside class="watch-aside">
             <section class="aside-card" aria-labelledby="playlistHeading">
-              <h3 id="playlistHeading">Danh sách phát</h3>
-              <p class="aside-desc">Tiếp tục với các phim khác trong kho.</p>
+              <div class="watch-aside-heading">
+                <div><p class="eyebrow">Xem tiếp</p><h3 id="playlistHeading">Danh sách phát</h3></div>
+                <span class="watch-aside-count" aria-label="${playlist.length} phim">${String(playlist.length).padStart(2, "0")}</span>
+              </div>
+              <p class="aside-desc">Các phim trong phiên xem này.</p>
               <div class="similar-list watch-playlist" id="playlistList"></div>
             </section>
 
             <section class="aside-card" aria-labelledby="watchSimilarHeading">
-              <h3 id="watchSimilarHeading">Gợi ý cho bạn</h3>
+              <div class="watch-aside-heading">
+                <div><p class="eyebrow">Có thể bạn sẽ thích</p><h3 id="watchSimilarHeading">Gợi ý cho bạn</h3></div>
+                <span class="watch-aside-count" aria-label="${similar.length} gợi ý">${String(similar.length).padStart(2, "0")}</span>
+              </div>
               <div class="similar-list" id="watchSimilarList"></div>
             </section>
           </aside>
@@ -268,6 +274,7 @@ function renderWatchPage(current) {
   let ytPlayer = null;
   let activeSource = 0;
   let resumeAt = 0;
+  let autoplayMuted = false;
   const errorTried = new Set();
   let ytReady = false;
   const ytPending = [];
@@ -302,7 +309,15 @@ function renderWatchPage(current) {
       return ytPlayer?.playbackRate || 1;
     },
     play() {
-      if (video) return video.play().catch(() => {});
+      if (video) {
+        if (autoplayMuted) {
+          video.muted = false;
+          autoplayMuted = false;
+          setVolumeIcon();
+          savePrefs();
+        }
+        return video.play().catch(() => {});
+      }
       ytPlayer?.api?.playVideo();
     },
     pause() {
@@ -348,6 +363,12 @@ function renderWatchPage(current) {
       }
     },
   };
+
+  stage.addEventListener("click", (event) => {
+    if (!video || event.target !== video) return;
+    event.preventDefault();
+    backend.toggle();
+  });
 
   function setPlayIcon(isPlaying) {
     playIcon.textContent = isPlaying ? "❚❚" : "▶";
@@ -413,13 +434,18 @@ function renderWatchPage(current) {
   function renderPlaylist() {
     document.querySelector("#playlistList").innerHTML = playlist
       .map(
-        (item) => `
-        <a class="similar-item ${item.id === current.id ? "is-current" : ""}" href="/watch.html?id=${encodeURIComponent(item.id)}">
-          <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">${item.id === current.id ? "▮▮" : "▶"}</span></span>
+        (item, index) => `
+        <a class="similar-item playlist-item ${item.id === current.id ? "is-current" : ""}" href="/watch.html?id=${encodeURIComponent(item.id)}">
+          <span class="playlist-order">${String(index + 1).padStart(2, "0")}</span>
+          <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">${item.id === current.id ? "Ⅱ" : "▶"}</span></span>
           <span class="similar-copy">
             <strong>${item.title}</strong>
             <span>${item.year} · ${item.genre}</span>
-            <span class="similar-progress" data-progress-for="${item.id}"></span>
+            ${item.id === current.id ? '<span class="playlist-now">Đang phát</span>' : ""}
+            <span class="watch-progress" data-progress-wrap="${item.id}" hidden>
+              <span class="watch-progress-track"><span class="similar-progress" data-progress-for="${item.id}"></span></span>
+              <span class="watch-progress-label" data-progress-label-for="${item.id}"></span>
+            </span>
           </span>
         </a>`,
       )
@@ -430,12 +456,13 @@ function renderWatchPage(current) {
   function renderSimilar() {
     document.querySelector("#watchSimilarList").innerHTML = similar
       .map(
-        (item) => `
-        <a class="similar-item" href="/watch.html?id=${encodeURIComponent(item.id)}">
+        (item, index) => `
+        <a class="similar-item recommendation-item" style="--item-index:${index}" href="/watch.html?id=${encodeURIComponent(item.id)}">
           <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">▶</span></span>
           <span class="similar-copy">
             <strong>${item.title}</strong>
-            <span>${item.year} · ${item.genre}</span>
+            <span>${item.year}</span>
+            <span class="recommendation-genre">${item.genre}</span>
           </span>
         </a>`,
       )
@@ -460,6 +487,7 @@ function renderWatchPage(current) {
     }
 
     openLink.href = source.watchUrl;
+    openLink.hidden = !source.watchUrl;
 
     if (source.kind === "youtube") {
       mountYouTube(source);
@@ -482,7 +510,7 @@ function renderWatchPage(current) {
     teardownMedia();
     emptyBox.hidden = true;
     controls.hidden = false;
-    openLink.hidden = false;
+    openLink.hidden = !source.watchUrl;
     document.querySelector("#playerHint").hidden = false;
     spinner.hidden = false;
 
@@ -535,6 +563,8 @@ function renderWatchPage(current) {
           videoId: source.videoId,
           playerVars: {
             rel: 0,
+            autoplay: 1,
+            mute: 1,
             modestbranding: 1,
             playsinline: 1,
             modestbranding: 1,
@@ -561,7 +591,9 @@ function renderWatchPage(current) {
     applyPrefsToPlayer(player);
     player.api.setVolume(player.volume * 100);
     player.api.setPlaybackRate(player.playbackRate);
-    if (player.muted) player.api.mute();
+    player.api.mute();
+    player.muted = true;
+    player.api.playVideo();
 
     player.duration = player.api.getDuration() || 0;
     document.querySelector("#totalTime").textContent = formatTime(
@@ -635,7 +667,7 @@ function renderWatchPage(current) {
     teardownMedia();
     emptyBox.hidden = true;
     controls.hidden = false;
-    openLink.hidden = false;
+    openLink.hidden = !source.watchUrl;
     document.querySelector("#playerHint").hidden = false;
     spinner.hidden = false;
 
@@ -644,11 +676,17 @@ function renderWatchPage(current) {
     video.playsInline = true;
     video.preload = "metadata";
     video.poster = current.backdrop;
+    const prefs = loadPrefs();
+    video.volume = typeof prefs.volume === "number" ? prefs.volume : 1;
+    video.muted = true;
+    autoplayMuted = video.volume > 0;
     video.src = source.url;
     stage.innerHTML = "";
     stage.appendChild(video);
+    setVolumeIcon();
     bindMediaElement(video);
     video.load();
+    video.play().catch(() => {});
   }
 
   function teardownMedia() {
@@ -980,14 +1018,19 @@ function renderWatchPage(current) {
     const all = loadProgressAll();
     document.querySelectorAll("[data-progress-for]").forEach((node) => {
       const entry = all[node.dataset.progressFor];
+      const wrapper = node.closest("[data-progress-wrap]");
       if (!entry || !entry.duration) {
-        node.textContent = "";
+        if (wrapper) wrapper.hidden = true;
         node.style.width = "0%";
         return;
       }
       const percent = Math.min((entry.time / entry.duration) * 100, 100);
       node.style.width = `${percent}%`;
-      node.textContent = `Đã xem ${formatTime(entry.time)}`;
+      if (wrapper) wrapper.hidden = false;
+      const label = document.querySelector(
+        `[data-progress-label-for="${node.dataset.progressFor}"]`,
+      );
+      if (label) label.textContent = `Đã xem ${formatTime(entry.time)}`;
     });
   }
 }

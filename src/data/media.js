@@ -1,5 +1,43 @@
 import { getMovieGenres } from "./data.js";
 
+const localTrailerAssets = import.meta.glob("../assets/trailer phim/*.mp4", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+
+function normalizeTitle(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[_']/g, " ")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function getLocalTrailer(movie) {
+  const title = normalizeTitle(movie.title);
+  const match = Object.entries(localTrailerAssets).find(([path]) => {
+    const filename = normalizeTitle(path.split("/").pop().replace(/\.mp4$/i, ""));
+    return filename.includes(title);
+  });
+
+  if (!match) return null;
+
+  const filename = match[0].split("/").pop();
+  const isConcept = normalizeTitle(filename).includes("concept trailer");
+  return {
+    kind: "file",
+    url: match[1],
+    title: `${movie.title} · ${isConcept ? "Concept trailer" : "Trailer"}`,
+    channel: isConcept ? "Concept trailer" : "Thư viện MovieVerse",
+    label: isConcept ? "Concept trailer" : "Trailer MP4",
+    isConcept,
+  };
+}
+
 // Mỗi phim sở hữu riêng danh sách nguồn của chính nó.
 // Mọi video ID đều đã kiểm tra phát được và thuộc kênh nhà phát chính thức.
 // clip[0] luôn là trailer chính, dùng làm nguồn mặc định ở trang chi tiết.
@@ -186,18 +224,33 @@ function buildReleaseDate(year, seed) {
 }
 
 export function getTrailer(movie) {
-  return MOVIE_SOURCES[movie.title]?.[0] || null;
+  return getLocalTrailer(movie) || MOVIE_SOURCES[movie.title]?.[0] || null;
 }
 
 // Chỉ trả về nguồn của chính phim này. Không bao giờ trộn nguồn của phim khác vào.
 export function getWatchSources(movie) {
   const clips = MOVIE_SOURCES[movie.title];
-  if (!clips || !clips.length) return [];
+  const localTrailer = getLocalTrailer(movie);
+  const sources = localTrailer
+    ? [
+        {
+          ...localTrailer,
+          index: 0,
+          label: "Thư viện",
+          variant: localTrailer.label,
+          quality: "MP4",
+          note: localTrailer.channel,
+          watchUrl: "",
+        },
+      ]
+    : [];
 
-  return clips.map((clip, index) => ({
+  if (!clips || !clips.length) return sources;
+
+  return sources.concat(clips.map((clip, index) => ({
     kind: "youtube",
-    index,
-    label: `Server ${index + 1}`,
+    index: sources.length + index,
+    label: `YouTube ${index + 1}`,
     variant: clip.label,
     quality: "YouTube",
     note: clip.channel,
@@ -205,20 +258,27 @@ export function getWatchSources(movie) {
     title: clip.title,
     channel: clip.channel,
     watchUrl: `https://www.youtube.com/watch?v=${clip.id}`,
-  }));
+  })));
 }
 
 export function getMovieMedia(movie, movieList = []) {
+  const localTrailer = getLocalTrailer(movie);
   const trailer = getTrailer(movie);
 
   const main = trailer
-    ? {
-        kind: "youtube",
-        videoId: trailer.id,
-        title: trailer.title,
-        meta: trailer.channel,
-        watchUrl: `https://www.youtube.com/watch?v=${trailer.id}`,
-      }
+    ? trailer.kind === "file"
+      ? {
+          ...trailer,
+          meta: trailer.channel,
+          watchUrl: "",
+        }
+      : {
+          kind: "youtube",
+          videoId: trailer.id,
+          title: trailer.title,
+          meta: trailer.channel,
+          watchUrl: `https://www.youtube.com/watch?v=${trailer.id}`,
+        }
     : {
         kind: "unavailable",
         title: `${movie.title} · Trailer chưa có trong kho`,
