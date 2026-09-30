@@ -4,6 +4,10 @@ export const genreList = [
   "Tâm lý",
   "Hoạt hình",
   "Bí ẩn",
+  "Tình cảm",
+  "Phiêu lưu",
+  "Hài",
+  "Kinh dị",
 ];
 
 export const movieSeed = [
@@ -39,7 +43,7 @@ export const movieSeed = [
     id: "m3",
     title: "Past Lives",
     year: "2023",
-    genre: "Tâm lý",
+    genre: "Tình cảm",
     rating: "8.1",
     isNew: false,
     poster:
@@ -277,7 +281,7 @@ export const movieSeed = [
     id: "n12",
     title: "Moana 2",
     year: "2024",
-    genre: "Hoạt hình",
+    genre: "Phiêu lưu",
     rating: "7.0",
     isNew: true,
     poster:
@@ -295,7 +299,7 @@ export const movieSeed = [
     rating: "8.2",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+      "https://upload.wikimedia.org/wikipedia/en/7/70/The_Wild_Robot_poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85",
     description:
@@ -319,7 +323,7 @@ export const movieSeed = [
     id: "n15",
     title: "A Minecraft Movie",
     year: "2025",
-    genre: "Hoạt hình",
+    genre: "Hài",
     rating: "5.6",
     isNew: true,
     poster:
@@ -361,7 +365,7 @@ export const movieSeed = [
     id: "n18",
     title: "Nosferatu",
     year: "2024",
-    genre: "Bí ẩn",
+    genre: "Kinh dị",
     rating: "7.1",
     isNew: true,
     poster:
@@ -374,7 +378,7 @@ export const movieSeed = [
 ];
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v4";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v7";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -415,12 +419,39 @@ export function getMovieDB() {
           localStorage.removeItem("movieverse_seed_migration_v2");
         }
         if (localStorage.getItem(SEED_MIGRATION_KEY) !== "done") {
+          const genreMigrations = new Map([
+            ["m3", ["Tâm lý", "Tình cảm"]],
+            ["n12", ["Hoạt hình", "Phiêu lưu"]],
+            ["n15", ["Hoạt hình", "Hài"]],
+            ["n18", ["Bí ẩn", "Kinh dị"]],
+          ]);
+          let genresUpdated = false;
+          parsed.movies.forEach((movie) => {
+            const [previousGenre, nextGenre] =
+              genreMigrations.get(movie.id) ?? [];
+            if (movie.genre === previousGenre) {
+              movie.genre = nextGenre;
+              genresUpdated = true;
+            }
+          });
+
+          const wildRobot = parsed.movies.find((movie) => movie.id === "n13");
+          let posterUpdated = false;
+          if (
+            wildRobot?.poster ===
+            "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85"
+          ) {
+            wildRobot.poster =
+              "https://upload.wikimedia.org/wikipedia/en/7/70/The_Wild_Robot_poster.jpg";
+            posterUpdated = true;
+          }
+
           const existingIds = new Set(parsed.movies.map((movie) => movie.id));
           const additions = movieSeed.filter(
             (movie) =>
               addedSeedMovieIds.has(movie.id) && !existingIds.has(movie.id),
           );
-          if (additions.length) {
+          if (additions.length || genresUpdated || posterUpdated) {
             parsed.movies.push(...additions);
             saveMovieDB(parsed.movies);
           }
