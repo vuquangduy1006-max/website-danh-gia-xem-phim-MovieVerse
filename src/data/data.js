@@ -17,6 +17,7 @@ export const genreList = [
   "Tâm lý",
   "Hoạt hình",
   "Bí ẩn",
+  "Tokusatsu",
 ];
 
 export function getMovieGenres(movie) {
