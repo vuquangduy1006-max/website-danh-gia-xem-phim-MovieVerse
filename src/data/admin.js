@@ -74,7 +74,7 @@ document.querySelector("#app").innerHTML = `
         <select class="toolbar-select" id="genreFilter" aria-label="Lọc theo thể loại"></select>
       </div>
       <div class="table-wrap">
-        <table class="movie-table">
+        <table class="movie-table movie-inventory-table">
           <thead>
             <tr>
               <th>Phim</th>

@@ -248,6 +248,20 @@ button {
   width: 100%;
   border-collapse: collapse;
 }
+.movie-inventory-table {
+  table-layout: fixed;
+}
+.movie-inventory-table th:nth-child(1) { width: 24%; }
+.movie-inventory-table th:nth-child(2) { width: 34%; }
+.movie-inventory-table th:nth-child(3) { width: 8%; }
+.movie-inventory-table th:nth-child(4) { width: 10%; }
+.movie-inventory-table th:nth-child(5) { width: 9%; }
+.movie-inventory-table th:nth-child(6) { width: 15%; }
+.movie-inventory-table td:nth-child(2) .badge.genre {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .movie-table thead th {
   text-align: left;
   color: var(--muted);
