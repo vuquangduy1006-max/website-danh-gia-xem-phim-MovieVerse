@@ -163,9 +163,6 @@ button {
 .genre-nav > summary::-webkit-details-marker {
   display: none;
 }
-.genre-nav > summary span {
-  color: var(--accent);
-}
 .genre-dropdown {
   display: none;
   position: absolute;
