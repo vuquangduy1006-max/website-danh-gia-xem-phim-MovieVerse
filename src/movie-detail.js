@@ -8,7 +8,10 @@ import {
 } from "./data/media.js";
 import { addReview, deleteReview, getMovieReviews } from "./data/reviews.js";
 import { isAdmin } from "./data/auth.js";
-import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
+import {
+  loadFavorites,
+  toggleFavorite as toggleFavoriteStorage,
+} from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 
@@ -38,7 +41,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -66,7 +69,7 @@ function renderDetailPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/#genres" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/genres.html" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
@@ -239,7 +242,8 @@ function renderDetailPage(current) {
   function renderMetrics() {
     const list = getMovieReviews(current.title);
     const average = list.length
-      ? list.reduce((sum, review) => sum + Number(review.rating), 0) / list.length
+      ? list.reduce((sum, review) => sum + Number(review.rating), 0) /
+        list.length
       : Number(current.rating);
 
     document.querySelector("#detailMetrics").innerHTML = [
@@ -293,9 +297,10 @@ function renderDetailPage(current) {
   }
 
   function renderRelatedVideos(related) {
-    document.querySelector("#relatedVideoList").innerHTML = related
-      .map(
-        (clip, index) => `
+    document.querySelector("#relatedVideoList").innerHTML =
+      related
+        .map(
+          (clip, index) => `
         <article class="video-item" style="animation-delay:${index * 0.05}s">
           <button type="button" class="video-thumb" data-clip="${clip.videoId}" aria-label="Phát ${clip.title}">
             <span class="video-thumb-img" style="background-image:url('${clip.poster}')"></span>
@@ -307,15 +312,17 @@ function renderDetailPage(current) {
             <p>${clip.movieTitle} · ${clip.meta}</p>
           </div>
         </article>`,
-      )
-      .join("") ||
+        )
+        .join("") ||
       '<p class="empty-note">Phim này chỉ có một nguồn phát chính thức.</p>';
 
     document
       .querySelectorAll("#relatedVideoList [data-clip]")
       .forEach((button) =>
         button.addEventListener("click", () => {
-          const clip = related.find((item) => item.videoId === button.dataset.clip);
+          const clip = related.find(
+            (item) => item.videoId === button.dataset.clip,
+          );
           if (!clip) return;
           renderTrailer(clip, false);
           scrollToPlayer();
@@ -401,27 +408,29 @@ function renderDetailPage(current) {
       );
     };
 
-    document.querySelector(".detail-toolbar").addEventListener("click", (event) => {
-      const button = event.target.closest("[data-tool]");
-      if (!button) return;
-      const tool = button.dataset.tool;
+    document
+      .querySelector(".detail-toolbar")
+      .addEventListener("click", (event) => {
+        const button = event.target.closest("[data-tool]");
+        if (!button) return;
+        const tool = button.dataset.tool;
 
-      if (tool === "play") {
-        window.location.href = `/watch.html?id=${encodeURIComponent(current.id)}`;
-        return;
-      }
-      if (tool === "trailer") {
-        renderTrailer(media.main, true);
-        scrollToPlayer();
-      }
-      if (tool === "favorite") toggleFavorite();
-      if (tool === "watchlist") toggleWatchlist();
-      if (tool === "share") {
-        const isOpen = sharePanelEl.hasAttribute("hidden");
-        sharePanelEl.toggleAttribute("hidden", !isOpen);
-        shareTrigger.setAttribute("aria-expanded", String(isOpen));
-      }
-    });
+        if (tool === "play") {
+          window.location.href = `/watch.html?id=${encodeURIComponent(current.id)}`;
+          return;
+        }
+        if (tool === "trailer") {
+          renderTrailer(media.main, true);
+          scrollToPlayer();
+        }
+        if (tool === "favorite") toggleFavorite();
+        if (tool === "watchlist") toggleWatchlist();
+        if (tool === "share") {
+          const isOpen = sharePanelEl.hasAttribute("hidden");
+          sharePanelEl.toggleAttribute("hidden", !isOpen);
+          shareTrigger.setAttribute("aria-expanded", String(isOpen));
+        }
+      });
 
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".tb-share")) {
@@ -483,7 +492,8 @@ function renderDetailPage(current) {
       document.querySelector("#reviewSummary").innerHTML = "";
     } else {
       const average =
-        list.reduce((sum, review) => sum + Number(review.rating), 0) / list.length;
+        list.reduce((sum, review) => sum + Number(review.rating), 0) /
+        list.length;
       const distribution = [1, 2, 3, 4, 5].map((star) => ({
         star,
         count: list.filter((review) => Number(review.rating) === star).length,
@@ -583,17 +593,20 @@ function renderDetailPage(current) {
       renderReviews();
     });
 
-  document.querySelector("#detailReviewList").addEventListener("click", (event) => {
-    const deleteButton = event.target.closest("[data-delete-review]");
-    if (!deleteButton || !isAdmin()) return;
-    const review = getMovieReviews(current.title).find(
-      (item) => item.id === deleteButton.dataset.deleteReview,
-    );
-    if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`)) return;
-    deleteReview(review.id);
-    renderMetrics();
-    renderReviews();
-  });
+  document
+    .querySelector("#detailReviewList")
+    .addEventListener("click", (event) => {
+      const deleteButton = event.target.closest("[data-delete-review]");
+      if (!deleteButton || !isAdmin()) return;
+      const review = getMovieReviews(current.title).find(
+        (item) => item.id === deleteButton.dataset.deleteReview,
+      );
+      if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
+        return;
+      deleteReview(review.id);
+      renderMetrics();
+      renderReviews();
+    });
 }
 
 function bindShareButtons(pageUrl, shareText) {
@@ -607,11 +620,17 @@ function bindShareButtons(pageUrl, shareText) {
     button.addEventListener("click", async () => {
       const platform = button.dataset.share;
 
-      if (platform === "copy" || platform === "tiktok" || platform === "instagram") {
+      if (
+        platform === "copy" ||
+        platform === "tiktok" ||
+        platform === "instagram"
+      ) {
         const copied = await copyText(`${shareText} — ${pageUrl}`);
         if (platform === "copy") {
           showToast(
-            copied ? "Đã sao chép link phim." : "Không sao chép được, hãy copy từ thany địa chỉ.",
+            copied
+              ? "Đã sao chép link phim."
+              : "Không sao chép được, hãy copy từ thany địa chỉ.",
           );
           return;
         }

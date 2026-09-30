@@ -2,7 +2,12 @@ import "./style.css";
 import "./favorites-page.css";
 import { getMovieDB } from "./data/data.js";
 import { loadFavorites, removeFavorite } from "./data/favorites.js";
-import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
+import {
+  bindAccountActions,
+  renderAccountActions,
+  renderFooter,
+  renderHeader,
+} from "./components/index.js";
 
 const movies = getMovieDB();
 
@@ -17,7 +22,7 @@ document.querySelector("#app").innerHTML = `
     newMoviesHref: "/new-movies.html",
     newMoviesActive: "",
     newMoviesCurrent: "",
-    genresHref: "/#genres",
+    genresHref: "/genres.html",
     reviewsHref: "/reviews.html",
     reviewsActive: "",
     reviewsCurrent: "",
@@ -45,20 +50,34 @@ document.querySelector("#app").innerHTML = `
       <div class="favorites-grid" id="favoritesGrid"></div>
     </section>
   </main>
-  ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/#genres", aboutHref: "/" })}
+  ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/genres.html", aboutHref: "/" })}
 `;
 
 bindAccountActions();
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+  return String(value).replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
+  );
 }
 function renderFavorites() {
   const favoriteIds = loadFavorites();
-  const favoriteMovies = favoriteIds.map((id) => movies.find((movie) => movie.id === id)).filter(Boolean);
-  document.querySelector("#favoritesCount").innerHTML = `<strong>${favoriteMovies.length}</strong><span>${favoriteMovies.length === 1 ? "bộ phim đã lưu" : "bộ phim đã lưu"}</span>`;
+  const favoriteMovies = favoriteIds
+    .map((id) => movies.find((movie) => movie.id === id))
+    .filter(Boolean);
+  document.querySelector("#favoritesCount").innerHTML =
+    `<strong>${favoriteMovies.length}</strong><span>${favoriteMovies.length === 1 ? "bộ phim đã lưu" : "bộ phim đã lưu"}</span>`;
   document.querySelector("#favoritesGrid").innerHTML = favoriteMovies.length
-    ? favoriteMovies.map((movie) => `<article class="favorite-card"><a class="favorite-poster" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')"><span class="favorite-play" aria-hidden="true">▶</span></a><div class="favorite-card-body"><div><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p></div><div class="favorite-card-foot"><span class="favorite-score">★ ${escapeHtml(movie.rating)}</span><button type="button" class="remove-favorite" data-remove-favorite="${escapeHtml(movie.id)}">Bỏ yêu thích</button></div></div></article>`).join("")
+    ? favoriteMovies
+        .map(
+          (movie) =>
+            `<article class="favorite-card"><a class="favorite-poster" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')"><span class="favorite-play" aria-hidden="true">▶</span></a><div class="favorite-card-body"><div><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p></div><div class="favorite-card-foot"><span class="favorite-score">★ ${escapeHtml(movie.rating)}</span><button type="button" class="remove-favorite" data-remove-favorite="${escapeHtml(movie.id)}">Bỏ yêu thích</button></div></div></article>`,
+        )
+        .join("")
     : '<div class="favorites-empty"><span class="favorites-empty-mark">♡</span><h3>Chưa có phim yêu thích</h3><p>Bấm “Yêu thích” trên trang chi tiết phim để lưu những bộ phim bạn muốn xem lại.</p><a class="watch-button" href="/">Khám phá phim <span aria-hidden="true">→</span></a></div>';
 }
 
@@ -68,5 +87,9 @@ document.querySelector("#favoritesGrid").addEventListener("click", (event) => {
   removeFavorite(button.dataset.removeFavorite);
   renderFavorites();
 });
-document.querySelector(".menu-toggle").addEventListener("click", () => document.querySelector(".main-nav").classList.toggle("mobile-open"));
+document
+  .querySelector(".menu-toggle")
+  .addEventListener("click", () =>
+    document.querySelector(".main-nav").classList.toggle("mobile-open"),
+  );
 renderFavorites();

@@ -629,6 +629,31 @@ button {
   min-height: 55vh;
   padding-bottom: 72px;
 }
+.genre-page-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 26px;
+}
+.genre-choice {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+.genre-choice:hover,
+.genre-choice.active {
+  border-color: rgba(240, 91, 60, 0.4);
+  background: rgba(240, 91, 60, 0.12);
+  color: #ff907a;
+}
 .new-page-count {
   display: inline-grid;
   place-items: center;

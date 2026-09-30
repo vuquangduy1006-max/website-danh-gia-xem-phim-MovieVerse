@@ -1,6 +1,11 @@
 import "./style.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
-import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
+import {
+  bindAccountActions,
+  renderAccountActions,
+  renderFooter,
+  renderHeader,
+} from "./components/index.js";
 
 const newMovies = getMovieDB().filter((movie) => movie.isNew);
 
@@ -13,7 +18,7 @@ ${renderHeader({
   newMoviesHref: "/new-movies.html",
   newMoviesActive: "active",
   newMoviesCurrent: 'aria-current="page"',
-  genresHref: "/#genres",
+  genresHref: "/genres.html",
   reviewsHref: "/reviews.html",
   favoritesHref: "/favorites.html",
   favoritesActive: "",
@@ -58,7 +63,7 @@ ${renderFooter({
   homeHref: "/",
   newMoviesHref: "/new-movies.html",
   rankingHref: "/#ranking",
-  genresHref: "/#genres",
+  genresHref: "/genres.html",
   aboutHref: "/#home",
 })}
 `;
@@ -69,8 +74,8 @@ const grid = document.querySelector("#newMovieGrid");
 const searchInput = document.querySelector("#newMovieSearch");
 const genreSelect = document.querySelector("#newMovieGenre");
 
-const genres = [...new Set(newMovies.flatMap(getMovieGenres))].sort(
-  (a, b) => a.localeCompare(b, "vi"),
+const genres = [...new Set(newMovies.flatMap(getMovieGenres))].sort((a, b) =>
+  a.localeCompare(b, "vi"),
 );
 genreSelect.insertAdjacentHTML(
   "beforeend",
@@ -84,7 +89,9 @@ function renderMovies() {
   const genre = genreSelect.value;
   const filteredMovies = newMovies.filter((movie) => {
     const matchesQuery = movie.title.toLocaleLowerCase("vi").includes(query);
-    return matchesQuery && (genre === "all" || getMovieGenres(movie).includes(genre));
+    return (
+      matchesQuery && (genre === "all" || getMovieGenres(movie).includes(genre))
+    );
   });
 
   grid.innerHTML = filteredMovies.length

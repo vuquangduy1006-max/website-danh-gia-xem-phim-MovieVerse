@@ -1,5 +1,5 @@
 import "./style.css";
-import { getMovieDB, genreList, getMovieGenres } from "./data/data.js";
+import { getMovieDB, getMovieGenres } from "./data/data.js";
 import { loadReviews } from "./data/reviews.js";
 import {
   bindAccountActions,
@@ -9,6 +9,9 @@ import {
 } from "./components/index.js";
 
 const movies = getMovieDB();
+const availableGenres = [...new Set(movies.flatMap(getMovieGenres))].sort(
+  (a, b) => a.localeCompare(b, "vi"),
+);
 const heroMovies = [...movies]
   .sort((a, b) => Number(b.rating) - Number(a.rating))
   .slice(0, 3);
@@ -46,7 +49,7 @@ ${renderHeader({
   newMoviesHref: "/new-movies.html",
   newMoviesActive: "",
   newMoviesCurrent: "",
-  genresHref: "#genres",
+  genresHref: "/genres.html",
   reviewsHref: "/reviews.html",
   favoritesHref: "/favorites.html",
   favoritesActive: "",
@@ -152,7 +155,7 @@ ${renderFooter({
   homeHref: "#home",
   newMoviesHref: "/new-movies.html",
   rankingHref: "#ranking",
-  genresHref: "#genres",
+  genresHref: "/genres.html",
   aboutHref: "#home",
 })}
 
@@ -163,7 +166,7 @@ bindAccountActions();
 renderGenrePills();
 renderHero();
 const requestedGenre = new URLSearchParams(window.location.search).get("genre");
-const selectedGenre = genreList.includes(requestedGenre)
+const selectedGenre = availableGenres.includes(requestedGenre)
   ? requestedGenre
   : "all";
 renderMovies(selectedGenre);
@@ -227,7 +230,7 @@ function posterStyle(movie) {
 }
 
 function renderGenrePills() {
-  const pills = ["all", ...genreList];
+  const pills = ["all", ...availableGenres];
   document.querySelector("#genres").innerHTML = pills
     .map(
       (genre) =>
