@@ -392,10 +392,22 @@ export const movieSeed = [
     description:
       "Một ám ảnh cổ xưa gieo bóng tối lên cuộc sống của một phụ nữ trẻ và những người quanh cô.",
   },
+  {
+    id: "n19",
+    title: "Kamen Rider Build",
+    year: "2017",
+    genre: "Hành động, Phiêu lưu, Hài, Chính kịch, Tình cảm, Giả tưởng, Khoa học viễn tưởng, Hoạt hình, Tokusatsu",
+    rating: "8.5",
+    isNew: true,
+    poster: "https://i.redd.it/96mkpqpb9wsa1.jpg",
+    backdrop: "https://i.redd.it/96mkpqpb9wsa1.jpg",
+    description:
+      "Nhà vật lý thiên tài Sento Kiryu biến thân thành Kamen Rider Build, chiến đấu chống lại Smash và khám phá bí mật của chiếc hộp Pandora.",
+  },
 ];
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v4";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v5";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -411,6 +423,7 @@ const addedSeedMovieIds = new Set([
   "n16",
   "n17",
   "n18",
+  "n19",
 ]);
 
 export function getMovieDB() {
@@ -437,9 +450,14 @@ export function getMovieDB() {
         }
         if (localStorage.getItem(SEED_MIGRATION_KEY) !== "done") {
           const existingIds = new Set(parsed.movies.map((movie) => movie.id));
+          const existingTitles = new Set(
+            parsed.movies.map((movie) => movie.title.trim().toLocaleLowerCase("vi")),
+          );
           const additions = movieSeed.filter(
             (movie) =>
-              addedSeedMovieIds.has(movie.id) && !existingIds.has(movie.id),
+              addedSeedMovieIds.has(movie.id) &&
+              !existingIds.has(movie.id) &&
+              !existingTitles.has(movie.title.trim().toLocaleLowerCase("vi")),
           );
           if (additions.length) {
             parsed.movies.push(...additions);
