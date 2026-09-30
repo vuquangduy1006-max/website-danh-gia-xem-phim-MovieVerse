@@ -427,6 +427,13 @@ button {
   resize: vertical;
   min-height: 82px;
 }
+.field select[multiple] {
+  min-height: 142px;
+  padding: 5px;
+}
+.field select[multiple] option {
+  padding: 5px 8px;
+}
 .checkbox-field {
   flex-direction: row;
   align-items: center;

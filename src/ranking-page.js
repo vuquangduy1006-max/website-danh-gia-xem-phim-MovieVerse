@@ -1,6 +1,6 @@
 import "./style.css";
 import "./ranking-page.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, getMovieGenres } from "./data/data.js";
 import { loadReviews } from "./data/reviews.js";
 import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
@@ -36,7 +36,7 @@ document.querySelector("#app").innerHTML = `
 
 bindAccountActions();
 const genreSelect = document.querySelector("#rankingGenre");
-const genres = [...new Set(movies.map((movie) => movie.genre))].sort((a, b) => a.localeCompare(b, "vi"));
+const genres = [...new Set(movies.flatMap(getMovieGenres))].sort((a, b) => a.localeCompare(b, "vi"));
 genreSelect.insertAdjacentHTML("beforeend", genres.map((genre) => `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`).join(""));
 
 document.querySelector("#rankingUpdated").textContent = `${rankedMovies.length} phim trong bảng xếp hạng`;
@@ -47,7 +47,7 @@ function scoreStars(score) {
 function render() {
   const query = document.querySelector("#rankingSearch").value.trim().toLocaleLowerCase("vi");
   const genre = genreSelect.value;
-  const shown = rankedMovies.filter((movie) => movie.title.toLocaleLowerCase("vi").includes(query) && (genre === "all" || movie.genre === genre));
+  const shown = rankedMovies.filter((movie) => movie.title.toLocaleLowerCase("vi").includes(query) && (genre === "all" || getMovieGenres(movie).includes(genre)));
   const podium = rankedMovies.slice(0, 3);
   document.querySelector("#rankingPodium").innerHTML = podium.map((movie, index) => `<a class="podium-item podium-${index + 1}" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}"><span class="podium-rank">0${index + 1}</span><span class="podium-poster" style="background-image:url('${movie.poster}')"></span><span class="podium-info"><strong>${escapeHtml(movie.title)}</strong><small>${escapeHtml(movie.genre)} · ${reviewCount(movie)} review</small><b>★ ${scoreFor(movie).toFixed(1)}</b></span></a>`).join("");
   document.querySelector("#rankingTable").innerHTML = shown.length ? shown.map((movie) => `<a class="ranking-row" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}"><span class="ranking-number">${String(rankedMovies.indexOf(movie) + 1).padStart(2, "0")}</span><span class="ranking-row-poster" style="background-image:url('${movie.poster}')"></span><span class="ranking-row-title"><strong>${escapeHtml(movie.title)}</strong><small>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</small></span><span class="ranking-row-reviews">${reviewCount(movie)} review</span><span class="ranking-row-score"><b>★ ${scoreFor(movie).toFixed(1)}</b><small>${scoreStars(scoreFor(movie))}</small></span></a>`).join("") : '<p class="empty-note">Không tìm thấy phim phù hợp.</p>';

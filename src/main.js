@@ -1,5 +1,5 @@
 import "./style.css";
-import { getMovieDB, genreList } from "./data/data.js";
+import { getMovieDB, genreList, getMovieGenres } from "./data/data.js";
 import { loadReviews } from "./data/reviews.js";
 import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
@@ -276,7 +276,7 @@ function renderMovies(filter = "all") {
   const shown =
     filter === "all"
       ? movies
-      : movies.filter((movie) => movie.genre === filter);
+      : movies.filter((movie) => getMovieGenres(movie).includes(filter));
   const grid = document.querySelector("#movieGrid");
   grid.innerHTML = shown.length
     ? shown

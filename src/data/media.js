@@ -1,3 +1,5 @@
+import { getMovieGenres } from "./data.js";
+
 // Mỗi phim sở hữu riêng danh sách nguồn của chính nó.
 // Mọi video ID đều đã kiểm tra phát được và thuộc kênh nhà phát chính thức.
 // clip[0] luôn là trailer chính, dùng làm nguồn mặc định ở trang chi tiết.
@@ -258,11 +260,12 @@ export function getMovieCredits(movie) {
 }
 
 export function getSimilarMovies(movie, movieList, limit = 5) {
+  const movieGenres = getMovieGenres(movie);
   const sameGenre = movieList.filter(
-    (item) => item.id !== movie.id && item.genre === movie.genre,
+    (item) => item.id !== movie.id && getMovieGenres(item).some((genre) => movieGenres.includes(genre)),
   );
   const others = movieList.filter(
-    (item) => item.id !== movie.id && item.genre !== movie.genre,
+    (item) => item.id !== movie.id && !getMovieGenres(item).some((genre) => movieGenres.includes(genre)),
   );
   return [...sameGenre, ...others].slice(0, limit);
 }

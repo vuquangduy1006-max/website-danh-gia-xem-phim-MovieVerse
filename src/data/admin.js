@@ -1,5 +1,5 @@
 import "../admin/admin.css";
-import { getMovieDB, saveMovieDB, genreList } from "./data.js";
+import { getMovieDB, saveMovieDB, genreList, getMovieGenres } from "./data.js";
 import { isAdmin } from "./auth.js";
 import { deleteReview, loadReviews } from "./reviews.js";
 
@@ -140,8 +140,8 @@ document.querySelector("#app").innerHTML = `
             <input id="fieldRating" type="number" min="0" max="10" step="0.1" placeholder="8.5">
           </div>
           <div class="field">
-            <label for="fieldGenre">Thể loại</label>
-            <select id="fieldGenre"></select>
+            <label for="fieldGenre">Thể loại (có thể chọn nhiều)</label>
+            <select id="fieldGenre" multiple size="5"></select>
           </div>
           <div class="field checkbox-field">
             <input id="fieldIsNew" type="checkbox">
@@ -277,7 +277,7 @@ function renderStats() {
     total > 0
       ? (movies.reduce((sum, movie) => sum + Number(movie.rating) || 0, 0) / total)
       : 0;
-  const genreCount = new Set(movies.map((movie) => movie.genre)).size;
+  const genreCount = new Set(movies.flatMap(getMovieGenres)).size;
   const newCount = movies.filter((movie) => movie.isNew).length;
 
   document.querySelector("#statsGrid").innerHTML = `
@@ -292,7 +292,7 @@ function filteredMovies() {
   const query = currentQuery.trim().toLowerCase();
   return movies.filter((movie) => {
     const matchGenre =
-      currentFilter === "all" || movie.genre === currentFilter;
+      currentFilter === "all" || getMovieGenres(movie).includes(currentFilter);
     const matchQuery =
       !query || movie.title.toLowerCase().includes(query);
     return matchGenre && matchQuery;
@@ -318,7 +318,7 @@ function renderTable() {
               <span class="movie-title" title="${movie.title}">${movie.title}</span>
             </div>
           </td>
-          <td><span class="badge genre">${movie.genre}</span></td>
+          <td><span class="badge genre">${escapeHtml(movie.genre)}</span></td>
           <td>${movie.year}</td>
           <td><span class="badge rating">★ ${movie.rating}</span></td>
           <td>${movie.isNew ? '<span class="badge new">Mới</span>' : '<span class="badge old">Cũ</span>'}</td>
@@ -345,7 +345,9 @@ function openAddForm() {
   document.querySelector("#formTitle").textContent = "Thêm phim mới";
   document.querySelector("#movieForm").reset();
   document.querySelector("#fieldId").value = "";
-  document.querySelector("#fieldGenre").value = "Hành động";
+  [...document.querySelector("#fieldGenre").options].forEach((option) => {
+    option.selected = option.value === "Hành động";
+  });
   document.querySelector("#fieldIsNew").checked = true;
   openOverlay("formOverlay");
   document.querySelector("#fieldTitle").focus();
@@ -360,7 +362,10 @@ function openEditForm(id) {
   document.querySelector("#fieldTitle").value = movie.title;
   document.querySelector("#fieldYear").value = movie.year || "";
   document.querySelector("#fieldRating").value = movie.rating || "";
-  document.querySelector("#fieldGenre").value = movie.genre || genreList[0];
+  const selectedGenres = getMovieGenres(movie);
+  [...document.querySelector("#fieldGenre").options].forEach((option) => {
+    option.selected = selectedGenres.includes(option.value);
+  });
   document.querySelector("#fieldIsNew").checked = Boolean(movie.isNew);
   document.querySelector("#fieldPoster").value = movie.poster || "";
   document.querySelector("#fieldBackdrop").value = movie.backdrop || "";
@@ -385,7 +390,9 @@ function onSave(event) {
       (document.querySelector("#fieldId").value || uid()),
     title,
     year: document.querySelector("#fieldYear").value.trim() || "2024",
-    genre: document.querySelector("#fieldGenre").value,
+    genre: [...document.querySelector("#fieldGenre").selectedOptions]
+      .map((option) => option.value)
+      .join(", "),
     rating: document.querySelector("#fieldRating").value.trim() || "8.0",
     isNew: document.querySelector("#fieldIsNew").checked,
     poster:

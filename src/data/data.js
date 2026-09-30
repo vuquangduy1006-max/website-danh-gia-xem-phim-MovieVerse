@@ -1,10 +1,30 @@
 export const genreList = [
   "Hành động",
+  "Phiêu lưu",
+  "Hài",
+  "Chính kịch",
+  "Tình cảm",
+  "Kinh dị",
+  "Tội phạm",
+  "Gia đình",
+  "Giả tưởng",
   "Khoa học viễn tưởng",
+  "Lịch sử",
+  "Tài liệu",
+  "Âm nhạc",
+  "Chiến tranh",
+  "Thể thao",
   "Tâm lý",
   "Hoạt hình",
   "Bí ẩn",
 ];
+
+export function getMovieGenres(movie) {
+  const genres = Array.isArray(movie?.genre)
+    ? movie.genre
+    : String(movie?.genre ?? "").split(",");
+  return genres.map((genre) => String(genre).trim()).filter(Boolean);
+}
 
 export const movieSeed = [
   {

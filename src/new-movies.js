@@ -1,5 +1,5 @@
 import "./style.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, getMovieGenres } from "./data/data.js";
 import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
 
 const newMovies = getMovieDB().filter((movie) => movie.isNew);
@@ -69,7 +69,7 @@ const grid = document.querySelector("#newMovieGrid");
 const searchInput = document.querySelector("#newMovieSearch");
 const genreSelect = document.querySelector("#newMovieGenre");
 
-const genres = [...new Set(newMovies.map((movie) => movie.genre))].sort(
+const genres = [...new Set(newMovies.flatMap(getMovieGenres))].sort(
   (a, b) => a.localeCompare(b, "vi"),
 );
 genreSelect.insertAdjacentHTML(
@@ -84,7 +84,7 @@ function renderMovies() {
   const genre = genreSelect.value;
   const filteredMovies = newMovies.filter((movie) => {
     const matchesQuery = movie.title.toLocaleLowerCase("vi").includes(query);
-    return matchesQuery && (genre === "all" || movie.genre === genre);
+    return matchesQuery && (genre === "all" || getMovieGenres(movie).includes(genre));
   });
 
   grid.innerHTML = filteredMovies.length
