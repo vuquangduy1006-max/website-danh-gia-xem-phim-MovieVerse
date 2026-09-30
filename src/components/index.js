@@ -1,13 +1,19 @@
 import footerTemplate from "./footer.html?raw";
 import headerTemplate from "./header.html?raw";
 import { getSession, logoutUser } from "../data/auth.js";
+import { genreList } from "../data/data.js";
 
 function renderTemplate(template, values) {
   return template.replace(/{{(\w+)}}/g, (_, key) => values[key] ?? "");
 }
 
 export function renderHeader(values) {
-  return renderTemplate(headerTemplate, values);
+  const genreMenu = genreList
+    .map(
+      (genre) => `<a href="/?genre=${encodeURIComponent(genre)}">${genre}</a>`,
+    )
+    .join("");
+  return renderTemplate(headerTemplate, { ...values, genreMenu });
 }
 
 export function renderFooter(values) {
