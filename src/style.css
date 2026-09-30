@@ -497,25 +497,40 @@ button {
 }
 .genre-pills {
   display: flex;
-  gap: 9px;
-  margin-bottom: 27px;
-  overflow: auto;
-  padding-bottom: 3px;
+  gap: 10px;
+  margin: 0 0 27px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 1px 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  touch-action: pan-x;
+}
+.genre-pills::-webkit-scrollbar {
+  display: none;
 }
 .pill {
+  flex: 0 0 auto;
   background: var(--surface);
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   color: var(--muted);
-  padding: 8px 15px;
+  padding: 9px 16px;
   border-radius: 30px;
   white-space: nowrap;
   font-size: 13px;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
 }
-.pill:hover,
-.pill.active {
+.pill:hover {
   background: rgba(240, 91, 60, 0.12);
   border-color: rgba(240, 91, 60, 0.4);
   color: #ff907a;
+}
+.pill.active,
+.pill.active:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #180e0b;
 }
 .movie-grid {
   display: grid;
