@@ -13,10 +13,24 @@
         {{newMoviesCurrent}}
         >Phim mới</a
       >
-      <a href="{{genresHref}}">Thể loại</a>
-      <a class="{{reviewsActive}}" href="{{reviewsHref}}" {{reviewsCurrent}}>Đánh giá</a>
-      <a class="{{favoritesActive}}" href="{{favoritesHref}}" {{favoritesCurrent}}>Yêu thích</a>
-      <a class="{{rankingActive}}" href="{{rankingHref}}" {{rankingCurrent}}>Top phim</a>
+      <details class="genre-nav">
+        <summary>Thể loại <span aria-hidden="true">⌄</span></summary>
+        <div class="genre-dropdown" aria-label="Chọn thể loại phim">
+          {{genreMenu}}
+        </div>
+      </details>
+      <a class="{{reviewsActive}}" href="{{reviewsHref}}" {{reviewsCurrent}}
+        >Đánh giá</a
+      >
+      <a
+        class="{{favoritesActive}}"
+        href="{{favoritesHref}}"
+        {{favoritesCurrent}}
+        >Yêu thích</a
+      >
+      <a class="{{rankingActive}}" href="{{rankingHref}}" {{rankingCurrent}}
+        >Top phim</a
+      >
     </nav>
     <div class="nav-actions">{{headerActions}}</div>
   </div>

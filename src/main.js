@@ -1,7 +1,12 @@
 import "./style.css";
 import { getMovieDB, genreList, getMovieGenres } from "./data/data.js";
 import { loadReviews } from "./data/reviews.js";
-import { bindAccountActions, renderAccountActions, renderFooter, renderHeader } from "./components/index.js";
+import {
+  bindAccountActions,
+  renderAccountActions,
+  renderFooter,
+  renderHeader,
+} from "./components/index.js";
 
 const movies = getMovieDB();
 const heroMovies = [...movies]
@@ -157,7 +162,16 @@ bindAccountActions();
 
 renderGenrePills();
 renderHero();
-renderMovies();
+const requestedGenre = new URLSearchParams(window.location.search).get("genre");
+const selectedGenre = genreList.includes(requestedGenre)
+  ? requestedGenre
+  : "all";
+renderMovies(selectedGenre);
+if (selectedGenre !== "all") {
+  requestAnimationFrame(() =>
+    document.querySelector("#movies").scrollIntoView(),
+  );
+}
 renderRanking();
 renderNewMovies();
 renderHomeReviews();
@@ -273,6 +287,11 @@ function startSlider() {
 }
 
 function renderMovies(filter = "all") {
+  document
+    .querySelectorAll(".pill")
+    .forEach((pill) =>
+      pill.classList.toggle("active", pill.dataset.filter === filter),
+    );
   const shown =
     filter === "all"
       ? movies
