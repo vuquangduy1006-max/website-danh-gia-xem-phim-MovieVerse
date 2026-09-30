@@ -266,18 +266,35 @@ function renderDetailPage(current) {
     document.querySelector("#playerNote").textContent = isMain
       ? clip.kind === "youtube"
         ? `Trailer chính thức của ${current.title}, phát trên kênh ${clip.meta}.`
-        : `Kho phim chưa có trailer cho ${current.title}.`
+        : clip.kind === "file"
+          ? `${clip.isConcept ? "Concept trailer" : "Trailer MP4"} của ${current.title}, phát trực tiếp từ thư viện MovieVerse.`
+          : `Kho phim chưa có trailer cho ${current.title}.`
       : `Đang xem ${clip.title} — cũng của ${current.title}. Nhấn "Trailer" trên thanh công cụ để quay lại trailer chính.`;
 
     if (clip.kind === "youtube") {
       playerFrame.innerHTML = `
         <iframe
-          src="https://www.youtube-nocookie.com/embed/${clip.videoId}?rel=0&amp;modestbranding=1"
+          src="https://www.youtube-nocookie.com/embed/${clip.videoId}?rel=0&amp;modestbranding=1&amp;autoplay=1&amp;mute=1"
           title="${escapeHtml(clip.title)}"
           loading="lazy"
           referrerpolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowfullscreen></iframe>`;
+    } else if (clip.kind === "file") {
+      playerFrame.innerHTML = `
+        <video src="${clip.url}" controls autoplay muted playsinline preload="metadata" poster="${current.backdrop}" aria-label="${escapeHtml(clip.title)}"></video>`;
+      const video = playerFrame.querySelector("video");
+      video.addEventListener("click", (event) => {
+        const bounds = video.getBoundingClientRect();
+        if (event.clientY >= bounds.bottom - 42) return;
+        event.preventDefault();
+        if (video.paused) {
+          video.muted = false;
+          safePlay();
+        } else {
+          video.pause();
+        }
+      });
     } else {
       playerFrame.innerHTML = `
         <div class="video-placeholder">
