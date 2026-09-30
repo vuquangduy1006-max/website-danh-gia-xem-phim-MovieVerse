@@ -8,7 +8,10 @@ import {
   getSimilarMovies,
 } from "./data/media.js";
 import { getMovieReviews } from "./data/reviews.js";
-import { loadFavorites, toggleFavorite as toggleFavoriteStorage } from "./data/favorites.js";
+import {
+  loadFavorites,
+  toggleFavorite as toggleFavoriteStorage,
+} from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 const PROGRESS_KEY = "movieverse_watch_progress";
@@ -39,7 +42,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -62,10 +65,10 @@ function renderWatchPage(current) {
   const catalog = getMovieDB().slice(0, 12);
   const position = catalog.findIndex((item) => item.id === current.id);
   const start = position >= 0 ? position : 0;
-  const playlist = [
-    ...catalog.slice(start),
-    ...catalog.slice(0, start),
-  ].slice(0, 8);
+  const playlist = [...catalog.slice(start), ...catalog.slice(0, start)].slice(
+    0,
+    8,
+  );
   const pageUrl = `${window.location.origin}/watch.html?id=${encodeURIComponent(current.id)}`;
   const shareText = `Đang xem ${current.title} (${current.year}) trên MovieVerse`;
   const reviews = getMovieReviews(current.title);
@@ -79,7 +82,7 @@ function renderWatchPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/#genres">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">Chi tiết phim <span aria-hidden="true">→</span></a>
@@ -391,7 +394,8 @@ function renderWatchPage(current) {
 
     if (!sources.length) {
       label.textContent = "Nguồn phát";
-      list.innerHTML = '<p class="empty-note">Phim này chưa có nguồn phát nào.</p>';
+      list.innerHTML =
+        '<p class="empty-note">Phim này chưa có nguồn phát nào.</p>';
       return;
     }
 
@@ -560,7 +564,9 @@ function renderWatchPage(current) {
     if (player.muted) player.api.mute();
 
     player.duration = player.api.getDuration() || 0;
-    document.querySelector("#totalTime").textContent = formatTime(player.duration);
+    document.querySelector("#totalTime").textContent = formatTime(
+      player.duration,
+    );
 
     if (resumeAt > 0 && resumeAt < player.duration - 15) {
       player.currentTime = resumeAt;
@@ -595,7 +601,9 @@ function renderWatchPage(current) {
     }
     errorTried.add(activeSource);
     const next = (activeSource + 1) % sources.length;
-    showToast(`${sources[activeSource].label} lỗi, đang thử ${sources[next].label}...`);
+    showToast(
+      `${sources[activeSource].label} lỗi, đang thử ${sources[next].label}...`,
+    );
     loadSource(next);
   }
 
@@ -665,7 +673,9 @@ function renderWatchPage(current) {
   function bindMediaElement(media) {
     const onMetadata = () => {
       spinner.hidden = true;
-      document.querySelector("#totalTime").textContent = formatTime(media.duration);
+      document.querySelector("#totalTime").textContent = formatTime(
+        media.duration,
+      );
       if (resumeAt > 0 && resumeAt < media.duration - 15) {
         media.currentTime = resumeAt;
         showResumeBar(resumeAt);
@@ -709,8 +719,9 @@ function renderWatchPage(current) {
       const ratio = media.currentTime / media.duration;
       seek.value = String(Math.round(ratio * 1000));
       seek.style.setProperty("--seek", `${ratio * 100}%`);
-      document.querySelector("#currentTime").textContent =
-        formatTime(media.currentTime);
+      document.querySelector("#currentTime").textContent = formatTime(
+        media.currentTime,
+      );
       updateBuffered(media);
       saveProgress(media.currentTime, media.duration);
     });
@@ -740,9 +751,7 @@ function renderWatchPage(current) {
       const index = Number(button.dataset.server);
       if (index === activeSource) return;
       loadSource(index);
-      showToast(
-        `Đang xem ${sources[index].label} · ${sources[index].variant}`,
-      );
+      showToast(`Đang xem ${sources[index].label} · ${sources[index].variant}`);
     });
   }
 
@@ -762,7 +771,9 @@ function renderWatchPage(current) {
 
     document.querySelector("#pipBtn").addEventListener("click", () => {
       if (backend.active !== "file" || !video) {
-        showToast("Nguồn YouTube chỉ hỗ trợ hình trong hình trong chế độ xem trước.");
+        showToast(
+          "Nguồn YouTube chỉ hỗ trợ hình trong hình trong chế độ xem trước.",
+        );
         return;
       }
       if (document.pictureInPictureElement) {
@@ -774,16 +785,16 @@ function renderWatchPage(current) {
       });
     });
 
-    document
-      .querySelector("#playerRetry")
-      .addEventListener("click", () => {
-        errorTried.clear();
-        errorBox.hidden = true;
-        loadSource(activeSource);
-      });
+    document.querySelector("#playerRetry").addEventListener("click", () => {
+      errorTried.clear();
+      errorBox.hidden = true;
+      loadSource(activeSource);
+    });
 
     document.querySelector("#resumeBtn").addEventListener("click", () => {
-      const target = Number(document.querySelector("#resumeBar").dataset.time || 0);
+      const target = Number(
+        document.querySelector("#resumeBar").dataset.time || 0,
+      );
       backend.seekTo(target);
       backend.play();
       hideResumeBar();
@@ -795,10 +806,7 @@ function renderWatchPage(current) {
     });
 
     seek.addEventListener("input", () => {
-      seek.style.setProperty(
-        "--seek",
-        `${(Number(seek.value) / 1000) * 100}%`,
-      );
+      seek.style.setProperty("--seek", `${(Number(seek.value) / 1000) * 100}%`);
     });
     seek.addEventListener("change", () => {
       const total = backend.duration;
@@ -823,10 +831,12 @@ function renderWatchPage(current) {
       .querySelector("#muteBtn")
       .addEventListener("click", () => backend.toggleMute());
 
-    document.querySelector("#speedSelect").addEventListener("change", (event) => {
-      backend.setSpeed(Number(event.target.value));
-      savePrefs();
-    });
+    document
+      .querySelector("#speedSelect")
+      .addEventListener("change", (event) => {
+        backend.setSpeed(Number(event.target.value));
+        savePrefs();
+      });
 
     setVolumeIcon();
   }
@@ -892,7 +902,9 @@ function renderWatchPage(current) {
       const saved = favorites.includes(current.id);
       favoriteBtn.setAttribute("aria-pressed", String(saved));
       favoriteBtn.classList.toggle("is-active", saved);
-      favoriteBtn.querySelector("span").textContent = saved ? "Đã lưu" : "Yêu thích";
+      favoriteBtn.querySelector("span").textContent = saved
+        ? "Đã lưu"
+        : "Yêu thích";
     };
 
     favoriteBtn.addEventListener("click", () => {
@@ -907,12 +919,14 @@ function renderWatchPage(current) {
       );
     });
 
-    document.querySelector(".detail-toolbar").addEventListener("click", (event) => {
-      if (!event.target.closest('[data-tool="share"]')) return;
-      const isOpen = sharePanel.hasAttribute("hidden");
-      sharePanel.toggleAttribute("hidden", !isOpen);
-      shareTrigger.setAttribute("aria-expanded", String(isOpen));
-    });
+    document
+      .querySelector(".detail-toolbar")
+      .addEventListener("click", (event) => {
+        if (!event.target.closest('[data-tool="share"]')) return;
+        const isOpen = sharePanel.hasAttribute("hidden");
+        sharePanel.toggleAttribute("hidden", !isOpen);
+        shareTrigger.setAttribute("aria-expanded", String(isOpen));
+      });
   }
 
   function loadPlayerPrefs() {
@@ -1006,7 +1020,8 @@ function readProgress(id) {
 function loadProgressAll() {
   try {
     const parsed = JSON.parse(localStorage.getItem(PROGRESS_KEY));
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+      return parsed;
   } catch (_) {}
   return {};
 }
@@ -1024,7 +1039,9 @@ function formatTime(seconds) {
   const minutes = Math.floor((total % 3600) / 60);
   const secs = total % 60;
   const pad = (n) => String(n).padStart(2, "0");
-  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(secs)}` : `${minutes}:${pad(secs)}`;
+  return hours > 0
+    ? `${hours}:${pad(minutes)}:${pad(secs)}`
+    : `${minutes}:${pad(secs)}`;
 }
 
 function bindShareButtons(pageUrl, shareText) {
@@ -1038,11 +1055,17 @@ function bindShareButtons(pageUrl, shareText) {
     button.addEventListener("click", async () => {
       const platform = button.dataset.share;
 
-      if (platform === "copy" || platform === "tiktok" || platform === "instagram") {
+      if (
+        platform === "copy" ||
+        platform === "tiktok" ||
+        platform === "instagram"
+      ) {
         const copied = await copyText(`${shareText} — ${pageUrl}`);
         if (platform === "copy") {
           showToast(
-            copied ? "Đã sao chép link phim." : "Không sao chép được, hãy copy từ thany địa chỉ.",
+            copied
+              ? "Đã sao chép link phim."
+              : "Không sao chép được, hãy copy từ thany địa chỉ.",
           );
           return;
         }
