@@ -232,7 +232,7 @@ export const movieSeed = [
     rating: "7.6",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+      "https://upload.wikimedia.org/wikipedia/en/6/6a/Zootopia_2_%282025_film%29.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1800&q=85",
     description:
@@ -316,7 +316,7 @@ export const movieSeed = [
     rating: "8.2",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+      "https://upload.wikimedia.org/wikipedia/en/7/70/The_Wild_Robot_poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85",
     description:
@@ -396,7 +396,8 @@ export const movieSeed = [
     id: "n19",
     title: "Kamen Rider Build",
     year: "2017",
-    genre: "Hành động, Phiêu lưu, Hài, Chính kịch, Tình cảm, Giả tưởng, Khoa học viễn tưởng, Hoạt hình, Tokusatsu",
+    genre:
+      "Hành động, Phiêu lưu, Hài, Chính kịch, Tình cảm, Giả tưởng, Khoa học viễn tưởng, Hoạt hình, Tokusatsu",
     rating: "8.5",
     isNew: true,
     poster: "https://i.redd.it/96mkpqpb9wsa1.jpg",
@@ -407,7 +408,7 @@ export const movieSeed = [
 ];
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v5";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v6";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -449,9 +450,37 @@ export function getMovieDB() {
           localStorage.removeItem("movieverse_seed_migration_v2");
         }
         if (localStorage.getItem(SEED_MIGRATION_KEY) !== "done") {
+          const posterMigrations = new Map([
+            [
+              "n7",
+              [
+                "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+                "https://upload.wikimedia.org/wikipedia/en/6/6a/Zootopia_2_%282025_film%29.jpg",
+              ],
+            ],
+            [
+              "n13",
+              [
+                "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+                "https://upload.wikimedia.org/wikipedia/en/7/70/The_Wild_Robot_poster.jpg",
+              ],
+            ],
+          ]);
+          let postersUpdated = false;
+          parsed.movies.forEach((movie) => {
+            const [previousPoster, nextPoster] =
+              posterMigrations.get(movie.id) ?? [];
+            if (movie.poster === previousPoster) {
+              movie.poster = nextPoster;
+              postersUpdated = true;
+            }
+          });
+
           const existingIds = new Set(parsed.movies.map((movie) => movie.id));
           const existingTitles = new Set(
-            parsed.movies.map((movie) => movie.title.trim().toLocaleLowerCase("vi")),
+            parsed.movies.map((movie) =>
+              movie.title.trim().toLocaleLowerCase("vi"),
+            ),
           );
           const additions = movieSeed.filter(
             (movie) =>
@@ -459,7 +488,7 @@ export function getMovieDB() {
               !existingIds.has(movie.id) &&
               !existingTitles.has(movie.title.trim().toLocaleLowerCase("vi")),
           );
-          if (additions.length) {
+          if (additions.length || postersUpdated) {
             parsed.movies.push(...additions);
             saveMovieDB(parsed.movies);
           }
