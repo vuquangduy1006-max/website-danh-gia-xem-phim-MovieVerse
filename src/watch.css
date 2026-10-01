@@ -47,6 +47,22 @@
   position: absolute;
   inset: 0;
 }
+.player-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.player-video-overlay[hidden] {
+  display: none;
+}
+.player-video-overlay:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
 
 .player-empty {
   position: absolute;
@@ -91,6 +107,7 @@
 .player-big-play {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: grid;
   place-items: center;
   width: 100%;

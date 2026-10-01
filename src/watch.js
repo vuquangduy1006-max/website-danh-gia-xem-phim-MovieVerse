@@ -103,6 +103,8 @@ function renderWatchPage(current) {
           <div class="watch-primary">
             <div class="player-shell" id="playerShell">
               <div class="player-stage" id="playerStage"></div>
+              <button type="button" class="player-video-overlay" id="playerVideoOverlay" aria-label="Tạm dừng video" hidden></button>
+              <button type="button" class="player-big-play" id="playerBigPlay" aria-label="Phát video" hidden><span aria-hidden="true">▶</span></button>
 
               <div class="player-empty" id="playerEmpty" hidden>
                 <span class="player-empty-mark" aria-hidden="true">▶</span>
@@ -265,6 +267,8 @@ function renderWatchPage(current) {
   const volumeRange = document.querySelector("#volumeRange");
   const playIcon = document.querySelector("#playIcon");
   const controls = document.querySelector("#playerControls");
+  const videoOverlay = document.querySelector("#playerVideoOverlay");
+  const bigPlay = document.querySelector("#playerBigPlay");
   const spinner = document.querySelector("#playerSpinner");
   const errorBox = document.querySelector("#playerError");
   const openLink = document.querySelector("#playerOpenLink");
@@ -376,9 +380,20 @@ function renderWatchPage(current) {
     event.preventDefault();
     backend.toggle();
   });
+  videoOverlay.addEventListener("click", () => backend.toggle());
+  bigPlay.addEventListener("click", () => backend.play());
 
   function setPlayIcon(isPlaying) {
     playIcon.textContent = isPlaying ? "❚❚" : "▶";
+    bigPlay.hidden = isPlaying || !backend.active;
+    bigPlay.setAttribute(
+      "aria-label",
+      isPlaying ? "Tạm dừng video" : "Phát video",
+    );
+    videoOverlay.setAttribute(
+      "aria-label",
+      isPlaying ? "Tạm dừng video" : "Phát video",
+    );
     document
       .querySelector("#playToggle")
       .setAttribute("aria-label", isPlaying ? "Tạm dừng" : "Phát");
@@ -506,6 +521,7 @@ function renderWatchPage(current) {
   function showEmptyState() {
     teardownMedia();
     stage.innerHTML = "";
+    videoOverlay.hidden = true;
     emptyBox.hidden = false;
     controls.hidden = true;
     document.querySelector("#playerHint").hidden = true;
@@ -516,6 +532,7 @@ function renderWatchPage(current) {
   function mountYouTube(source) {
     teardownMedia();
     emptyBox.hidden = true;
+    videoOverlay.hidden = false;
     controls.hidden = false;
     openLink.hidden = !source.watchUrl;
     document.querySelector("#playerHint").hidden = false;
@@ -523,6 +540,7 @@ function renderWatchPage(current) {
 
     stage.innerHTML = '<div id="ytHost" class="watch-embed"></div>';
     ytPlayer = createYouTubePlayer(source);
+    setPlayIcon(false);
   }
 
   // YouTube IFrame API: giữ cho phím tắt, tua, tốc độ và xem lại vị trí đã dừng.
@@ -576,7 +594,7 @@ function renderWatchPage(current) {
             modestbranding: 1,
             playsinline: 1,
             modestbranding: 1,
-            controls: 1,
+            controls: 0,
             enablejsapi: 1,
           },
           events: {
@@ -682,6 +700,7 @@ function renderWatchPage(current) {
   function mountVideo(source) {
     teardownMedia();
     emptyBox.hidden = true;
+    videoOverlay.hidden = true;
     controls.hidden = false;
     openLink.hidden = !source.watchUrl;
     document.querySelector("#playerHint").hidden = false;

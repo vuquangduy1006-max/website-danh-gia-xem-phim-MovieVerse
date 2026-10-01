@@ -219,36 +219,20 @@ export function getTrailer(movie) {
 
 // Chỉ trả về nguồn của chính phim này. Không bao giờ trộn nguồn của phim khác vào.
 export function getWatchSources(movie) {
-  const clips = MOVIE_SOURCES[movie.title];
   const localTrailer = getLocalTrailer(movie);
-  const sources = localTrailer
-    ? [
-        {
-          ...localTrailer,
-          index: 0,
-          label: "Thư viện",
-          variant: localTrailer.label,
-          quality: "MP4",
-          note: localTrailer.channel,
-          watchUrl: "",
-        },
-      ]
-    : [];
+  if (!localTrailer) return [];
 
-  if (!clips || !clips.length) return sources;
-
-  return sources.concat(clips.map((clip, index) => ({
-    kind: "youtube",
-    index: sources.length + index,
-    label: `YouTube ${index + 1}`,
-    variant: clip.label,
-    quality: "YouTube",
-    note: clip.channel,
-    videoId: clip.id,
-    title: clip.title,
-    channel: clip.channel,
-    watchUrl: `https://www.youtube.com/watch?v=${clip.id}`,
-  })));
+  return [
+    {
+      ...localTrailer,
+      index: 0,
+      label: "Thư viện",
+      variant: localTrailer.label,
+      quality: "MP4",
+      note: localTrailer.channel,
+      watchUrl: "",
+    },
+  ];
 }
 
 export function getMovieMedia(movie, movieList = []) {
