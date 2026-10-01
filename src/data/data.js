@@ -36,7 +36,7 @@ export const movieSeed = [
     rating: "8.8",
     isNew: false,
     poster:
-      "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Dune%20Part%20Two%20poster.jpeg",
     backdrop:
       "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1800&q=85",
     description:
@@ -50,7 +50,7 @@ export const movieSeed = [
     rating: "8.1",
     isNew: false,
     poster:
-      "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Past%20Lives%20film%20poster.png",
     backdrop:
       "https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=1800&q=85",
     description:
@@ -64,7 +64,7 @@ export const movieSeed = [
     rating: "8.3",
     isNew: false,
     poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Kiki%27s%20Delivery%20Service%20%28Movie%29.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1800&q=85",
     description:
@@ -78,7 +78,7 @@ export const movieSeed = [
     rating: "7.9",
     isNew: false,
     poster:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Civil%20War%202024%20film%20poster.jpeg",
     backdrop:
       "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1800&q=85",
     description:
@@ -92,7 +92,7 @@ export const movieSeed = [
     rating: "7.7",
     isNew: false,
     poster:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Wildwood%202026%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85",
     description:
@@ -106,7 +106,7 @@ export const movieSeed = [
     rating: "7.1",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Superman%20%282025%20film%29%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1800&q=85",
     description:
@@ -120,7 +120,7 @@ export const movieSeed = [
     rating: "7.3",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/The%20Fantastic%20Four%20First%20Steps%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1800&q=85",
     description:
@@ -134,7 +134,7 @@ export const movieSeed = [
     rating: "7.7",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/F1%20%282025%20film%29.png",
     backdrop:
       "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1800&q=85",
     description:
@@ -148,7 +148,7 @@ export const movieSeed = [
     rating: "7.0",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Gladiator%20II%20%282024%29%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1800&q=85",
     description:
@@ -162,7 +162,7 @@ export const movieSeed = [
     rating: "7.6",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Inside%20Out%202%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1800&q=85",
     description:
@@ -176,7 +176,7 @@ export const movieSeed = [
     rating: "7.5",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Deadpool%20%26%20Wolverine%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1800&q=85",
     description:
@@ -204,7 +204,7 @@ export const movieSeed = [
     rating: "7.4",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Wicked%20%282024%20film%29%20poster.png",
     backdrop:
       "https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=1800&q=85",
     description:
@@ -218,7 +218,7 @@ export const movieSeed = [
     rating: "5.6",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/A%20Minecraft%20Movie%20poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85",
     description:
@@ -232,7 +232,7 @@ export const movieSeed = [
     rating: "7.8",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/How%20To%20Train%20Your%20Dragon%202025%20Poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1800&q=85",
     description:
@@ -246,7 +246,7 @@ export const movieSeed = [
     rating: "7.2",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Mission%20Impossible%20%E2%80%93%20The%20Final%20Reckoning%20Poster.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1800&q=85",
     description:
@@ -260,7 +260,7 @@ export const movieSeed = [
     rating: "7.1",
     isNew: true,
     poster:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=85",
+      "https://en.wikipedia.org/wiki/Special:FilePath/Nosferatu%20IMAX%20poster%202024.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=1800&q=85",
     description:
@@ -282,7 +282,7 @@ export const movieSeed = [
 ];
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v6";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v9";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -311,17 +311,19 @@ const removedSeedMovieIds = new Set([
   "n7",
   "n12",
 ]);
-const removedMovieTitles = new Set([
-  "The Last Horizon",
-  "The Quiet Room",
-  "Neon City",
-  "Midnight Signal",
-  "Blue Summer",
-  "Rogue Planet",
-  "Paper Hearts",
-  "Zootopia 2",
-  "Moana 2",
-].map((title) => title.toLocaleLowerCase("vi")));
+const removedMovieTitles = new Set(
+  [
+    "The Last Horizon",
+    "The Quiet Room",
+    "Neon City",
+    "Midnight Signal",
+    "Blue Summer",
+    "Rogue Planet",
+    "Paper Hearts",
+    "Zootopia 2",
+    "Moana 2",
+  ].map((title) => title.toLocaleLowerCase("vi")),
+);
 
 export function getMovieDB() {
   try {
@@ -333,7 +335,9 @@ export function getMovieDB() {
           (movie) =>
             !removedSeedMovieIds.has(movie.id) &&
             !removedMovieTitles.has(
-              String(movie.title ?? "").trim().toLocaleLowerCase("vi"),
+              String(movie.title ?? "")
+                .trim()
+                .toLocaleLowerCase("vi"),
             ),
         );
         if (cleanedMovies.length !== parsed.movies.length) {
@@ -358,6 +362,118 @@ export function getMovieDB() {
         }
         if (localStorage.getItem(SEED_MIGRATION_KEY) !== "done") {
           const posterMigrations = new Map([
+            [
+              "n11",
+              [
+                "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Deadpool%20%26%20Wolverine%20poster.jpg",
+              ],
+            ],
+            [
+              "n14",
+              [
+                "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Wicked%20%282024%20film%29%20poster.png",
+              ],
+            ],
+            [
+              "n15",
+              [
+                "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/A%20Minecraft%20Movie%20poster.jpg",
+              ],
+            ],
+            [
+              "n16",
+              [
+                "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/How%20To%20Train%20Your%20Dragon%202025%20Poster.jpg",
+              ],
+            ],
+            [
+              "n17",
+              [
+                "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Mission%20Impossible%20%E2%80%93%20The%20Final%20Reckoning%20Poster.jpg",
+              ],
+            ],
+            [
+              "n18",
+              [
+                "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Nosferatu%20IMAX%20poster%202024.jpg",
+              ],
+            ],
+            [
+              "n5",
+              [
+                "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Superman%20%282025%20film%29%20poster.jpg",
+              ],
+            ],
+            [
+              "n6",
+              [
+                "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/The%20Fantastic%20Four%20First%20Steps%20poster.jpg",
+              ],
+            ],
+            [
+              "n8",
+              [
+                "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/F1%20%282025%20film%29.png",
+              ],
+            ],
+            [
+              "n9",
+              [
+                "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Gladiator%20II%20%282024%29%20poster.jpg",
+              ],
+            ],
+            [
+              "n10",
+              [
+                "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Inside%20Out%202%20poster.jpg",
+              ],
+            ],
+            [
+              "m1",
+              [
+                "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Dune%20Part%20Two%20poster.jpeg",
+              ],
+            ],
+            [
+              "m3",
+              [
+                "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Past%20Lives%20film%20poster.png",
+              ],
+            ],
+            [
+              "m4",
+              [
+                "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Kiki%27s%20Delivery%20Service%20%28Movie%29.jpg",
+              ],
+            ],
+            [
+              "m5",
+              [
+                "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Civil%20War%202024%20film%20poster.jpeg",
+              ],
+            ],
+            [
+              "m8",
+              [
+                "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=85",
+                "https://en.wikipedia.org/wiki/Special:FilePath/Wildwood%202026%20poster.jpg",
+              ],
+            ],
             [
               "n7",
               [
