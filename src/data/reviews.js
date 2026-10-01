@@ -1,6 +1,20 @@
 const REVIEWS_KEY = "movieverse_reviews";
 import { isAdmin } from "./auth.js";
 
+const removedMovieTitles = new Set(
+  [
+    "The Last Horizon",
+    "The Quiet Room",
+    "Neon City",
+    "Midnight Signal",
+    "Blue Summer",
+    "Rogue Planet",
+    "Paper Hearts",
+    "Zootopia 2",
+    "Moana 2",
+  ].map((title) => title.toLocaleLowerCase("vi")),
+);
+
 const reviewSeed = [
   {
     id: "rv1",
@@ -20,22 +34,6 @@ const reviewSeed = [
     date: "03/06/2025",
   },
   {
-    id: "rv3",
-    movieTitle: "Rogue Planet",
-    author: "Thu Trang",
-    rating: 5,
-    comment: "Cảm giác mãn nhãn với những khung hình vũ trụ tuyệt đẹp.",
-    date: "20/06/2025",
-  },
-  {
-    id: "rv4",
-    movieTitle: "Midnight Signal",
-    author: "Quốc Bảo",
-    rating: 4,
-    comment: "Kịch tính từ đầu đến cuối, cái kết gây sốc.",
-    date: "18/06/2025",
-  },
-  {
     id: "rv5",
     movieTitle: "Past Lives",
     author: "Linh Chi",
@@ -43,20 +41,23 @@ const reviewSeed = [
     comment: "Một bộ phim nhẹ nhàng nhưng chạm đến trái tim.",
     date: "02/06/2025",
   },
-  {
-    id: "rv6",
-    movieTitle: "Neon City",
-    author: "Đức Huy",
-    rating: 3,
-    comment: "Bối cảnh đẹp nhưng cốt truyện còn thiếu chiều sâu.",
-    date: "25/05/2025",
-  },
 ];
 
 export function loadReviews() {
   try {
     const parsed = JSON.parse(localStorage.getItem(REVIEWS_KEY));
-    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed)) {
+      const activeReviews = parsed.filter(
+        (review) =>
+          !removedMovieTitles.has(
+            String(review.movieTitle ?? "").trim().toLocaleLowerCase("vi"),
+          ),
+      );
+      if (activeReviews.length !== parsed.length) {
+        localStorage.setItem(REVIEWS_KEY, JSON.stringify(activeReviews));
+      }
+      return activeReviews;
+    }
   } catch (_) {}
   return [...reviewSeed];
 }
