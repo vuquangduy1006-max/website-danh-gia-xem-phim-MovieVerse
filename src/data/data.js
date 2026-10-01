@@ -43,20 +43,6 @@ export const movieSeed = [
       "Paul Atreides hợp nhất với Chani và người Fremen trong hành trình trả thù những kẻ đã hủy diệt gia đình mình.",
   },
   {
-    id: "m2",
-    title: "The Last Horizon",
-    year: "2024",
-    genre: "Hành động",
-    rating: "8.5",
-    isNew: false,
-    poster:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1800&q=85",
-    description:
-      "Một phi hành đoàn đơn độc phải vượt qua rìa của vũ trụ để mang hy vọng cuối cùng trở về Trái Đất.",
-  },
-  {
     id: "m3",
     title: "Past Lives",
     year: "2023",
@@ -99,34 +85,6 @@ export const movieSeed = [
       "Một nhóm phóng viên chạy đua với thời gian để ghi lại khoảnh khắc lịch sử của một đất nước.",
   },
   {
-    id: "m6",
-    title: "The Quiet Room",
-    year: "2023",
-    genre: "Tâm lý",
-    rating: "7.8",
-    isNew: false,
-    poster:
-      "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1800&q=85",
-    description:
-      "Một căn phòng im lặng, một bí mật cũ và cuộc đối thoại có thể thay đổi tất cả.",
-  },
-  {
-    id: "m7",
-    title: "Neon City",
-    year: "2024",
-    genre: "Khoa học viễn tưởng",
-    rating: "8.0",
-    isNew: false,
-    poster:
-      "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1800&q=85",
-    description:
-      "Thành phố không bao giờ ngủ che giấu những câu chuyện của những người sống dưới ánh đèn neon.",
-  },
-  {
     id: "m8",
     title: "Wildwood",
     year: "2024",
@@ -139,62 +97,6 @@ export const movieSeed = [
       "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85",
     description:
       "Một cô bé bước vào khu rừng kỳ diệu để tìm lại người anh trai mất tích.",
-  },
-  {
-    id: "n1",
-    title: "Midnight Signal",
-    year: "2024",
-    genre: "Bí ẩn",
-    rating: "8.4",
-    isNew: true,
-    poster:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1800&q=85",
-    description:
-      "Một tín hiệu lạ xuất hiện giữa đêm và kéo một kỹ sư trẻ vào bí mật bị chôn vùi nhiều năm.",
-  },
-  {
-    id: "n2",
-    title: "Blue Summer",
-    year: "2024",
-    genre: "Tâm lý",
-    rating: "8.0",
-    isNew: true,
-    poster:
-      "https://images.unsplash.com/photo-1507525422872-b6696d73aee5?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1507525422872-b6696d73aee5?w=1800&q=85",
-    description:
-      "Một mùa hè ngắn ngủi khiến ba người xa lạ nhìn lại những lựa chọn của mình.",
-  },
-  {
-    id: "n3",
-    title: "Rogue Planet",
-    year: "2024",
-    genre: "Khoa học viễn tưởng",
-    rating: "8.6",
-    isNew: true,
-    poster:
-      "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1800&q=85",
-    description:
-      "Phi hành đoàn cuối cùng của nhân loại tìm thấy một hành tinh có thể là ngôi nhà mới.",
-  },
-  {
-    id: "n4",
-    title: "Paper Hearts",
-    year: "2024",
-    genre: "Tâm lý",
-    rating: "7.9",
-    isNew: true,
-    poster:
-      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1800&q=85",
-    description:
-      "Những lá thư chưa gửi kết nối hai thế hệ trong một câu chuyện dịu dàng về gia đình.",
   },
   {
     id: "n5",
@@ -223,20 +125,6 @@ export const movieSeed = [
       "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1800&q=85",
     description:
       "Gia đình siêu anh hùng đối mặt với mối đe dọa có thể định đoạt số phận Trái Đất.",
-  },
-  {
-    id: "n7",
-    title: "Zootopia 2",
-    year: "2025",
-    genre: "Hoạt hình",
-    rating: "7.6",
-    isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/6/6a/Zootopia_2_%282025_film%29.jpg",
-    backdrop:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1800&q=85",
-    description:
-      "Judy Hopps và Nick Wilde tiếp tục phá án trong chuyến phiêu lưu mới tại Zootopia.",
   },
   {
     id: "n8",
@@ -293,20 +181,6 @@ export const movieSeed = [
       "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1800&q=85",
     description:
       "Deadpool kéo Wolverine vào chuyến phiêu lưu xuyên đa vũ trụ đầy hỗn loạn.",
-  },
-  {
-    id: "n12",
-    title: "Moana 2",
-    year: "2024",
-    genre: "Hoạt hình",
-    rating: "7.0",
-    isNew: true,
-    poster:
-      "https://images.unsplash.com/photo-1507525422872-b6696d73aee5?w=600&q=85",
-    backdrop:
-      "https://images.unsplash.com/photo-1507525422872-b6696d73aee5?w=1800&q=85",
-    description:
-      "Moana cùng những người bạn lên đường vượt đại dương để kết nối các cộng đồng trên đảo.",
   },
   {
     id: "n13",
@@ -426,6 +300,28 @@ const addedSeedMovieIds = new Set([
   "n18",
   "n19",
 ]);
+const removedSeedMovieIds = new Set([
+  "m2",
+  "m6",
+  "m7",
+  "n1",
+  "n2",
+  "n3",
+  "n4",
+  "n7",
+  "n12",
+]);
+const removedMovieTitles = new Set([
+  "The Last Horizon",
+  "The Quiet Room",
+  "Neon City",
+  "Midnight Signal",
+  "Blue Summer",
+  "Rogue Planet",
+  "Paper Hearts",
+  "Zootopia 2",
+  "Moana 2",
+].map((title) => title.toLocaleLowerCase("vi")));
 
 export function getMovieDB() {
   try {
@@ -433,6 +329,17 @@ export function getMovieDB() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed.movies) && parsed.movies.length) {
+        const cleanedMovies = parsed.movies.filter(
+          (movie) =>
+            !removedSeedMovieIds.has(movie.id) &&
+            !removedMovieTitles.has(
+              String(movie.title ?? "").trim().toLocaleLowerCase("vi"),
+            ),
+        );
+        if (cleanedMovies.length !== parsed.movies.length) {
+          saveMovieDB(cleanedMovies);
+        }
+        parsed.movies = cleanedMovies;
         if (localStorage.getItem("movieverse_seed_migration_v2") === "done") {
           const addedTitles = new Map([
             ["n5", "Oppenheimer"],

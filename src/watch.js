@@ -286,6 +286,9 @@ function renderWatchPage(current) {
     },
     get time() {
       if (video) return video.currentTime;
+      if (ytPlayer?.seekTarget !== null && ytPlayer?.seekTarget !== undefined) {
+        return ytPlayer.seekTarget;
+      }
       if (ytPlayer?.api) return ytPlayer.api.getCurrentTime() || 0;
       return ytPlayer?.currentTime || 0;
     },
@@ -333,7 +336,11 @@ function renderWatchPage(current) {
       if (!Number.isFinite(total) || total <= 0) return;
       const target = Math.min(Math.max(seconds, 0), total);
       if (video) video.currentTime = target;
-      else ytPlayer?.api?.seekTo(target, true);
+      else if (ytPlayer?.api) {
+        ytPlayer.seekTarget = target;
+        ytPlayer.seekTargetExpiresAt = Date.now() + 2000;
+        ytPlayer.api.seekTo(target, true);
+      }
     },
     setVolume(value) {
       if (video) {
@@ -552,6 +559,8 @@ function renderWatchPage(current) {
       volume: 1,
       muted: false,
       playbackRate: 1,
+      seekTarget: null,
+      seekTargetExpiresAt: 0,
       bufferedRatio: 0,
       destroyed: false,
     };
@@ -564,7 +573,6 @@ function renderWatchPage(current) {
           playerVars: {
             rel: 0,
             autoplay: 1,
-            mute: 1,
             modestbranding: 1,
             playsinline: 1,
             modestbranding: 1,
@@ -591,8 +599,6 @@ function renderWatchPage(current) {
     applyPrefsToPlayer(player);
     player.api.setVolume(player.volume * 100);
     player.api.setPlaybackRate(player.playbackRate);
-    player.api.mute();
-    player.muted = true;
     player.api.playVideo();
 
     player.duration = player.api.getDuration() || 0;
@@ -647,14 +653,24 @@ function renderWatchPage(current) {
       const time = player.api.getCurrentTime() || 0;
       const duration = player.api.getDuration() || 0;
       if (duration <= 0) return;
-      player.currentTime = time;
+      if (player.seekTarget !== null) {
+        if (
+          Math.abs(time - player.seekTarget) <= 1 ||
+          Date.now() >= player.seekTargetExpiresAt
+        ) {
+          player.seekTarget = null;
+        }
+      }
+      player.currentTime = player.seekTarget ?? time;
       player.duration = duration;
 
-      const ratio = time / duration;
+      const ratio = player.currentTime / duration;
       seek.value = String(Math.round(ratio * 1000));
       seek.style.setProperty("--seek", `${ratio * 100}%`);
-      document.querySelector("#currentTime").textContent = formatTime(time);
-      saveProgress(time, duration);
+      document.querySelector("#currentTime").textContent = formatTime(
+        player.currentTime,
+      );
+      saveProgress(player.currentTime, duration);
     }, 250);
   }
 
@@ -678,8 +694,7 @@ function renderWatchPage(current) {
     video.poster = current.backdrop;
     const prefs = loadPrefs();
     video.volume = typeof prefs.volume === "number" ? prefs.volume : 1;
-    video.muted = true;
-    autoplayMuted = video.volume > 0;
+    video.muted = video.volume === 0;
     video.src = source.url;
     stage.innerHTML = "";
     stage.appendChild(video);

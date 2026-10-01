@@ -72,11 +72,6 @@ const MOVIE_SOURCES = {
     { id: "AzMo-FgRp64", title: "The Fantastic Four: First Steps | Official Teaser", channel: "Marvel Entertainment", label: "Teaser" },
     { id: "VtWHYkNHm2k", title: "The Fantastic Four: First Steps | Meet The Family", channel: "Marvel Entertainment", label: "Giới thiệu nhân vật" },
   ],
-  "Zootopia 2": [
-    { id: "BjkIOU5PhyQ", title: "Zootopia 2 | Trailer", channel: "Walt Disney Animation Studios", label: "Trailer chính" },
-    { id: "xo4rkcC7kFc", title: "Zootopia 2 | Teaser Trailer", channel: "Walt Disney Animation Studios", label: "Teaser" },
-    { id: "5AwtptT8X8k", title: "Zootopia 2 | Final Trailer", channel: "Walt Disney Animation Studios", label: "Final trailer" },
-  ],
   F1: [
     { id: "4DGgue0BoD8", title: "F1 The Movie — Official Trailer", channel: "Apple TV", label: "Trailer chính" },
     { id: "8yh9BPUBbbQ", title: "F1 The Movie | Main Trailer", channel: "Warner Bros.", label: "Trailer Warner Bros." },
@@ -96,11 +91,6 @@ const MOVIE_SOURCES = {
     { id: "sMVIBr-7hgE", title: "Deadpool & Wolverine | Official Trailer", channel: "Marvel Entertainment", label: "Trailer chính" },
     { id: "uJMCNJP2ipI", title: "Deadpool & Wolverine | Official Teaser", channel: "Marvel Entertainment", label: "Teaser" },
     { id: "laNA2HgwYXU", title: "Deadpool & Wolverine | Final Trailer", channel: "Ryan Reynolds", label: "Final trailer" },
-  ],
-  "Moana 2": [
-    { id: "hDZ7y8RP5HE", title: "Moana 2 | Official Trailer", channel: "Walt Disney Animation Studios", label: "Trailer chính" },
-    { id: "JdsSDUfHsC0", title: "Moana 2 | Moana is Back!", channel: "Walt Disney Animation Studios", label: "Teaser" },
-    { id: "LvCedoSC4oA", title: "Moana 2 | Watch Official Trailer Now", channel: "Walt Disney Animation Studios", label: "Trailer mới" },
   ],
   "The Wild Robot": [
     { id: "67vbA5ZJdKQ", title: "The Wild Robot | Official Trailer", channel: "Universal Pictures", label: "Trailer chính" },
