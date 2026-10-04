@@ -1,6 +1,14 @@
 import { loginUser, registerUser } from "./data/auth.js";
 
 const form = document.querySelector(".auth-form");
+
+function safeNext(role) {
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  if (next.startsWith("/admin/") && role !== "admin") return null;
+  return next;
+}
+
 if (form) {
   const message = document.createElement("p");
   message.className = "auth-message";
@@ -42,9 +50,8 @@ if (form) {
       window.setTimeout(() => {
         window.location.href = isRegister
           ? "/login.html"
-          : result.session.role === "admin"
-            ? "/admin/admin.html"
-            : "/";
+          : (safeNext(result.session.role) ??
+            (result.session.role === "admin" ? "/admin/admin.html" : "/"));
       }, 450);
     }
   });
