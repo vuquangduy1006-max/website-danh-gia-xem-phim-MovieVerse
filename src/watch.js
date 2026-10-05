@@ -62,6 +62,11 @@ function renderWatchPage(current) {
   const sources = getWatchSources(current);
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
+  const episodeCount = current.id === "n19" ? 49 : 1;
+  const requestedEpisode = Number(params.get("episode"));
+  let activeEpisode = Number.isInteger(requestedEpisode)
+    ? Math.min(Math.max(requestedEpisode, 1), episodeCount)
+    : 1;
   const catalog = getMovieDB().slice(0, 12);
   const position = catalog.findIndex((item) => item.id === current.id);
   const start = position >= 0 ? position : 0;
@@ -227,6 +232,15 @@ function renderWatchPage(current) {
           </div>
 
           <aside class="watch-aside">
+            <section class="aside-card" aria-labelledby="episodesHeading">
+              <div class="watch-aside-heading">
+                <div><p class="eyebrow">${episodeCount > 1 ? "Series" : "Phim lẻ"}</p><h3 id="episodesHeading">Tập phim</h3></div>
+                <span class="watch-aside-count" id="episodeCount" aria-label="${episodeCount} tập">${String(episodeCount).padStart(2, "0")}</span>
+              </div>
+              <p class="aside-desc episode-note">${episodeCount > 1 ? "Chọn tập muốn xem." : "Phim này có một nội dung độc lập."} Video từng tập chưa có trong kho; player hiện phát trailer hoặc clip có sẵn.</p>
+              <div class="episode-list" id="episodeList" role="group" aria-label="Danh sách tập phim"></div>
+            </section>
+
             <section class="aside-card" aria-labelledby="playlistHeading">
               <div class="watch-aside-heading">
                 <div><p class="eyebrow">Xem tiếp</p><h3 id="playlistHeading">Danh sách phát</h3></div>
@@ -403,10 +417,12 @@ function renderWatchPage(current) {
   }
 
   renderServers();
+  renderEpisodes();
   renderPlaylist();
   renderSimilar();
   loadPlayerPrefs();
   bindServers();
+  bindEpisodes();
   bindSharedControls();
   bindToolbar();
   bindShareButtons(pageUrl, shareText);
@@ -436,6 +452,32 @@ function renderWatchPage(current) {
         </button>`,
       )
       .join("");
+  }
+
+  function renderEpisodes() {
+    const list = document.querySelector("#episodeList");
+    list.innerHTML = Array.from({ length: episodeCount }, (_, index) => {
+      const episode = index + 1;
+      const label = episodeCount === 1 ? "Phim lẻ" : `Tập ${String(episode).padStart(2, "0")}`;
+      return `<button type="button" class="episode-btn ${episode === activeEpisode ? "is-current" : ""}" data-episode="${episode}" aria-pressed="${episode === activeEpisode}">${label}</button>`;
+    }).join("");
+  }
+
+  function bindEpisodes() {
+    document.querySelector("#episodeList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-episode]");
+      if (!button) return;
+      activeEpisode = Number(button.dataset.episode);
+      document.querySelectorAll(".episode-btn").forEach((episodeButton) => {
+        const isActive = Number(episodeButton.dataset.episode) === activeEpisode;
+        episodeButton.classList.toggle("is-current", isActive);
+        episodeButton.setAttribute("aria-pressed", String(isActive));
+      });
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set("episode", String(activeEpisode));
+      window.history.replaceState({}, "", nextUrl);
+      showToast(`Đã chọn ${episodeCount === 1 ? "phim lẻ" : `tập ${activeEpisode}`}. Video tập chưa được cập nhật.`);
+    });
   }
 
   function renderPlaylist() {
