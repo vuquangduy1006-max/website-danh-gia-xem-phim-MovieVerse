@@ -2,7 +2,7 @@
 
 ## Trợ lý AI
 
-Trợ lý dùng API tương thích OpenAI Chat Completions. Khóa API chỉ được đọc ở backend, không đưa vào mã frontend.
+Trợ lý dùng API tương thích OpenAI Chat Completions khi đã cấu hình key. Nếu chưa có key hoặc nhà cung cấp tạm lỗi, trợ lý vẫn trả lời câu hỏi cơ bản và gợi ý phim theo danh mục cục bộ. Khóa API chỉ được đọc ở backend, không đưa vào mã frontend.
 
 1. Tạo file `.env` từ `.env.example` và điền `AI_API_KEY`.
 2. Mở terminal thứ nhất và chạy `npm run dev:api`.
