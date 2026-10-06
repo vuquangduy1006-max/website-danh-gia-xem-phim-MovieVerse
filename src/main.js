@@ -1,6 +1,9 @@
 import "./style.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
 import { loadReviews } from "./data/reviews.js";
+import { loadFavorites } from "./data/favorites.js";
+import { rankMovieRecommendations } from "./data/recommendations.js";
+import { initMovieAssistant } from "./assistant.js";
 import {
   bindAccountActions,
   renderAccountActions,
@@ -79,6 +82,19 @@ ${renderHeader({
       <a class="text-link" href="/new-movies.html">Phim mới <span>→</span></a>
     </div>
     <div class="genre-pills" id="genres"></div>
+    <section class="recommendation-tool" aria-labelledby="recommendationHeading">
+      <div class="recommendation-copy">
+        <p class="eyebrow">MovieVerse Match</p>
+        <h2 id="recommendationHeading">Tối nay bạn muốn xem gì?</h2>
+        <p>Gợi ý dựa trên mô tả, phim yêu thích và đánh giá trên thiết bị này.</p>
+      </div>
+      <form class="recommendation-form" id="recommendationForm">
+        <label class="sr-only" for="recommendationQuery">Mô tả phim bạn muốn xem</label>
+        <input id="recommendationQuery" type="search" maxlength="120" placeholder="Ví dụ: hoạt hình ấm áp cho cả nhà">
+        <button class="recommendation-submit" type="submit">Gợi ý phim <span aria-hidden="true">→</span></button>
+      </form>
+      <div class="recommendation-results" id="recommendationResults" aria-live="polite"></div>
+    </section>
     <div class="movie-grid" id="movieGrid"></div>
   </section>
 
@@ -162,9 +178,11 @@ ${renderFooter({
 `;
 
 bindAccountActions();
+initMovieAssistant(movies);
 
 renderGenrePills();
 renderHero();
+renderRecommendations();
 const requestedGenre = new URLSearchParams(window.location.search).get("genre");
 const selectedGenre = availableGenres.includes(requestedGenre)
   ? requestedGenre
@@ -202,6 +220,12 @@ document.querySelectorAll(".pill").forEach((pill) =>
 document.querySelector("#headerSearch").addEventListener("submit", (event) => {
   event.preventDefault();
 });
+document
+  .querySelector("#recommendationForm")
+  .addEventListener("submit", (event) => {
+    event.preventDefault();
+    renderRecommendations(document.querySelector("#recommendationQuery").value);
+  });
 document
   .querySelector("#searchInput")
   .addEventListener("input", (event) => renderSearch(event.target.value));
@@ -309,6 +333,31 @@ function renderMovies(filter = "all") {
         .join("")
     : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
   bindDetailLinks("#movieGrid");
+}
+
+function renderRecommendations(query = "") {
+  const results = rankMovieRecommendations({
+    movies,
+    reviews,
+    favoriteIds: loadFavorites(),
+    query,
+  });
+  document.querySelector("#recommendationResults").innerHTML = results.length
+    ? results
+        .map(
+          ({ movie, reasons }, index) => `
+            <article class="recommendation-card" style="animation-delay:${index * 0.08}s">
+              <a class="recommendation-poster" href="${detailUrl(movie)}" style="background-image:url('${escapeHtml(movie.poster)}')" aria-label="Xem chi tiết ${escapeHtml(movie.title)}"></a>
+              <div class="recommendation-card-copy">
+                <p class="recommendation-reasons">${reasons.map(escapeHtml).join(" · ")}</p>
+                <h3><a href="${detailUrl(movie)}">${escapeHtml(movie.title)}</a></h3>
+                <p>${escapeHtml(movie.year)} · ★ ${escapeHtml(movie.rating)}</p>
+              </div>
+            </article>
+          `,
+        )
+        .join("")
+    : '<p class="empty-note">Chưa đủ dữ liệu để đưa ra gợi ý.</p>';
 }
 
 function detailUrl(movie) {
