@@ -510,6 +510,100 @@ button {
 .genre-pills::-webkit-scrollbar {
   display: none;
 }
+.recommendation-tool {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.8fr) minmax(320px, 1.2fr);
+  gap: 18px 32px;
+  align-items: center;
+  margin: 0 0 30px;
+  padding: 24px 0 26px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.recommendation-copy .eyebrow {
+  margin-bottom: 5px;
+}
+.recommendation-copy h2 {
+  margin: 0;
+  font: 600 21px var(--display);
+}
+.recommendation-copy > p:last-child {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.recommendation-form {
+  display: flex;
+  min-width: 0;
+  gap: 8px;
+}
+.recommendation-form input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+}
+.recommendation-form input:focus {
+  border-color: rgba(240, 91, 60, 0.72);
+}
+.recommendation-submit {
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #180e0b;
+  font-weight: 700;
+}
+.recommendation-submit span {
+  margin-left: 5px;
+}
+.recommendation-results {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.recommendation-card {
+  display: flex;
+  min-width: 0;
+  gap: 12px;
+  animation: rise 0.45s both;
+}
+.recommendation-poster {
+  flex: 0 0 52px;
+  aspect-ratio: 2 / 3;
+  border-radius: 3px;
+  background-position: center;
+  background-size: cover;
+}
+.recommendation-card-copy {
+  min-width: 0;
+  align-self: center;
+}
+.recommendation-card-copy h3 {
+  margin: 3px 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recommendation-card-copy h3 a:hover {
+  color: var(--accent);
+}
+.recommendation-card-copy > p:last-child,
+.recommendation-reasons {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.recommendation-reasons {
+  color: var(--accent);
+}
 .pill {
   flex: 0 0 auto;
   background: var(--surface);
@@ -519,7 +613,10 @@ button {
   border-radius: 30px;
   white-space: nowrap;
   font-size: 13px;
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 .pill:hover {
   background: rgba(240, 91, 60, 0.12);
@@ -1207,6 +1304,14 @@ button {
   .movie-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 23px 13px;
+  }
+  .recommendation-tool {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .recommendation-results {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
   .movie-card:nth-child(n + 7) {
     display: none;
