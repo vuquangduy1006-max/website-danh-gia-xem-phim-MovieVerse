@@ -63,6 +63,42 @@ export function initMovieAssistant(movies) {
     return message;
   };
 
+  const renderAnswer = (element, text) => {
+    const moviesByTitle = new Map(
+      movies
+        .filter((movie) => movie.id && movie.title)
+        .map((movie) => [movie.title.toLocaleLowerCase("vi"), movie]),
+    );
+    const titles = [...moviesByTitle.keys()].sort(
+      (first, second) => second.length - first.length,
+    );
+    if (!titles.length) {
+      element.textContent = text;
+      return;
+    }
+
+    element.replaceChildren();
+    const titlePattern = new RegExp(
+      `(^|[^\\p{L}\\p{N}])(${titles.map((title) => title.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")).join("|")})(?=$|[^\\p{L}\\p{N}])`,
+      "giu",
+    );
+    let cursor = 0;
+    let match;
+    while ((match = titlePattern.exec(text))) {
+      const linkStart = match.index + match[1].length;
+      element.append(document.createTextNode(text.slice(cursor, linkStart)));
+
+      const movie = moviesByTitle.get(match[2].toLocaleLowerCase("vi"));
+      const link = document.createElement("a");
+      link.className = "assistant-movie-link";
+      link.href = `/movie-detail.html?id=${encodeURIComponent(movie.id)}`;
+      link.textContent = match[2];
+      element.append(link);
+      cursor = linkStart + match[2].length;
+    }
+    element.append(document.createTextNode(text.slice(cursor)));
+  };
+
   const sendMessage = async (rawText) => {
     const content = rawText.trim();
     if (!content || isSending) return;
@@ -99,7 +135,7 @@ export function initMovieAssistant(movies) {
       const result = await response.json();
       if (!response.ok)
         throw new Error(result.error || "Trợ lý chưa thể trả lời.");
-      pendingMessage.textContent = result.answer;
+      renderAnswer(pendingMessage, result.answer);
       pendingMessage.classList.remove("assistant-message-pending");
       conversation.push({ role: "assistant", content: result.answer });
     } catch (error) {
