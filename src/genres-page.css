@@ -1,0 +1,115 @@
+.genre-page-main .new-page-intro {
+  padding: clamp(58px, 8vw, 92px) 0 clamp(52px, 7vw, 78px);
+  background:
+    radial-gradient(
+      ellipse at 85% 40%,
+      rgba(240, 91, 60, 0.2),
+      transparent 36%
+    ),
+    radial-gradient(
+      ellipse at 8% 100%,
+      rgba(67, 83, 95, 0.16),
+      transparent 42%
+    ),
+    linear-gradient(110deg, #171a1d 0%, #111315 56%, #1a1715 100%);
+}
+
+.genre-page-main .new-page-intro h1 {
+  font-size: clamp(42px, 6vw, 68px);
+  letter-spacing: -0.055em;
+}
+
+.genre-page-main .new-page-description {
+  max-width: 540px;
+  margin-top: 14px;
+  font-size: clamp(14px, 1.5vw, 17px);
+  line-height: 1.7;
+}
+
+.genre-page-list {
+  padding-top: clamp(44px, 6vw, 72px);
+}
+
+.genre-page-list .section-heading {
+  margin-bottom: 22px;
+}
+
+.genre-page-choices {
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.genre-choice {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.genre-choice:hover {
+  transform: translateY(-2px);
+}
+
+.genre-choice.active {
+  border-color: rgba(240, 91, 60, 0.72);
+  background: linear-gradient(
+    135deg,
+    rgba(240, 91, 60, 0.22),
+    rgba(240, 91, 60, 0.08)
+  );
+  color: #ffab98;
+  box-shadow: 0 5px 18px rgba(240, 91, 60, 0.1);
+}
+
+.genre-choice:focus-visible {
+  outline: 2px solid #ff907a;
+  outline-offset: 3px;
+}
+
+.genre-page-list .movie-card {
+  border-radius: 6px;
+}
+
+.genre-page-list .poster {
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.22);
+}
+
+.genre-page-list .empty-note {
+  grid-column: 1 / -1;
+  padding: 38px 20px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .genre-page-list {
+    padding-top: 44px;
+  }
+
+  .genre-page-choices {
+    gap: 8px;
+    margin-bottom: 26px;
+  }
+
+  .genre-choice {
+    min-height: 38px;
+    padding: 8px 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genre-choice {
+    transition: none;
+  }
+
+  .genre-choice:hover {
+    transform: none;
+  }
+}
