@@ -14,7 +14,6 @@ export default defineConfig({
         login: fileURLToPath(new URL("./login.html", import.meta.url)),
         register: fileURLToPath(new URL("./register.html", import.meta.url)),
         admin: fileURLToPath(new URL("./admin/admin.html", import.meta.url)),
-        adminLegacy: fileURLToPath(new URL("./admin.html", import.meta.url)),
         adminComments: fileURLToPath(
           new URL("./admin/comments.html", import.meta.url),
         ),
