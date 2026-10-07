@@ -1,0 +1,103 @@
+.genre-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.genre-management-panel .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.genre-management-panel ~ .genre-storage-note {
+  color: var(--muted);
+}
+
+.admin-role {
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.genre-management-panel {
+  overflow: hidden;
+}
+
+.genre-management-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 18px;
+}
+
+.genre-management-heading h2 {
+  margin: 0;
+  font: 600 23px var(--display);
+  letter-spacing: -0.7px;
+}
+
+.genre-management-heading p,
+.genre-storage-note {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.genre-add-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(500px, 55%);
+}
+
+.genre-add-form .toolbar-input {
+  min-width: 120px;
+}
+
+.genre-admin-table th:first-child {
+  width: 55%;
+}
+
+.genre-admin-table th:nth-child(2) {
+  width: 20%;
+}
+
+.genre-storage-note {
+  margin-top: 14px;
+}
+
+@media (max-width: 800px) {
+  .genre-management-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .genre-add-form {
+    width: 100%;
+  }
+
+  .genre-admin-table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 520px) {
+  .genre-admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .genre-add-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
