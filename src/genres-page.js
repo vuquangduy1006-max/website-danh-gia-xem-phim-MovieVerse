@@ -1,4 +1,5 @@
 import "./style.css";
+import "./genres-page.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
 import {
   bindAccountActions,
@@ -49,7 +50,7 @@ document.querySelector("#app").innerHTML = `
     rankingCurrent: "",
     headerActions,
   })}
-  <main class="new-page-main">
+  <main class="new-page-main genre-page-main">
     <section class="new-page-intro">
       <div class="container new-page-intro-inner">
         <p class="eyebrow">Khám phá MovieVerse</p>
