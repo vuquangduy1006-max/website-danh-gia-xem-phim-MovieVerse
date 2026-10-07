@@ -17,6 +17,9 @@ export default defineConfig({
         adminComments: fileURLToPath(
           new URL("./admin/comments.html", import.meta.url),
         ),
+        adminGenres: fileURLToPath(
+          new URL("./admin/genres.html", import.meta.url),
+        ),
         newMovies: fileURLToPath(new URL("./new-movies.html", import.meta.url)),
         genres: fileURLToPath(new URL("./genres.html", import.meta.url)),
         reviews: fileURLToPath(new URL("./reviews.html", import.meta.url)),

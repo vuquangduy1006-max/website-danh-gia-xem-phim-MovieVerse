@@ -1,6 +1,6 @@
 import "./style.css";
 import "./reviews-page.css";
-import { getMovieDB, genreList } from "./data/data.js";
+import { getMovieDB, getGenreList } from "./data/data.js";
 import { isAdmin } from "./data/auth.js";
 import {
   addReview,
@@ -112,7 +112,7 @@ movieSelect.innerHTML = movies
   )
   .join("");
 
-const filters = ["Tất cả", ...genreList];
+const filters = ["Tất cả", ...getGenreList()];
 document.querySelector("#reviewFilters").innerHTML = filters
   .map(
     (filter, index) =>

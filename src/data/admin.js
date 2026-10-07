@@ -1,5 +1,10 @@
 import "../admin/admin.css";
-import { getMovieDB, saveMovieDB, genreList, getMovieGenres } from "./data.js";
+import {
+  getMovieDB,
+  saveMovieDB,
+  getGenreList,
+  getMovieGenres,
+} from "./data.js";
 import { isAdmin } from "./auth.js";
 import { deleteReview, loadReviews } from "./reviews.js";
 
@@ -47,6 +52,7 @@ document.querySelector("#app").innerHTML = `
     <nav class="admin-nav" aria-label="Điều hướng quản trị">
       <a href="/" class="back-link">← Trang chủ</a>
       <a class="active" href="/admin/admin.html">Quản lý phim</a>
+      <a href="/admin/genres.html">Thể loại</a>
       <a href="/admin/comments.html">Bình luận</a>
     </nav>
     <div class="header-actions">
@@ -194,15 +200,16 @@ function init() {
 }
 
 function fillGenreSelects() {
+  const genres = getGenreList();
   const filter = document.querySelector("#genreFilter");
   filter.innerHTML = `<option value="all">Tất cả thể loại</option>` +
-    genreList
-      .map((genre) => `<option value="${genre}">${genre}</option>`)
+    genres
+      .map((genre) => `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`)
       .join("");
 
   const field = document.querySelector("#fieldGenre");
-  field.innerHTML = genreList
-    .map((genre) => `<option value="${genre}">${genre}</option>`)
+  field.innerHTML = genres
+    .map((genre) => `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`)
     .join("");
 }
 

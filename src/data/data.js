@@ -20,6 +20,27 @@ export const genreList = [
   "Tokusatsu",
 ];
 
+const GENRE_STORAGE_KEY = "movieverse_genres";
+
+export function getGenreList() {
+  try {
+    const storedGenres = JSON.parse(
+      localStorage.getItem(GENRE_STORAGE_KEY) || "null",
+    );
+    if (
+      Array.isArray(storedGenres) &&
+      storedGenres.every((genre) => typeof genre === "string")
+    ) {
+      return storedGenres;
+    }
+  } catch (_) {}
+  return [...genreList];
+}
+
+export function saveGenreList(genres) {
+  localStorage.setItem(GENRE_STORAGE_KEY, JSON.stringify(genres));
+}
+
 export function getMovieGenres(movie) {
   const genres = Array.isArray(movie?.genre)
     ? movie.genre

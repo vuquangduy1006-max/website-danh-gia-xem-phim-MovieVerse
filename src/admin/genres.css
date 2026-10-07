@@ -1,0 +1,443 @@
+.admin-main:has(.genre-management-panel) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-top: 54px;
+}
+
+.admin-main:has(.genre-management-panel)::before {
+  position: absolute;
+  z-index: -1;
+  top: -220px;
+  left: 50%;
+  width: min(1000px, 100vw);
+  height: 460px;
+  content: "";
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(240, 91, 60, 0.1), transparent 68%);
+}
+
+.admin-main:has(.genre-management-panel) .admin-heading {
+  margin-bottom: 34px;
+}
+
+.admin-main:has(.genre-management-panel) .admin-heading h1 {
+  font-size: clamp(34px, 5vw, 48px);
+  letter-spacing: -2px;
+}
+
+.admin-main:has(.genre-management-panel) .admin-heading p:last-child {
+  max-width: 560px;
+  line-height: 1.7;
+}
+
+.genre-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.genre-admin-stats .stat-card {
+  position: relative;
+  min-height: 136px;
+  overflow: hidden;
+  padding: 20px 22px;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 72%),
+    var(--surface);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.genre-admin-stats .stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(240, 91, 60, 0.34);
+}
+
+.genre-admin-stats .stat-card::after {
+  position: absolute;
+  right: -26px;
+  bottom: -52px;
+  width: 126px;
+  height: 126px;
+  content: "";
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 50%;
+  box-shadow: 0 0 0 16px rgba(255, 255, 255, 0.018);
+  pointer-events: none;
+}
+
+.genre-admin-stats .stat-label {
+  letter-spacing: 1.3px;
+}
+
+.genre-admin-stats .stat-value {
+  margin-top: 12px;
+  font-size: 38px;
+}
+
+.genre-management-panel {
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16);
+}
+
+.genre-management-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 25px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.genre-management-heading h2 {
+  margin: 0;
+  font: 600 22px/1.2 var(--display);
+  letter-spacing: -0.6px;
+}
+
+.genre-management-heading p,
+.genre-storage-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.genre-add-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(500px, 55%);
+}
+
+.genre-add-form .toolbar-input {
+  min-width: 120px;
+  min-height: 44px;
+  border-radius: 7px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.genre-add-form .toolbar-input:focus,
+.genre-management-panel #genreSearch:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240, 91, 60, 0.12);
+}
+
+.genre-add-form .btn {
+  min-height: 44px;
+  justify-content: center;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.genre-management-panel .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.genre-management-panel .panel-toolbar {
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.genre-management-panel #genreSearch {
+  max-width: 400px;
+  min-height: 42px;
+  border-radius: 7px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.genre-admin-table {
+  table-layout: fixed;
+}
+
+.genre-admin-table th:first-child {
+  width: 55%;
+}
+
+.genre-admin-table th:nth-child(2) {
+  width: 20%;
+}
+
+.genre-admin-table thead th {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.genre-admin-table tbody td {
+  height: 68px;
+}
+
+.genre-admin-table tbody tr {
+  transition: background 160ms ease;
+}
+
+.genre-admin-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.genre-admin-table .badge.genre {
+  padding: 6px 12px;
+  border: 1px solid rgba(240, 91, 60, 0.12);
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.genre-admin-table td:nth-child(2) {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.genre-admin-table .row-actions {
+  gap: 8px;
+}
+
+.genre-admin-table .btn {
+  border-radius: 6px;
+}
+
+.genre-storage-note {
+  margin-top: 14px;
+  padding-left: 2px;
+  font-size: 12px;
+}
+
+.admin-main:has(.genre-management-panel) ~ .admin-footer {
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .genre-management-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .genre-add-form {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  body:has(.genre-management-panel) .admin-header {
+    height: auto;
+  }
+
+  body:has(.genre-management-panel) .header-inner {
+    height: auto;
+    min-height: 64px;
+    flex-wrap: wrap;
+    gap: 0 18px;
+    padding-bottom: 8px;
+  }
+
+  body:has(.genre-management-panel) .admin-nav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    gap: 14px;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  body:has(.genre-management-panel) .admin-nav a {
+    flex: 0 0 auto;
+    padding: 12px 0 8px;
+    white-space: nowrap;
+  }
+
+  .admin-main:has(.genre-management-panel) {
+    padding-top: 34px;
+  }
+
+  .genre-admin-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .genre-admin-stats .stat-card {
+    min-height: 120px;
+    padding: 15px 13px;
+  }
+
+  .genre-admin-stats .stat-label {
+    min-height: 32px;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .genre-admin-stats .stat-value {
+    font-size: 31px;
+  }
+
+  .genre-admin-stats .stat-sub {
+    font-size: 10px;
+  }
+
+  .genre-management-heading {
+    padding: 20px 16px;
+  }
+
+  .genre-management-panel .panel-toolbar {
+    padding: 12px 16px;
+  }
+
+  .genre-management-panel #genreSearch {
+    max-width: none;
+  }
+
+  .genre-management-panel .table-wrap {
+    overflow: visible;
+  }
+
+  .genre-admin-table,
+  .genre-admin-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .genre-admin-table thead {
+    display: none;
+  }
+
+  .genre-admin-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 5px 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .genre-admin-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .genre-admin-table tbody td {
+    width: auto;
+    height: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .genre-admin-table tbody td:first-child {
+    grid-column: 1;
+  }
+
+  .genre-admin-table tbody td:nth-child(2) {
+    grid-column: 1;
+    font-size: 12px;
+  }
+
+  .genre-admin-table tbody td:nth-child(2)::before {
+    content: "Phim: ";
+    color: var(--muted);
+  }
+
+  .genre-admin-table tbody td:last-child {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .genre-admin-table .row-actions {
+    flex-wrap: wrap;
+  }
+
+  .genre-admin-table .btn {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+
+  .genre-storage-note {
+    padding: 0 2px;
+  }
+}
+
+@media (max-width: 420px) {
+  .genre-admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 520px) {
+    .genre-admin-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .genre-admin-stats .stat-card:last-child {
+      grid-column: 1 / -1;
+    }
+
+    body:has(.genre-management-panel) .header-inner {
+      gap: 0 10px;
+    }
+
+    body:has(.genre-management-panel) .brand {
+      gap: 7px;
+      font-size: 18px;
+    }
+
+    body:has(.genre-management-panel) .header-actions {
+      gap: 8px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .genre-admin-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .genre-admin-stats .stat-card:last-child {
+      grid-column: auto;
+    }
+  }
+
+  .genre-admin-stats .stat-card {
+    min-height: 0;
+    padding: 15px 18px;
+  }
+
+  .genre-admin-stats .stat-label {
+    min-height: 0;
+  }
+
+  .genre-admin-stats .stat-value {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 29px;
+  }
+
+  .genre-admin-stats .stat-sub {
+    display: inline-block;
+  }
+
+  .genre-add-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .genre-add-form .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genre-admin-stats .stat-card,
+  .genre-admin-table tbody tr,
+  .genre-add-form .toolbar-input,
+  .genre-management-panel #genreSearch {
+    transition: none;
+  }
+}
