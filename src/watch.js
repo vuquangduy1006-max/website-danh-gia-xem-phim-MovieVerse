@@ -12,6 +12,7 @@ import {
   loadFavorites,
   toggleFavorite as toggleFavoriteStorage,
 } from "./data/favorites.js";
+import { addToWatchHistory } from "./data/history.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 const PROGRESS_KEY = "movieverse_watch_progress";
@@ -59,10 +60,20 @@ function renderNotFound() {
 }
 
 function renderWatchPage(current) {
+  addToWatchHistory(current.id, {
+    title: current.title,
+    poster: current.poster,
+    year: current.year,
+    genre: current.genre,
+  });
+
   const sources = getWatchSources(current);
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
-  const episodeCount = current.id === "n19" ? 49 : 1;
+  const rawEpisodeCount = Number(current.episodeCount ?? 0);
+  const episodeCount = Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
+    ? Math.max(rawEpisodeCount, 1)
+    : current.id === "n19" ? 49 : 1;
   const requestedEpisode = Number(params.get("episode"));
   let activeEpisode = Number.isInteger(requestedEpisode)
     ? Math.min(Math.max(requestedEpisode, 1), episodeCount)
@@ -270,7 +281,26 @@ function renderWatchPage(current) {
     </footer>
 
     <div class="detail-toast" id="watchToast" role="status" aria-live="polite"></div>
+
+    <div class="modal" id="nextEpisodeOverlay" aria-hidden="true">
+      <div class="next-episode-card" role="dialog" aria-modal="true" aria-labelledby="nextEpisodeTitle">
+        <button type="button" class="modal-close" data-close-next-episode aria-label="Đóng">×</button>
+        <div class="next-episode-icon">⏭</div>
+        <p class="eyebrow">Chuyển tập</p>
+        <h3 id="nextEpisodeTitle">Tiếp tục xem tập tiếp theo?</h3>
+        <p id="nextEpisodeText">Bạn đang ở tập <strong id="nextEpisodeCurrent">1</strong>. Chuyển sang tập <strong id="nextEpisodeTarget">2</strong> ngay bây giờ?</p>
+        <div class="next-episode-actions">
+          <button type="button" class="tb-btn tb-btn-ghost" data-close-next-episode>Ở lại</button>
+          <button type="button" class="tb-btn" data-confirm-next-episode>Chuyển tập</button>
+        </div>
+      </div>
+    </div>
   `;
+
+  const playerShell = document.querySelector("#playerShell");
+  const nextEpisodeOverlay = document.querySelector("#nextEpisodeOverlay");
+  nextEpisodeOverlay.classList.add("next-episode-overlay");
+  playerShell.append(nextEpisodeOverlay);
 
   const stage = document.querySelector("#playerStage");
   const emptyBox = document.querySelector("#playerEmpty");
@@ -463,20 +493,75 @@ function renderWatchPage(current) {
     }).join("");
   }
 
+  function goToEpisode(nextEpisode, options = {}) {
+    const target = Number.isFinite(nextEpisode)
+      ? Math.min(Math.max(Number(nextEpisode), 1), episodeCount)
+      : activeEpisode;
+
+    if (target === activeEpisode && !options.force) return;
+    activeEpisode = target;
+    document.querySelectorAll(".episode-btn").forEach((episodeButton) => {
+      const isActive = Number(episodeButton.dataset.episode) === activeEpisode;
+      episodeButton.classList.toggle("is-current", isActive);
+      episodeButton.setAttribute("aria-pressed", String(isActive));
+    });
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("episode", String(activeEpisode));
+    window.history.replaceState({}, "", nextUrl);
+
+    if (episodeCount > 1) {
+      showToast(
+        options.autoNext
+          ? `Đã tự chuyển sang tập ${activeEpisode}.`
+          : `Đã chọn ${episodeCount === 1 ? "phim lẻ" : `tập ${activeEpisode}`}. Video tập chưa được cập nhật.`,
+      );
+    }
+  }
+
   function bindEpisodes() {
     document.querySelector("#episodeList").addEventListener("click", (event) => {
       const button = event.target.closest("[data-episode]");
       if (!button) return;
-      activeEpisode = Number(button.dataset.episode);
-      document.querySelectorAll(".episode-btn").forEach((episodeButton) => {
-        const isActive = Number(episodeButton.dataset.episode) === activeEpisode;
-        episodeButton.classList.toggle("is-current", isActive);
-        episodeButton.setAttribute("aria-pressed", String(isActive));
+      goToEpisode(Number(button.dataset.episode));
+    });
+  }
+
+  function confirmNextEpisode() {
+    if (episodeCount <= 1 || activeEpisode >= episodeCount) return Promise.resolve(false);
+
+    const overlay = document.querySelector("#nextEpisodeOverlay");
+    const current = document.querySelector("#nextEpisodeCurrent");
+    const target = document.querySelector("#nextEpisodeTarget");
+    const confirmButton = document.querySelector("[data-confirm-next-episode]");
+    const cancelButtons = document.querySelectorAll("[data-close-next-episode]");
+
+    current.textContent = String(activeEpisode);
+    target.textContent = String(activeEpisode + 1);
+
+    return new Promise((resolve) => {
+      const close = () => {
+        overlay.classList.remove("open");
+        overlay.setAttribute("aria-hidden", "true");
+        confirmButton.onclick = null;
+        cancelButtons.forEach((button) => {
+          button.onclick = null;
+        });
+      };
+
+      confirmButton.onclick = () => {
+        close();
+        resolve(true);
+      };
+
+      cancelButtons.forEach((button) => {
+        button.onclick = () => {
+          close();
+          resolve(false);
+        };
       });
-      const nextUrl = new URL(window.location.href);
-      nextUrl.searchParams.set("episode", String(activeEpisode));
-      window.history.replaceState({}, "", nextUrl);
-      showToast(`Đã chọn ${episodeCount === 1 ? "phim lẻ" : `tập ${activeEpisode}`}. Video tập chưa được cập nhật.`);
+
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
     });
   }
 
@@ -669,6 +754,15 @@ function renderWatchPage(current) {
     } else if (event.data === states.PAUSED || event.data === states.ENDED) {
       setPlayIcon(false);
       stopYouTubeTicker(player);
+      if (event.data === states.ENDED && episodeCount > 1 && activeEpisode < episodeCount) {
+        confirmNextEpisode().then((shouldContinue) => {
+          if (!shouldContinue) return;
+          const nextEpisode = activeEpisode + 1;
+          goToEpisode(nextEpisode, { autoNext: true });
+          backend.seekTo(0);
+          backend.play();
+        });
+      }
     }
   }
 
@@ -794,6 +888,17 @@ function renderWatchPage(current) {
     });
     media.addEventListener("play", () => setPlayIcon(true));
     media.addEventListener("pause", () => setPlayIcon(false));
+    media.addEventListener("ended", () => {
+      if (episodeCount > 1 && activeEpisode < episodeCount) {
+        confirmNextEpisode().then((shouldContinue) => {
+          if (!shouldContinue) return;
+          const nextEpisode = activeEpisode + 1;
+          goToEpisode(nextEpisode, { autoNext: true });
+          backend.seekTo(0);
+          backend.play();
+        });
+      }
+    });
 
     media.addEventListener("error", () => {
       spinner.hidden = true;

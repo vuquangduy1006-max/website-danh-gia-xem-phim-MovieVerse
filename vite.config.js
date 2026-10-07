@@ -17,6 +17,7 @@ export default defineConfig({
         reviews: fileURLToPath(new URL("./reviews.html", import.meta.url)),
         ranking: fileURLToPath(new URL("./ranking.html", import.meta.url)),
         favorites: fileURLToPath(new URL("./favorites.html", import.meta.url)),
+        history: fileURLToPath(new URL("./history.html", import.meta.url)),
         movieDetail: fileURLToPath(
           new URL("./movie-detail.html", import.meta.url),
         ),
