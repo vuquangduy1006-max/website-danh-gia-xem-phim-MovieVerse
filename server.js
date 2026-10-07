@@ -163,6 +163,14 @@ function sendJson(response, status, payload) {
   response.end(JSON.stringify(payload));
 }
 
+function sendCatalogFallback(response, question, catalog, notice) {
+  sendJson(response, 200, {
+    answer: answerFromCatalog(question, catalog),
+    mode: "catalog",
+    notice,
+  });
+}
+
 function isRateLimited(ip) {
   const now = Date.now();
   const current = requestsByIp.get(ip);
@@ -206,6 +214,8 @@ const server = createServer(async (request, response) => {
     });
     return;
   }
+  let fallbackQuestion = "";
+  let catalog = [];
   try {
     const body = await readJson(request);
     if (!Array.isArray(body.messages) || !Array.isArray(body.movies)) {
@@ -228,8 +238,9 @@ const server = createServer(async (request, response) => {
       sendJson(response, 400, { error: "Hãy gửi một câu hỏi trước nhé." });
       return;
     }
+    fallbackQuestion = messages.at(-1).content;
 
-    const catalog = body.movies
+    catalog = body.movies
       .slice(0, 100)
       .map((movie) => ({
         id: String(movie?.id ?? "").slice(0, 60),
@@ -242,10 +253,12 @@ const server = createServer(async (request, response) => {
       .filter((movie) => movie.id && movie.title);
 
     if (!apiKey) {
-      sendJson(response, 200, {
-        answer: answerFromCatalog(messages.at(-1).content, catalog),
-        mode: "catalog",
-      });
+      sendCatalogFallback(
+        response,
+        messages.at(-1).content,
+        catalog,
+        "AI chưa được cấu hình. Hãy thêm AI_API_KEY hợp lệ vào file .env rồi khởi động lại máy chủ API.",
+      );
       return;
     }
 
@@ -267,17 +280,41 @@ const server = createServer(async (request, response) => {
     });
 
     if (!upstream.ok) {
-      sendJson(response, 200, {
-        answer: answerFromCatalog(messages.at(-1).content, catalog),
-        mode: "catalog",
-      });
+      const notice =
+        upstream.status === 401 || upstream.status === 403
+          ? "Nhà cung cấp AI từ chối khóa API. Hãy cập nhật AI_API_KEY hợp lệ trong file .env rồi khởi động lại máy chủ API."
+          : upstream.status === 429
+            ? "Nhà cung cấp AI đang giới hạn yêu cầu hoặc đã hết hạn mức. Câu trả lời dưới đây dùng danh mục phim nội bộ."
+            : `Nhà cung cấp AI phản hồi lỗi HTTP ${upstream.status}. Câu trả lời dưới đây dùng danh mục phim nội bộ.`;
+      sendCatalogFallback(
+        response,
+        messages.at(-1).content,
+        catalog,
+        notice,
+      );
       return;
     }
 
-    const result = await upstream.json();
+    let result;
+    try {
+      result = await upstream.json();
+    } catch {
+      sendCatalogFallback(
+        response,
+        messages.at(-1).content,
+        catalog,
+        "Nhà cung cấp AI trả về dữ liệu rỗng hoặc không đúng định dạng. Câu trả lời dưới đây dùng danh mục phim nội bộ.",
+      );
+      return;
+    }
     const answer = result.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {
-      sendJson(response, 502, { error: "AI trả về câu trả lời không hợp lệ." });
+      sendCatalogFallback(
+        response,
+        messages.at(-1).content,
+        catalog,
+        "Nhà cung cấp AI không trả về câu trả lời hợp lệ. Câu trả lời dưới đây dùng danh mục phim nội bộ.",
+      );
       return;
     }
     sendJson(response, 200, { answer: answer.trim() });
@@ -285,20 +322,20 @@ const server = createServer(async (request, response) => {
     const isBadInput =
       error instanceof SyntaxError ||
       error.message === "Request body is too large";
-    sendJson(
+    if (!isBadInput) {
+      console.warn("AI provider request failed; using catalog fallback.");
+    }
+    if (isBadInput) {
+      sendJson(response, 400, {
+        error: "Dữ liệu gửi lên không hợp lệ hoặc quá lớn.",
+      });
+      return;
+    }
+    sendCatalogFallback(
       response,
-      isBadInput ? 400 : 200,
-      isBadInput
-        ? {
-            error: isBadInput
-              ? "Dữ liệu gửi lên không hợp lệ hoặc quá lớn."
-              : "Không thể kết nối trợ lý lúc này. Vui lòng thử lại.",
-          }
-        : {
-            answer:
-              "Mình đang gặp trục trặc kết nối AI. Bạn vẫn có thể hỏi mình để tìm phim trong danh mục hiện có.",
-            mode: "catalog",
-          },
+      fallbackQuestion,
+      catalog,
+      "Không kết nối được với nhà cung cấp AI. Câu trả lời dưới đây dùng danh mục phim nội bộ.",
     );
   }
 });

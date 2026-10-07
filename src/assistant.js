@@ -132,16 +132,35 @@ export function initMovieAssistant(movies) {
           })),
         }),
       });
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          response.ok
+            ? "Máy chủ trợ lý trả về phản hồi rỗng hoặc không đúng định dạng."
+            : `Không kết nối được máy chủ trợ lý (HTTP ${response.status}). Hãy kiểm tra máy chủ API đang chạy.`,
+        );
+      }
       if (!response.ok)
-        throw new Error(result.error || "Trợ lý chưa thể trả lời.");
+        throw new Error(result?.error || "Trợ lý chưa thể trả lời.");
+      if (typeof result?.answer !== "string" || !result.answer.trim()) {
+        throw new Error("Máy chủ trợ lý chưa trả về câu trả lời hợp lệ.");
+      }
       renderAnswer(pendingMessage, result.answer);
+      if (typeof result.notice === "string" && result.notice) {
+        const notice = document.createElement("span");
+        notice.className = "assistant-message-notice";
+        notice.textContent = result.notice;
+        pendingMessage.append(notice);
+      }
       pendingMessage.classList.remove("assistant-message-pending");
       conversation.push({ role: "assistant", content: result.answer });
     } catch (error) {
-      pendingMessage.textContent = error.message.includes("Failed to fetch")
-        ? "Chưa kết nối được máy chủ trợ lý. Hãy kiểm tra máy chủ API đang chạy."
-        : error.message;
+      pendingMessage.textContent =
+        error instanceof TypeError && error.message.includes("fetch")
+          ? "Chưa kết nối được máy chủ trợ lý. Hãy kiểm tra máy chủ API đang chạy."
+          : error.message;
       pendingMessage.classList.add("assistant-message-error");
       pendingMessage.classList.remove("assistant-message-pending");
     } finally {

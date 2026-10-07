@@ -138,6 +138,14 @@
   border-color: rgba(240, 91, 60, 0.35);
   color: #ff9b85;
 }
+.assistant-message-notice {
+  display: block;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(240, 91, 60, 0.24);
+  color: #ffad98;
+  font-size: 11px;
+}
 .assistant-movie-link {
   color: #ff907a;
   text-decoration-color: rgba(255, 144, 122, 0.55);
