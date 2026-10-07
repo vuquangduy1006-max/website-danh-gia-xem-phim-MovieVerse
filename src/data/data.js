@@ -278,6 +278,202 @@ export const movieSeed = [
     backdrop: "https://i.redd.it/96mkpqpb9wsa1.jpg",
     description:
       "Nhà vật lý thiên tài Sento Kiryu biến thân thành Kamen Rider Build, chiến đấu chống lại Smash và khám phá bí mật của chiếc hộp Pandora.",
+    episodeCount: 49,
+  },
+  {
+    id: "n20",
+    title: "One Piece",
+    year: "2023",
+    genre: "Hành động, Phiêu lưu, Hài, Gia đình, Giả tưởng",
+    rating: "8.8",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/9/90/One_Piece_2023_series_poster.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1800&q=85",
+    description:
+      "Luffy và băng hải tặc Mũ Rơm khởi hành trên hành trình tìm kho báu, đối đầu với thế giới rộng lớn và những kẻ mạnh nhất.",
+    episodeCount: 24,
+  },
+  {
+    id: "n21",
+    title: "Spy x Family",
+    year: "2022",
+    genre: "Hài, Hành động, Tình cảm, Gia đình, Giả tưởng",
+    rating: "8.6",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/8/8f/Spy_x_Family_key_visual.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
+    description:
+      "Một điệp viên, một sát thủ và một phù thủy chuyên giả tạo ra một gia đình giả tưởng nhưng đầy bất ngờ và yếu mềm.",
+    episodeCount: 12,
+  },
+  {
+    id: "n22",
+    title: "Attack on Titan",
+    year: "2013",
+    genre: "Hành động, Chính kịch, Khoa học viễn tưởng, Tâm lý, Chiến tranh",
+    rating: "9.1",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/d/d6/Shingeki_no_Kyojin_manga_volume_1.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1518770660439-463ac1d4f9fa?w=1800&q=85",
+    description:
+      "Eren và bạn bè sống trong thành phố rào chắn khi cuộc chiến chống lại khổng lồ mang đến câu hỏi về tự do, chiến tranh và tiền định.",
+    episodeCount: 16,
+  },
+  {
+    id: "n23",
+    title: "Naruto",
+    year: "2002",
+    genre: "Hành động, Phiêu lưu, Hài, Gia đình, Tâm lý",
+    rating: "8.7",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/9/94/NarutoCoverTankobon1.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=1800&q=85",
+    description:
+      "Naruto bước qua nhiều thử thách để chứng minh bản thân và bảo vệ những người mình yêu thương trong thế giới ninja.",
+    episodeCount: 20,
+  },
+  {
+    id: "n24",
+    title: "Dragon Ball Z",
+    year: "1989",
+    genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Huyền bí",
+    rating: "8.9",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/7/74/DBZ_DVD_cover_1.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=1800&q=85",
+    description:
+      "Goku và các chiến binh Z rèn luyện, chiến đấu và bảo vệ Trái Đất trước các thế lực siêu mạnh từ vũ trụ.",
+    episodeCount: 18,
+  },
+  {
+    id: "n25",
+    title: "Bleach",
+    year: "2004",
+    genre: "Hành động, Giả tưởng, Hài, Tâm lý, Tokusatsu",
+    rating: "8.2",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/9/94/Bleach_01.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?w=1800&q=85",
+    description:
+      "Ichigo trở thành Soul Reaper và đối đầu với linh hồn, quỷ và những bí mật đen tối của thế giới siêu nhiên.",
+    episodeCount: 17,
+  },
+  {
+    id: "n26",
+    title: "Black Clover",
+    year: "2017",
+    genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Giả tưởng",
+    rating: "8.1",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/3/35/Black_Clover_Volume_1.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1800&q=85",
+    description:
+      "Asta và Yuno cùng nhau chiến đấu để vươn tới đỉnh cao của giấc mơ trở thành pháp sư tối thượng.",
+    episodeCount: 15,
+  },
+  {
+    id: "n27",
+    title: "Fullmetal Alchemist: Brotherhood",
+    year: "2009",
+    genre: "Hành động, Hài, Phiêu aventure, Giả tưởng, Chính kịch",
+    rating: "9.1",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/2/2b/Fullmetal-Alchemist-Brotherhood.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
+    description:
+      "Hai anh em Elric đi tìm kiếm phép thuật và sự thật đằng sau sự mất mát trong một thế giới đầy hiểm nguy.",
+    episodeCount: 19,
+  },
+  {
+    id: "n28",
+    title: "Doraemon",
+    year: "1979",
+    genre: "Hài, Gia đình, Phiêu lưu, Hoạt hình",
+    rating: "8.4",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/3/3a/Doraemon_character.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=1800&q=85",
+    description:
+      "Nobita và những cuộc phiêu lưu kỳ dị với chiếc máy móc từ tương lai khiến mọi ngày đều chứa đựng niềm vui và cảm hứng.",
+    episodeCount: 14,
+  },
+  {
+    id: "n29",
+    title: "Fairy Tail",
+    year: "2009",
+    genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Gia đình",
+    rating: "8.3",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/b/b9/Fairy_Tail_Volume_1.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1800&q=85",
+    description:
+      "Natsu và đồng đội của Guild Fairy Tail trải qua những trận chiến lớn để bảo vệ bạn bè và khôi phục niềm tin.",
+    episodeCount: 18,
+  },
+  {
+    id: "n30",
+    title: "My Hero Academia",
+    year: "2016",
+    genre: "Hành động, Hài, Siêu anh hùng, Phiêu lưu, Tâm lý",
+    rating: "8.5",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/4/42/My_Hero_Academia_Volume_1_cover.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1521985429101-21bed8b75e47?w=1800&q=85",
+    description:
+      "Izuku Midoriya bước vào trường Hero Academy để trở thành siêu anh hùng và kiếm chỗ đứng giữa những người mạnh nhất.",
+    episodeCount: 16,
+  },
+  {
+    id: "n31",
+    title: "Hunter x Hunter",
+    year: "2011",
+    genre: "Hành động, Phiêu lưu, Tâm lý, Hài, Giả tưởng",
+    rating: "9.0",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/8/8a/Hunter_x_Hunter_cover_-_vol._1.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=1800&q=85",
+    description:
+      "Gon cống hiến cả cuộc đời để tìm cha mình và vượt qua những thử thách khó nhằn trên hành trình trở thành Hunter.",
+    episodeCount: 20,
+  },
+  {
+    id: "n32",
+    title: "Blue Lock",
+    year: "2022",
+    genre: "Thể thao, Hành động, Tâm lý, Chiến tranh",
+    rating: "8.3",
+    isNew: true,
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/4/4d/Blue_Lock_manga_volume_1_cover.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1800&q=85",
+    description:
+      "Những cầu thủ trẻ tranh nhau trong khuôn khổ Blue Lock để biến thành tiền đạo hàng đầu của đội tuyển quốc gia.",
+    episodeCount: 12,
   },
 ];
 
@@ -299,6 +495,19 @@ const addedSeedMovieIds = new Set([
   "n17",
   "n18",
   "n19",
+  "n20",
+  "n21",
+  "n22",
+  "n23",
+  "n24",
+  "n25",
+  "n26",
+  "n27",
+  "n28",
+  "n29",
+  "n30",
+  "n31",
+  "n32",
 ]);
 const removedSeedMovieIds = new Set([
   "m2",
