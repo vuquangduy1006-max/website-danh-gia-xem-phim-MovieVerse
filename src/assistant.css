@@ -138,6 +138,15 @@
   border-color: rgba(240, 91, 60, 0.35);
   color: #ff9b85;
 }
+.assistant-movie-link {
+  color: #ff907a;
+  text-decoration-color: rgba(255, 144, 122, 0.55);
+  text-underline-offset: 2px;
+}
+.assistant-movie-link:hover,
+.assistant-movie-link:focus-visible {
+  color: #ffb09e;
+}
 .assistant-prompts {
   display: flex;
   gap: 7px;
