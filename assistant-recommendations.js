@@ -39,8 +39,15 @@ const MOOD_RULES = [
       "buon ba",
       "co don",
       "tam trang xuong",
-      "khong vui",
       "chan nan",
+      "thay minh vo dung",
+      "bi bo lai",
+      "moi chia tay",
+      "cai nhau voi ban",
+      "mau thuan voi nguoi than",
+      "bi phan boi",
+      "tim nang triu",
+      "khong vui",
       "tui than",
       "muon khoc",
       "can mot bo phim buon",
@@ -66,6 +73,10 @@ const MOOD_RULES = [
       "bi bo roi",
       "bi ghost",
       "sad day",
+      "feeling blue",
+      "down in the dumps",
+      "miss my ex",
+      "feeling rejected",
       "gloomy",
       "empty inside",
       "feeling empty",
@@ -82,6 +93,7 @@ const MOOD_RULES = [
       "rejected",
     ],
     genres: ["Tâm lý", "Tình cảm", "Chính kịch"],
+    goalTerms: ["phim buon", "cau chuyen buon", "muon khoc", "can khoc"],
     contentTerms: [
       "ban thoi tho au",
       "gap lai",
@@ -125,7 +137,9 @@ const MOOD_RULES = [
       "muon co nguoi lang nghe",
       "qua tai",
       "het pin",
-      "buc minh",
+      "can xa hoi",
+      "muon o mot minh",
+      "muon tam dung",
       "burnt out",
       "stressful day",
       "lo lang",
@@ -142,10 +156,21 @@ const MOOD_RULES = [
       "rough day",
       "rough week",
       "bad day",
+      "bad mood",
       "just need a hug",
       "need a hug",
     ],
     genres: ["Hoạt hình", "Gia đình", "Hài", "Tình cảm"],
+    goalTerms: [
+      "an ui",
+      "vo ve",
+      "binh tam",
+      "nhe long",
+      "de chiu",
+      "am ap",
+      "feel good",
+      "uplifting",
+    ],
     contentTerms: [
       "am ap",
       "tinh ban",
@@ -156,6 +181,123 @@ const MOOD_RULES = [
       "vui",
     ],
     reason: "nhẹ nhàng, ấm áp để bạn thư giãn",
+  },
+  {
+    name: "đang tức giận, muốn xả năng lượng",
+    terms: [
+      "tuc gian",
+      "tuc toi",
+      "tuc dien",
+      "buc tuc",
+      "buc minh",
+      "cay",
+      "cay cu",
+      "cuc qua",
+      "cay cu",
+      "bi choi xau",
+      "dong nghiep choi xau",
+      "bi lua",
+      "vua bi mang",
+      "muon xa gian",
+      "xa stress",
+      "muon dap pha",
+      "muon xa cang thang",
+      "angry",
+      "furious",
+      "frustrated",
+    ],
+    genres: ["Hành động", "Tội phạm", "Phiêu lưu"],
+    goalTerms: [
+      "xa gian",
+      "xa stress",
+      "xa nang luong",
+      "manh me",
+      "hanh dong",
+      "phim cuon",
+    ],
+    contentTerms: [
+      "chay dua",
+      "duong dua",
+      "doi dau",
+      "chien dau",
+      "bao ve",
+      "tra thu",
+      "dau truong",
+    ],
+    reason: "nhịp phim mạnh mẽ để giải tỏa năng lượng",
+  },
+  {
+    name: "đang lo lắng, muốn bình tâm",
+    terms: [
+      "hoi hop vi",
+      "lo ngay mai",
+      "lo cho ky thi",
+      "sap thi",
+      "mai thi",
+      "so phong van",
+      "lo phong van",
+      "bat an",
+      "cuon len",
+      "ap luc thi cu",
+      "sap den han",
+      "deadline",
+      "so truot",
+      "khong ngu duoc vi lo",
+      "anxious",
+      "nervous",
+      "worried",
+    ],
+    genres: ["Hoạt hình", "Gia đình", "Tình cảm"],
+    goalTerms: [
+      "binh yen",
+      "binh tam",
+      "nhe nhang",
+      "thu gian",
+      "de ngu",
+      "calm",
+      "relax",
+    ],
+    contentTerms: [
+      "am ap",
+      "ven bien",
+      "mau sac",
+      "cham soc",
+      "tinh ban",
+      "cuoc song moi",
+    ],
+    reason: "không khí nhẹ nhàng để bạn bình tâm và thư giãn",
+  },
+  {
+    name: "đang vui, muốn ăn mừng",
+    terms: [
+      "vua dat duoc",
+      "vua tot nghiep",
+      "thi dau xong",
+      "vua thi xong",
+      "vua nop xong",
+      "xong deadline",
+      "duoc thang chuc",
+      "duoc nhan viec",
+      "vua ket hon",
+      "hom nay sinh nhat",
+      "muon an mung",
+      "hom nay la ngay dac biet",
+      "cuoi cung cung xong",
+      "co tin vui",
+      "just got promoted",
+      "got the job",
+      "celebrating",
+    ],
+    genres: ["Hài", "Hoạt hình", "Phiêu lưu"],
+    goalTerms: ["an mung", "chien thang", "vui", "dat duoc"],
+    contentTerms: [
+      "hon loan",
+      "phieu luu",
+      "the gioi ky dieu",
+      "mau sac",
+      "gia dinh",
+    ],
+    reason: "không khí vui tươi, hợp để ăn mừng",
   },
   {
     name: "muốn vui vẻ, giải trí",
@@ -189,6 +331,14 @@ const MOOD_RULES = [
       "need a laugh",
     ],
     genres: ["Hài", "Hoạt hình"],
+    goalTerms: [
+      "cuoi",
+      "vui",
+      "hai",
+      "giai tri",
+      "feel good",
+      "phim vui",
+    ],
     contentTerms: [
       "hai huoc",
       "hai huoc",
@@ -256,6 +406,10 @@ const MOOD_RULES = [
     name: "muốn tìm cảm hứng, hy vọng",
     terms: [
       "can dong luc",
+      "cam thay vo dung",
+      "khong con dong luc",
+      "khong thay loi thoat",
+      "khong biet lam gi tiep",
       "muon co dong luc",
       "truyen cam hung",
       "hy vong",
@@ -505,6 +659,11 @@ export function answerFromCatalog(question, catalog) {
   const query = normalizeAssistantText(question);
   const genres = requestedGenres(query);
   const moods = requestedMoods(query);
+  const targetMoods = moods.filter((mood) =>
+    (mood.goalTerms ?? []).some((term) =>
+      matchesRequestedTerm(query, term),
+    ),
+  );
   const filters = recommendationFilters(query);
 
   if (/(xin chao|chao ban|hello|\bhi\b)/.test(query)) {
@@ -527,16 +686,22 @@ export function answerFromCatalog(question, catalog) {
           const genreMatch = mood.genres.some((genre) =>
             movie.genres.includes(genre),
           );
+          const goalMatch = (mood.goalTerms ?? []).some((term) =>
+            matchesRequestedTerm(query, term),
+          );
+          const relevanceScore = contentMatchCount
+            ? 2 + contentMatchCount + Number(genreMatch)
+            : genreMatch
+              ? 0.25
+              : 0;
           return {
             mood,
-            score: contentMatchCount
-              ? 2 + contentMatchCount + Number(genreMatch)
-              : genreMatch
-                ? 0.25
-                : 0,
+            relevanceScore,
+            score: relevanceScore + Number(goalMatch) * 8,
           };
         })
-        .filter((match) => match.score > 0),
+        .filter((match) => match.relevanceScore > 0)
+        .sort((first, second) => second.score - first.score),
       moodScore: 0,
     }));
   for (const movie of movies) {
@@ -549,6 +714,12 @@ export function answerFromCatalog(question, catalog) {
     const year = Number(movie.year);
     const rating = Number(movie.rating);
     if (genres.length && !movie.matchingGenres.length) return false;
+    if (
+      targetMoods.length &&
+      !movie.matchingMoods.some((match) => targetMoods.includes(match.mood))
+    ) {
+      return false;
+    }
     if (moods.length && !genres.length && !movie.matchingMoods.length) {
       return false;
     }
@@ -586,9 +757,11 @@ export function answerFromCatalog(question, catalog) {
   }
 
   requestedMovies.sort((first, second) => {
-    const genreDifference =
-      second.matchingGenres.length - first.matchingGenres.length;
-    if (genreDifference) return genreDifference;
+    if (genres.length) {
+      const genreDifference =
+        second.matchingGenres.length - first.matchingGenres.length;
+      if (genreDifference) return genreDifference;
+    }
 
     const moodDifference = second.moodScore - first.moodScore;
     if (moodDifference) return moodDifference;

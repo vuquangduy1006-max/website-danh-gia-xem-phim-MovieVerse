@@ -217,3 +217,74 @@ test("understands feeling empty and left out as a need for an empathetic story",
   assert.match(answer, /Past Lives/);
   assert.match(answer, /đồng cảm/);
 });
+
+test("understands anger after being treated unfairly and selects an energetic genre", () => {
+  const question =
+    "Đồng nghiệp chơi xấu làm mình bực tức quá, muốn xem gì mạnh mẽ để xả giận.";
+  const realCatalog = movieSeed.map((movie) => ({
+    ...movie,
+    genre: getMovieGenres(movie).join(", "),
+  }));
+  const answer = answerFromCatalog(question, realCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Dune: Part Two|F1/);
+  assert.match(answer, /hành động/);
+  assert.match(answer, /giải tỏa năng lượng/);
+});
+
+test("understands exam anxiety and recommends a calm, comforting movie", () => {
+  const question =
+    "Mai mình thi rồi lo quá, không ngủ được, muốn xem gì bình yên cho đỡ căng.";
+  const answer = answerFromCatalog(question, moodCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Kiki’s Delivery/);
+  assert.match(answer, /bình tâm|ấm áp|thư giãn/);
+});
+
+test("understands a low mood and explicitly requested humor as a mood-lifting target", () => {
+  const question =
+    "Mình hơi buồn nhưng không muốn phim buồn, kiếm gì vui vui để cười lên đi.";
+  const answer = answerFromCatalog(question, moodCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Kiki’s Delivery/);
+  assert.match(answer, /vui vẻ, giải trí/);
+});
+
+test("prioritizes the requested cheering-up mood over the user's initial sadness", () => {
+  const question =
+    "Mình hơi buồn nhưng không muốn phim buồn, kiếm gì vui vui để cười lên đi.";
+  const answer = answerFromCatalog(question, [
+    catalog[1],
+    ...moodCatalog,
+  ]);
+
+  assert.match(answer, /Kiki’s Delivery/);
+  assert.match(answer, /vui vẻ, giải trí/);
+  assert.doesNotMatch(answer, /Past Lives/);
+});
+
+test("understands a spontaneous celebration and recommends a feel-good movie", () => {
+  const question =
+    "Cuối cùng mình cũng đậu phỏng vấn rồi, tối nay muốn ăn mừng bằng phim gì vui vui nhỉ?";
+  const answer = answerFromCatalog(question, moodCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Kiki’s Delivery/);
+  assert.match(answer, /không khí vui tươi/);
+});
+
+test("understands relationship conflict and recommends an emotionally relatable movie", () => {
+  const question =
+    "Vừa cãi nhau với bạn thân, lòng nặng trĩu, mình cần một phim thật đồng cảm.";
+  const answer = answerFromCatalog(question, [
+    catalog[1],
+    ...moodCatalog,
+  ]);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Past Lives/);
+  assert.match(answer, /đồng cảm/);
+});

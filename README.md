@@ -8,6 +8,8 @@ Trợ lý có thể lọc gợi ý theo thể loại, thời lượng mong muố
 
 Trợ lý cũng nhận biết các tâm trạng phổ biến như buồn/cô đơn, cần được an ủi, muốn vui vẻ, hồi hộp, lãng mạn, cần cảm hứng, thư giãn, tò mò hoặc muốn xem kinh dị để chọn phim phù hợp trong danh mục.
 
+Khi câu hỏi vừa kể tâm trạng hiện tại vừa nói rõ muốn cảm thấy thế nào sau khi xem, trợ lý ưu tiên cảm xúc người dùng đang tìm kiếm (ví dụ: đang buồn nhưng muốn xem phim vui) và chỉ chọn phim có thể loại cùng nội dung khớp với cảm xúc đó.
+
 1. Tạo file `.env` từ `.env.example` và điền `AI_API_KEY` hợp lệ.
 2. Chạy `npm run dev:local`; lệnh này khởi động cả API và trang web.
 3. Truy cập `http://localhost:5173`.
