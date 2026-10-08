@@ -20,7 +20,10 @@ const GENRE_TERMS = [
     terms: ["phim hai", "the loai hai", "hai huoc", "comedy"],
   },
   { genre: "Tình cảm", terms: ["tinh cam", "lang man", "romance"] },
-  { genre: "Kinh dị", terms: ["kinh di", "ma", "horror"] },
+  {
+    genre: "Kinh dị",
+    terms: ["kinh di", "phim ma", "horror", "scary movie"],
+  },
   { genre: "Hoạt hình", terms: ["hoat hinh", "animation"] },
   { genre: "Gia đình", terms: ["gia dinh", "family"] },
   { genre: "Tâm lý", terms: ["tam ly", "drama"] },
@@ -36,14 +39,47 @@ const MOOD_RULES = [
       "buon ba",
       "co don",
       "tam trang xuong",
+      "khong vui",
+      "chan nan",
       "tui than",
       "muon khoc",
       "can mot bo phim buon",
       "chia tay",
       "that tinh",
+      "moi bi tu choi",
+      "bi tu choi",
+      "khong duoc chon",
+      "truot phong van",
+      "rot phong van",
+      "mat viec",
+      "vo dung",
+      "lac long",
+      "long nang triu",
+      "khong biet chia se voi ai",
+      "no one to talk to",
+      "miss someone",
+      "mood tut",
+      "tam trang tut",
+      "chan doi",
+      "trong rong",
+      "hut hang",
+      "bi bo roi",
+      "bi ghost",
+      "sad day",
+      "gloomy",
+      "empty inside",
+      "feeling empty",
+      "left out",
+      "no one understands me",
       "sad",
       "lonely",
       "heartbroken",
+      "feeling down",
+      "feeling low",
+      "feeling alone",
+      "feeling lost",
+      "breakup",
+      "rejected",
     ],
     genres: ["Tâm lý", "Tình cảm", "Chính kịch"],
     contentTerms: [
@@ -61,13 +97,36 @@ const MOOD_RULES = [
     name: "cần được an ủi",
     terms: [
       "tam trang khong tot",
+      "khong on chut nao",
+      "khong on lam",
       "chan nan",
       "that vong",
       "ap luc",
       "met moi",
+      "kiet suc",
+      "het nang luong",
+      "tinh than xuong",
+      "dau oc met",
+      "muon nghi ngoi",
       "stress",
       "cang thang",
       "ngay met moi",
+      "ngay dai",
+      "ngay toi te",
+      "ngay hom nay te",
+      "ngay hom nay dung la te hai",
+      "te hai",
+      "hom nay te qua",
+      "can mot cai om",
+      "can duoc vo ve",
+      "vo ve tinh than",
+      "muon ai do an ui",
+      "thay on hon",
+      "muon co nguoi lang nghe",
+      "qua tai",
+      "het pin",
+      "buc minh",
+      "burnt out",
       "stressful day",
       "lo lang",
       "bat an",
@@ -75,9 +134,16 @@ const MOOD_RULES = [
       "can duoc dong vien",
       "muon vui len",
       "chua lanh",
+      "pick me up",
       "cheer me up",
       "comfort",
       "stressed",
+      "overwhelmed",
+      "rough day",
+      "rough week",
+      "bad day",
+      "just need a hug",
+      "need a hug",
     ],
     genres: ["Hoạt hình", "Gia đình", "Hài", "Tình cảm"],
     contentTerms: [
@@ -96,10 +162,16 @@ const MOOD_RULES = [
     terms: [
       "muon cuoi",
       "can tieng cuoi",
+      "cuoi dau bung",
+      "cuoi muon xiu",
+      "cuoi that nhieu",
+      "muon doi mood",
+      "muon doi gio",
       "xem gi cho vui",
       "vui ve",
       "vui",
-      "chan",
+      "chan qua",
+      "chan muon chet",
       "buon chan",
       "phan khoi",
       "hao hung",
@@ -108,9 +180,13 @@ const MOOD_RULES = [
       "giai tri",
       "hai huoc",
       "tam trang vui",
+      "dang vui",
+      "tinh than len cao",
       "cheerful",
       "bored",
       "funny",
+      "laugh",
+      "need a laugh",
     ],
     genres: ["Hài", "Hoạt hình"],
     contentTerms: [
@@ -133,8 +209,13 @@ const MOOD_RULES = [
       "muon xem gi do kich tinh",
       "hoi hop nhat",
       "phim gay can",
+      "muon mot bo phim cuon",
+      "phim cuon",
+      "xoan nao",
+      "plot twist",
       "thrilling",
-      "excited",
+      "suspense",
+      "edge of my seat",
     ],
     genres: ["Hành động", "Bí ẩn", "Tội phạm", "Khoa học viễn tưởng"],
     contentTerms: [
@@ -155,6 +236,8 @@ const MOOD_RULES = [
       "chuyen tinh",
       "muon yeu",
       "tinh cam",
+      "hen ho",
+      "crush",
       "nho nguoi yeu",
       "romantic",
     ],
@@ -179,6 +262,12 @@ const MOOD_RULES = [
       "lac quan",
       "vuot qua kho khan",
       "vuot kho",
+      "be tac",
+      "mat phuong huong",
+      "mat dong luc",
+      "can tiep dong luc",
+      "khong muon bo cuoc",
+      "co gang tiep",
       "y nghia tich cuc",
       "inspired",
       "need motivation",
@@ -203,6 +292,10 @@ const MOOD_RULES = [
       "chill",
       "de ngu",
       "khong muon suy nghi",
+      "dau oc roi boi",
+      "chi muon yen tinh",
+      "dau oc met moi",
+      "tron khoi thuc tai",
       "xem gi cho thoai mai",
       "binh yen",
       "relax",
@@ -229,6 +322,8 @@ const MOOD_RULES = [
       "giai ma",
       "kham pha",
       "bat ngo",
+      "plot twist",
+      "doan xem chuyen gi xay ra",
       "hack nao",
       "curious",
       "mind bending",
@@ -295,17 +390,37 @@ function movieFacts(movie) {
 
 function requestedGenres(query) {
   return GENRE_TERMS.filter((item) =>
-    item.terms.some((term) => query.includes(term)),
+    item.terms.some((term) => matchesRequestedTerm(query, term)),
   ).map((item) => item.genre);
+}
+
+function matchesRequestedTerm(query, term) {
+  const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `(^|[^a-z0-9])${escapedTerm}($|[^a-z0-9])`,
+    "g",
+  );
+
+  for (const match of query.matchAll(pattern)) {
+    const clause = query
+      .slice(0, match.index)
+      .split(/[,;.!?]|\b(?:nhung|but|however)\b/)
+      .at(-1);
+    if (
+      !/(?:^|\s)(?:khong|dung|tranh|not|dont|never)(?:\s+\w+){0,5}\s*$/.test(
+        clause,
+      )
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function requestedMoods(query) {
   return MOOD_RULES.filter((mood) =>
-    mood.terms.some((term) =>
-      new RegExp(
-        `(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z0-9])`,
-      ).test(query),
-    ),
+    mood.terms.some((term) => matchesRequestedTerm(query, term)),
   );
 }
 
@@ -392,7 +507,7 @@ export function answerFromCatalog(question, catalog) {
   const moods = requestedMoods(query);
   const filters = recommendationFilters(query);
 
-  if (/(xin chao|chao ban|hello|hi\b)/.test(query)) {
+  if (/(xin chao|chao ban|hello|\bhi\b)/.test(query)) {
     return "Chào bạn! Hãy cho mình biết thể loại phim hoặc thời lượng bạn muốn xem, mình sẽ tìm phim phù hợp trong kho MovieVerse.";
   }
 
@@ -401,16 +516,35 @@ export function answerFromCatalog(question, catalog) {
     .map((movie) => ({
       ...movie,
       matchingGenres: movie.genres.filter((genre) => genres.includes(genre)),
-      matchingMoods: moods.filter((mood) => {
-        const movieText = normalizeAssistantText(
-          `${movie.title} ${movie.description} ${movie.genres.join(" ")}`,
-        );
-        return (
-          mood.genres.some((genre) => movie.genres.includes(genre)) ||
-          mood.contentTerms.some((term) => movieText.includes(term))
-        );
-      }),
+      matchingMoods: moods
+        .map((mood) => {
+          const movieText = normalizeAssistantText(
+            `${movie.title} ${movie.description} ${movie.genres.join(" ")}`,
+          );
+          const contentMatchCount = mood.contentTerms.filter((term) =>
+            movieText.includes(term),
+          ).length;
+          const genreMatch = mood.genres.some((genre) =>
+            movie.genres.includes(genre),
+          );
+          return {
+            mood,
+            score: contentMatchCount
+              ? 2 + contentMatchCount + Number(genreMatch)
+              : genreMatch
+                ? 0.25
+                : 0,
+          };
+        })
+        .filter((match) => match.score > 0),
+      moodScore: 0,
     }));
+  for (const movie of movies) {
+    movie.moodScore = movie.matchingMoods.reduce(
+      (total, match) => total + match.score,
+      0,
+    );
+  }
   const requestedMovies = movies.filter((movie) => {
     const year = Number(movie.year);
     const rating = Number(movie.rating);
@@ -456,8 +590,7 @@ export function answerFromCatalog(question, catalog) {
       second.matchingGenres.length - first.matchingGenres.length;
     if (genreDifference) return genreDifference;
 
-    const moodDifference =
-      second.matchingMoods.length - first.matchingMoods.length;
+    const moodDifference = second.moodScore - first.moodScore;
     if (moodDifference) return moodDifference;
 
     if (
@@ -497,7 +630,7 @@ export function answerFromCatalog(question, catalog) {
     );
   }
   if (movie.matchingMoods.length) {
-    const mood = movie.matchingMoods[0];
+    const mood = movie.matchingMoods[0].mood;
     details.push(`hợp với tâm trạng của bạn: ${mood.reason}`);
   }
   if (Number.isFinite(Number(movie.year))) {

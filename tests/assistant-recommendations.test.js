@@ -4,6 +4,7 @@ import {
   answerFromCatalog,
   hasMovieRecommendationIntent,
 } from "../assistant-recommendations.js";
+import { getMovieGenres, movieSeed } from "../src/data/data.js";
 
 const catalog = [
   {
@@ -148,4 +149,71 @@ test("does not recommend a random movie when its genre cannot match the mood", (
   ]);
 
   assert.match(answer, /chưa tìm thấy phim nào khớp tất cả tiêu chí/i);
+});
+
+test("understands an informal failed-interview and loneliness description", () => {
+  const question =
+    "Mới trượt phỏng vấn, mình thấy lạc lõng với vô dụng quá. Có phim nào hiểu mình không?";
+  const realCatalog = movieSeed.map((movie) => ({
+    ...movie,
+    genre: getMovieGenres(movie).join(", "),
+  }));
+  const answer = answerFromCatalog(question, realCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Past Lives/);
+  assert.match(answer, /đồng cảm/);
+});
+
+test("understands a casual request for a mood-lifting movie", () => {
+  const question =
+    "Ngày hôm nay tệ quá, cho mình bộ gì nhẹ nhàng để thấy đỡ cô đơn với.";
+  const answer = answerFromCatalog(question, moodCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Kiki’s Delivery/);
+  assert.match(answer, /an ủi|thư giãn/);
+});
+
+test("does not interpret negated genres or moods as recommendations", () => {
+  const question = "Tâm trạng mình hơi buồn mà không muốn phim kinh dị.";
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answerFromCatalog(question, [catalog[1], moodCatalog[0]]), /Past Lives/);
+  assert.doesNotMatch(
+    answerFromCatalog(question, [catalog[1], moodCatalog[0]]),
+    /chưa tìm thấy phim nào khớp tất cả tiêu chí/i,
+  );
+});
+
+test("understands mood hinted at by a bad day rather than a named genre", () => {
+  const question =
+    "Ngày hôm nay đúng là tệ hại, chỉ muốn xem gì đó vỗ về tinh thần.";
+  const answer = answerFromCatalog(question, moodCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Kiki’s Delivery/);
+  assert.match(answer, /ấm áp để bạn thư giãn/);
+});
+
+test("does not mistake the Vietnamese word 'chỉ' for an English greeting", () => {
+  const question =
+    "Ngày hôm nay đúng là tệ hại, chỉ muốn xem gì đó vỗ về tinh thần.";
+  const answer = answerFromCatalog(question, moodCatalog);
+
+  assert.doesNotMatch(answer, /^Chào bạn!/);
+  assert.match(answer, /Kiki’s Delivery/);
+});
+
+test("understands feeling empty and left out as a need for an empathetic story", () => {
+  const question =
+    "Dạo này mình thấy trống rỗng, lạc lõng, như chẳng ai hiểu mình.";
+  const answer = answerFromCatalog(question, [
+    ...moodCatalog,
+    catalog[1],
+  ]);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.match(answer, /Past Lives/);
+  assert.match(answer, /đồng cảm/);
 });
