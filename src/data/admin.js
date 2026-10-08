@@ -6,7 +6,12 @@ import {
   getMovieGenres,
 } from "./data.js";
 import { isAdmin } from "./auth.js";
-import { deleteReview, loadReviews, setReviewHidden } from "./reviews.js";
+import {
+  deleteReview,
+  loadReviews,
+  setReviewHidden,
+} from "./reviews.js";
+import { initMovieAssistant } from "../assistant.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
@@ -197,6 +202,7 @@ document.querySelector("#app").innerHTML = `
 `;
 
 init();
+initMovieAssistant(() => movies);
 
 function init() {
   fillGenreSelects();
@@ -282,7 +288,6 @@ function renderComments() {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-  renderReviewTable();
 }
 
 function renderStats() {

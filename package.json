@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "node scripts/dev.js",
     "dev:api": "node --env-file-if-exists=.env server.js",
+    "test": "node --test",
     "build": "vite build",
     "preview": "vite preview"
   },

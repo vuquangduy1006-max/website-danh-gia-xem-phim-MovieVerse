@@ -1,18 +1,20 @@
 import "./assistant.css";
 import { getMovieGenres } from "./data/data.js";
 
-export function initMovieAssistant(movies) {
+export function initMovieAssistant(movieSource) {
+  const getMovies = () =>
+    typeof movieSource === "function" ? movieSource() : movieSource;
   const root = document.createElement("div");
   root.className = "assistant-root";
   root.innerHTML = `
-    <button class="assistant-launcher" id="assistantLauncher" type="button" aria-label="Mở trợ lý MovieVerse" aria-expanded="false" aria-controls="assistantPanel">
-      <span aria-hidden="true">✦</span>
+    <button class="assistant-launcher" id="assistantLauncher" type="button" aria-label="Mở Trợ lý AI MovieVerse" aria-expanded="false" aria-controls="assistantPanel">
+      <span aria-hidden="true">🤖</span><span>Trợ lý AI</span>
     </button>
     <section class="assistant-panel" id="assistantPanel" aria-label="Trợ lý AI MovieVerse" hidden>
       <header class="assistant-header">
         <div class="assistant-identity">
           <span class="assistant-mark" aria-hidden="true">M</span>
-          <div><strong>MovieVerse AI</strong><small>Tư vấn phim cho bạn</small></div>
+          <div><strong>Trợ lý AI MovieVerse</strong><small>Gợi ý phim hợp tâm trạng của bạn</small></div>
         </div>
         <button class="assistant-close" id="assistantClose" type="button" aria-label="Đóng trợ lý">×</button>
       </header>
@@ -20,7 +22,9 @@ export function initMovieAssistant(movies) {
         <div class="assistant-message assistant-message-bot">Chào bạn, tối nay mình giúp bạn tìm phim nhé. Bạn thích thể loại hoặc tâm trạng nào?</div>
       </div>
       <div class="assistant-prompts" aria-label="Gợi ý câu hỏi">
-        <button type="button" data-prompt="Gợi ý cho mình một phim phù hợp để xem tối nay.">Tìm phim tối nay</button>
+        <button type="button" data-prompt="Tối nay tôi muốn xem phim khoảng 2 tiếng, thể loại hành động.">Hành động ~2 tiếng</button>
+        <button type="button" data-prompt="Hôm nay mình hơi buồn, gợi ý phim gì nhẹ nhàng và ấm áp giúp mình nhé.">Cần phim an ủi</button>
+        <button type="button" data-prompt="Mình muốn xem gì đó hồi hộp, gay cấn và khó đoán.">Muốn hồi hộp</button>
         <button type="button" data-prompt="Có phim nào vui và phù hợp xem cùng gia đình không?">Xem cùng gia đình</button>
         <button type="button" data-prompt="Tư vấn một phim khoa học viễn tưởng hay trong kho phim.">Khoa học viễn tưởng</button>
       </div>
@@ -29,7 +33,7 @@ export function initMovieAssistant(movies) {
         <textarea id="assistantInput" rows="1" maxlength="1000" placeholder="Hỏi về phim bạn muốn xem..."></textarea>
         <button id="assistantSend" type="submit" aria-label="Gửi tin nhắn"><span aria-hidden="true">↑</span></button>
       </form>
-      <p class="assistant-privacy">Câu hỏi và danh mục phim được gửi đến AI để trả lời.</p>
+      <p class="assistant-privacy">Gợi ý dựa trên thể loại, thời lượng và danh mục phim MovieVerse.</p>
     </section>
   `;
   document.body.append(root);
@@ -65,7 +69,7 @@ export function initMovieAssistant(movies) {
 
   const renderAnswer = (element, text) => {
     const moviesByTitle = new Map(
-      movies
+      getMovies()
         .filter((movie) => movie.id && movie.title)
         .map((movie) => [movie.title.toLocaleLowerCase("vi"), movie]),
     );
@@ -79,7 +83,7 @@ export function initMovieAssistant(movies) {
 
     element.replaceChildren();
     const titlePattern = new RegExp(
-      `(^|[^\\p{L}\\p{N}])(${titles.map((title) => title.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")).join("|")})(?=$|[^\\p{L}\\p{N}])`,
+      `(^|[^\\p{L}\\p{N}])(${titles.map((title) => title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?=$|[^\\p{L}\\p{N}])`,
       "giu",
     );
     let cursor = 0;
@@ -103,7 +107,6 @@ export function initMovieAssistant(movies) {
     const content = rawText.trim();
     if (!content || isSending) return;
 
-    conversation.push({ role: "user", content });
     appendMessage("user", content);
     input.value = "";
     input.style.height = "auto";
@@ -121,8 +124,8 @@ export function initMovieAssistant(movies) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: conversation.slice(-8),
-          movies: movies.map((movie) => ({
+          messages: [...conversation.slice(-6), { role: "user", content }],
+          movies: getMovies().map((movie) => ({
             id: movie.id,
             title: movie.title,
             year: movie.year,
@@ -132,16 +135,47 @@ export function initMovieAssistant(movies) {
           })),
         }),
       });
-      const result = await response.json();
+      let result;
+      if (
+        !response.headers
+          .get("content-type")
+          ?.toLocaleLowerCase("en")
+          .includes("application/json")
+      ) {
+        throw new Error(
+          "Máy chủ website đang trả về trang HTML thay vì API chat. Nếu chạy trên máy cá nhân, hãy khởi động backend bằng npm run dev:api; nếu dùng bản online, cần cấu hình máy chủ/reverse proxy cho đường dẫn /api.",
+        );
+      }
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          `API chat trả về JSON không hợp lệ (HTTP ${response.status}). Hãy kiểm tra máy chủ API.`,
+        );
+      }
       if (!response.ok)
-        throw new Error(result.error || "Trợ lý chưa thể trả lời.");
+        throw new Error(result?.error || "Trợ lý chưa thể trả lời.");
+      if (typeof result?.answer !== "string" || !result.answer.trim()) {
+        throw new Error("Máy chủ trợ lý chưa trả về câu trả lời hợp lệ.");
+      }
       renderAnswer(pendingMessage, result.answer);
+      if (typeof result.notice === "string" && result.notice) {
+        const notice = document.createElement("span");
+        notice.className = "assistant-message-notice";
+        notice.textContent = result.notice;
+        pendingMessage.append(notice);
+      }
       pendingMessage.classList.remove("assistant-message-pending");
+      conversation.push({ role: "user", content });
       conversation.push({ role: "assistant", content: result.answer });
+      if (conversation.length > 8) conversation.splice(0, conversation.length - 8);
     } catch (error) {
-      pendingMessage.textContent = error.message.includes("Failed to fetch")
-        ? "Chưa kết nối được máy chủ trợ lý. Hãy kiểm tra máy chủ API đang chạy."
-        : error.message;
+      pendingMessage.textContent =
+        error instanceof TypeError && error.message.includes("fetch")
+          ? "Chưa kết nối được máy chủ trợ lý. Hãy kiểm tra máy chủ API đang chạy."
+          : error instanceof Error
+            ? error.message
+            : "Đã xảy ra lỗi khi gửi câu hỏi. Vui lòng thử lại.";
       pendingMessage.classList.add("assistant-message-error");
       pendingMessage.classList.remove("assistant-message-pending");
     } finally {
