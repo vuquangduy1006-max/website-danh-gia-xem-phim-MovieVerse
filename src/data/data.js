@@ -106,20 +106,6 @@ export const movieSeed = [
       "Một nhóm phóng viên chạy đua với thời gian để ghi lại khoảnh khắc lịch sử của một đất nước.",
   },
   {
-    id: "m8",
-    title: "Wildwood",
-    year: "2024",
-    genre: "Hoạt hình",
-    rating: "7.7",
-    isNew: false,
-    poster:
-      "https://en.wikipedia.org/wiki/Special:FilePath/Wildwood%202026%20poster.jpg",
-    backdrop:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85",
-    description:
-      "Một cô bé bước vào khu rừng kỳ diệu để tìm lại người anh trai mất tích.",
-  },
-  {
     id: "n5",
     title: "Superman",
     year: "2025",
@@ -303,7 +289,7 @@ export const movieSeed = [
   },
   {
     id: "n20",
-    title: "One Piece",
+    title: "One Piece Film: God Valley",
     year: "2023",
     genre: "Hành động, Phiêu lưu, Hài, Gia đình, Giả tưởng",
     rating: "8.8",
@@ -313,12 +299,11 @@ export const movieSeed = [
     backdrop:
       "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1800&q=85",
     description:
-      "Luffy và băng hải tặc Mũ Rơm khởi hành trên hành trình tìm kho báu, đối đầu với thế giới rộng lớn và những kẻ mạnh nhất.",
-    episodeCount: 24,
+      "Trailer fan-made về biến cố God Valley trong thế giới One Piece; nội dung video không phải trailer chính thức.",
   },
   {
     id: "n21",
-    title: "Spy x Family",
+    title: "SPY x FAMILY CODE: White",
     year: "2022",
     genre: "Hài, Hành động, Tình cảm, Gia đình, Giả tưởng",
     rating: "8.6",
@@ -328,12 +313,11 @@ export const movieSeed = [
     backdrop:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
     description:
-      "Một điệp viên, một sát thủ và một phù thủy chuyên giả tạo ra một gia đình giả tưởng nhưng đầy bất ngờ và yếu mềm.",
-    episodeCount: 12,
+      "Gia đình Forger bước vào chuyến phiêu lưu mùa đông có thể ảnh hưởng đến chiến dịch Operation Strix.",
   },
   {
     id: "n22",
-    title: "Attack on Titan",
+    title: "Attack on Titan: Season 1",
     year: "2013",
     genre: "Hành động, Chính kịch, Khoa học viễn tưởng, Tâm lý, Chiến tranh",
     rating: "9.1",
@@ -348,7 +332,7 @@ export const movieSeed = [
   },
   {
     id: "n23",
-    title: "Naruto",
+    title: "Naruto: 20th Anniversary",
     year: "2002",
     genre: "Hành động, Phiêu lưu, Hài, Gia đình, Tâm lý",
     rating: "8.7",
@@ -378,7 +362,7 @@ export const movieSeed = [
   },
   {
     id: "n25",
-    title: "Bleach",
+    title: "Bleach: Thousand-Year Blood War",
     year: "2004",
     genre: "Hành động, Giả tưởng, Hài, Tâm lý, Tokusatsu",
     rating: "8.2",
@@ -390,21 +374,6 @@ export const movieSeed = [
     description:
       "Ichigo trở thành Soul Reaper và đối đầu với linh hồn, quỷ và những bí mật đen tối của thế giới siêu nhiên.",
     episodeCount: 17,
-  },
-  {
-    id: "n26",
-    title: "Black Clover",
-    year: "2017",
-    genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Giả tưởng",
-    rating: "8.1",
-    isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/3/35/Black_Clover_Volume_1.jpg",
-    backdrop:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1800&q=85",
-    description:
-      "Asta và Yuno cùng nhau chiến đấu để vươn tới đỉnh cao của giấc mơ trở thành pháp sư tối thượng.",
-    episodeCount: 15,
   },
   {
     id: "n27",
@@ -422,24 +391,9 @@ export const movieSeed = [
     episodeCount: 19,
   },
   {
-    id: "n28",
-    title: "Doraemon",
-    year: "1979",
-    genre: "Hài, Gia đình, Phiêu lưu, Hoạt hình",
-    rating: "8.4",
-    isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/3/3a/Doraemon_character.jpg",
-    backdrop:
-      "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=1800&q=85",
-    description:
-      "Nobita và những cuộc phiêu lưu kỳ dị với chiếc máy móc từ tương lai khiến mọi ngày đều chứa đựng niềm vui và cảm hứng.",
-    episodeCount: 14,
-  },
-  {
     id: "n29",
-    title: "Fairy Tail",
-    year: "2009",
+    title: "Fairy Tail: Nhiệm vụ 100 năm",
+    year: "2024",
     genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Gia đình",
     rating: "8.3",
     isNew: true,
@@ -453,7 +407,7 @@ export const movieSeed = [
   },
   {
     id: "n30",
-    title: "My Hero Academia",
+    title: "My Hero Academia: Final Season",
     year: "2016",
     genre: "Hành động, Hài, Siêu anh hùng, Phiêu lưu, Tâm lý",
     rating: "8.5",
@@ -468,7 +422,7 @@ export const movieSeed = [
   },
   {
     id: "n31",
-    title: "Hunter x Hunter",
+    title: "Hunter x Hunter: Set 1",
     year: "2011",
     genre: "Hành động, Phiêu lưu, Tâm lý, Hài, Giả tưởng",
     rating: "9.0",
@@ -483,7 +437,7 @@ export const movieSeed = [
   },
   {
     id: "n32",
-    title: "Blue Lock",
+    title: "Blue Lock vs. U-20 Japan",
     year: "2022",
     genre: "Thể thao, Hành động, Tâm lý, Chiến tranh",
     rating: "8.3",
@@ -496,10 +450,38 @@ export const movieSeed = [
       "Những cầu thủ trẻ tranh nhau trong khuôn khổ Blue Lock để biến thành tiền đạo hàng đầu của đội tuyển quốc gia.",
     episodeCount: 12,
   },
+  {
+    id: "n33",
+    title: "Interstellar 2",
+    year: "2026",
+    genre: "Khoa học viễn tưởng",
+    rating: "0.0",
+    isNew: true,
+    poster:
+      "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&q=85",
+    backdrop:
+      "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1800&q=85",
+    description:
+      "Video concept trailer do người hâm mộ dựng, không phải trailer phim chính thức.",
+  },
+  {
+    id: "n34",
+    title: "Spider-Man: Across the Spider-Verse",
+    year: "2023",
+    genre: "Hoạt hình, Hành động, Phiêu lưu, Khoa học viễn tưởng",
+    rating: "8.6",
+    isNew: false,
+    poster:
+      "https://en.wikipedia.org/wiki/Special:FilePath/Spider-Man_Across_the_Spider-Verse_poster.jpg",
+    backdrop:
+      "https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=1800&q=85",
+    description:
+      "Miles Morales du hành qua các vũ trụ Spider-Man và đối mặt với lựa chọn có thể thay đổi số phận của mọi người.",
+  },
 ];
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v9";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v10";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -529,8 +511,11 @@ const addedSeedMovieIds = new Set([
   "n30",
   "n31",
   "n32",
+  "n33",
+  "n34",
 ]);
 const removedSeedMovieIds = new Set([
+  "m8",
   "m2",
   "m6",
   "m7",
@@ -538,6 +523,8 @@ const removedSeedMovieIds = new Set([
   "n2",
   "n3",
   "n4",
+  "n26",
+  "n28",
   "n7",
   "n12",
 ]);
@@ -552,6 +539,10 @@ const removedMovieTitles = new Set(
     "Paper Hearts",
     "Zootopia 2",
     "Moana 2",
+    "Wildwood",
+    "Black Clover",
+    "Doraemon",
+    "Interstellar",
   ].map((title) => title.toLocaleLowerCase("vi")),
 );
 
@@ -591,6 +582,21 @@ export function getMovieDB() {
           localStorage.removeItem("movieverse_seed_migration_v2");
         }
         if (localStorage.getItem(SEED_MIGRATION_KEY) !== "done") {
+          const titleMigrations = new Map([
+            ["n20", "One Piece Film: God Valley"],
+            ["n21", "SPY x FAMILY CODE: White"],
+            ["n22", "Attack on Titan: Season 1"],
+            ["n23", "Naruto: 20th Anniversary"],
+            ["n25", "Bleach: Thousand-Year Blood War"],
+            ["n29", "Fairy Tail: Nhiệm vụ 100 năm"],
+            ["n30", "My Hero Academia: Final Season"],
+            ["n31", "Hunter x Hunter: Set 1"],
+            ["n32", "Blue Lock vs. U-20 Japan"],
+          ]);
+          parsed.movies.forEach((movie) => {
+            const title = titleMigrations.get(movie.id);
+            if (title) movie.title = title;
+          });
           const posterMigrations = new Map([
             [
               "n11",
