@@ -622,3 +622,9 @@ button {
   .comment-table tbody td:nth-child(6) { position: absolute; left: 16px; bottom: 14px; padding: 0; }
   .comment-table .comment-table-text { max-width: none; overflow: visible; text-overflow: clip; }
 }
+/* Add to src/admin/admin.css */
+.review-moderation { margin: 24px 0; }
+.review-moderation-heading { padding: 20px 24px; }
+.review-moderation-heading h2 { margin: 0 0 6px; }
+.review-moderation-heading p { margin: 0; opacity: .75; }
+.review-moderation td { max-width: 380px; overflow-wrap: anywhere; }

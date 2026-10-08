@@ -226,9 +226,14 @@ test("understands anger after being treated unfairly and selects an energetic ge
     genre: getMovieGenres(movie).join(", "),
   }));
   const answer = answerFromCatalog(question, realCatalog);
+  const recommendedActionMovie = realCatalog.find(
+    (movie) =>
+      answer.includes(movie.title) &&
+      getMovieGenres(movie).includes("Hành động"),
+  );
 
   assert.equal(hasMovieRecommendationIntent(question), true);
-  assert.match(answer, /Dune: Part Two|F1/);
+  assert.ok(recommendedActionMovie);
   assert.match(answer, /hành động/);
   assert.match(answer, /giải tỏa năng lượng/);
 });
