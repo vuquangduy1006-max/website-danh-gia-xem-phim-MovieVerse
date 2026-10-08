@@ -23,7 +23,7 @@ const newMovies = movies.filter((movie) => movie.isNew);
 let currentSlide = 0;
 let slideTimer;
 
-const reviews = loadReviews();
+const reviews = loadReviews().filter((review) => !review.hidden);
 
 function escapeHtml(str) {
   return String(str).replace(
@@ -219,7 +219,10 @@ document.querySelectorAll(".pill").forEach((pill) =>
 
 document.querySelector("#headerSearch").addEventListener("submit", (event) => {
   event.preventDefault();
+  const first = document.querySelector("#searchResults a.search-result");
+  if (first) window.location.href = first.href;
 });
+document.querySelector("#searchInput").addEventListener("focus", (event) => renderSearch(event.target.value));
 document
   .querySelector("#recommendationForm")
   .addEventListener("submit", (event) => {
@@ -484,17 +487,13 @@ function renderSearch(query = "") {
   const resultsBox = document.querySelector("#searchResults");
   if (!resultsBox) return;
 
-  if (!query) {
-    closeSearch();
-    resultsBox.innerHTML = "";
-    return;
-  }
+  const suggestions = normalizedQuery ? results : [...movies].sort((a,b) => Number(b.rating)-Number(a.rating)).slice(0, 6);
 
   // Chỉ mở dropdown khi thực sự có kết quả để tránh hiện khung rỗng.
-  searchForm?.classList.toggle("has-results", results.length > 0);
+  searchForm?.classList.add("has-results");
 
-  resultsBox.innerHTML = results.length
-    ? results
+  resultsBox.innerHTML = suggestions.length
+    ? suggestions
         .map(
           (movie) =>
             `<a class="search-result" href="${detailUrl(movie)}"><img src="${movie.poster}" alt=""><p>${movie.title}<br><small>${movie.year} · ${movie.genre}</small></p></a>`,

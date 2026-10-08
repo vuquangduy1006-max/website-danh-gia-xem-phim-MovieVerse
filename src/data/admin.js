@@ -6,11 +6,12 @@ import {
   getMovieGenres,
 } from "./data.js";
 import { isAdmin } from "./auth.js";
-import { deleteReview, loadReviews } from "./reviews.js";
+import { deleteReview, loadReviews, setReviewHidden } from "./reviews.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
 }
+
 
 const DB_KEY = "movieverse_db";
 let movies = loadDB();
@@ -73,6 +74,10 @@ document.querySelector("#app").innerHTML = `
     </div>
 
     <div class="stats-grid" id="statsGrid"></div>
+    <section class="admin-panel review-moderation" aria-label="Quản lý bình luận">
+      <div class="review-moderation-heading"><h2>Quản lý bình luận</h2><p>Ẩn hoặc hiện bình luận của người dùng.</p></div>
+      <div class="table-wrap"><table class="movie-table"><thead><tr><th>Người dùng</th><th>Phim</th><th>Bình luận</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="reviewTableBody"></tbody></table></div>
+    </section>
 
     <div class="admin-panel">
       <div class="panel-toolbar">
@@ -250,6 +255,7 @@ function bindEvents() {
 function renderAll() {
   renderStats();
   renderTable();
+  renderReviewTable();
   renderComments();
 }
 
@@ -276,6 +282,7 @@ function renderComments() {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+  renderReviewTable();
 }
 
 function renderStats() {
@@ -470,4 +477,30 @@ function showToast(message, type = "success") {
   clearTimeout(toastTimer);
   requestAnimationFrame(() => toast.classList.add("show"));
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+}
+function escapeReviewText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
+}
+
+function renderReviewTable() {
+  const body = document.querySelector("#reviewTableBody");
+  if (!body) return;
+  const reviews = loadReviews();
+  body.innerHTML = reviews.length ? reviews.map((review) => `
+    <tr>
+      <td>${escapeReviewText(review.author)}</td>
+      <td>${escapeReviewText(review.movieTitle)}</td>
+      <td>${escapeReviewText(review.comment)}</td>
+      <td>${review.hidden ? "Đã ẩn" : "Đang hiển thị"}</td>
+      <td><button type="button" class="btn btn-ghost btn-sm" data-review-id="${escapeReviewText(review.id)}">${review.hidden ? "Hiện" : "Ẩn"}</button></td>
+    </tr>`).join("") : '<tr><td colspan="5">Chưa có bình luận.</td></tr>';
+  body.querySelectorAll("[data-review-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const review = loadReviews().find((item) => String(item.id) === button.dataset.reviewId);
+      if (review && setReviewHidden(review.id, !review.hidden)) {
+        renderReviewTable();
+        showToast(review.hidden ? "Đã hiện bình luận." : "Đã ẩn bình luận.");
+      }
+    });
+  });
 }

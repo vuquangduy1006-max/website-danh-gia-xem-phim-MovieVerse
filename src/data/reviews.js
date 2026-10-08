@@ -123,3 +123,17 @@ function formatDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${day}/${month}/${date.getFullYear()}`;
 }
+
+// Admin moderation: hide without deleting the review.
+export function setReviewHidden(id, hidden) {
+  const reviews = loadReviews();
+  const review = reviews.find((item) => String(item.id) === String(id));
+  if (!review) return false;
+  review.hidden = Boolean(hidden);
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+  return true;
+}
+
+export function getVisibleMovieReviews(title) {
+  return getMovieReviews(title).filter((review) => !review.hidden);
+}
