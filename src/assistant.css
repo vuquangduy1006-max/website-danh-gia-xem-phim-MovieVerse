@@ -2,20 +2,32 @@
   position: relative;
   z-index: 50;
 }
+.assistant-root .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 .assistant-launcher {
   position: fixed;
   right: 24px;
   bottom: 24px;
-  display: grid;
-  width: 58px;
-  aspect-ratio: 1;
-  place-items: center;
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 50%;
+  border-radius: 28px;
   background: var(--accent);
   color: #180e0b;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38);
-  font-size: 27px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
   transition:
     transform 180ms ease,
     background-color 180ms ease;
@@ -245,7 +257,8 @@
   .assistant-launcher {
     right: 16px;
     bottom: 16px;
-    width: 54px;
+    min-height: 50px;
+    padding: 0 15px;
   }
   .assistant-panel {
     right: 10px;

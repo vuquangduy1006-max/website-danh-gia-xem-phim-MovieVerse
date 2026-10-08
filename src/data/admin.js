@@ -7,6 +7,7 @@ import {
 } from "./data.js";
 import { isAdmin } from "./auth.js";
 import { deleteReview, loadReviews } from "./reviews.js";
+import { initMovieAssistant } from "../assistant.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
@@ -192,6 +193,7 @@ document.querySelector("#app").innerHTML = `
 `;
 
 init();
+initMovieAssistant(() => movies);
 
 function init() {
   fillGenreSelects();
