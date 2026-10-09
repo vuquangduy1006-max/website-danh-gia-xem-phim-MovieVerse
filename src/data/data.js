@@ -496,10 +496,314 @@ export const movieSeed = [
       "Những cầu thủ trẻ tranh nhau trong khuôn khổ Blue Lock để biến thành tiền đạo hàng đầu của đội tuyển quốc gia.",
     episodeCount: 12,
   },
+  {
+    id: "kr-kuuga",
+    title: "Kamen Rider Kuuga",
+    year: "2000",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "8.3",
+    imdbId: "tt0188340",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BYWY1ZWViOTQtYmYzNS00YmY0LTk1OTItODkzMjg1ODNiMWZkXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BYWY1ZWViOTQtYmYzNS00YmY0LTk1OTItODkzMjg1ODNiMWZkXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Yusuke Godai hóa thân thành Kuuga để bảo vệ con người trước bộ tộc Gurongi cổ đại.",
+    episodeCount: 49,
+  },
+  {
+    id: "kr-agito",
+    title: "Kamen Rider Agito",
+    year: "2001",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "8.0",
+    imdbId: "tt0346311",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BNjY2YmE0NmUtZjFjZC00NzgyLThkYzEtZDg4ZTUwNjJhZjFkXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BNjY2YmE0NmUtZjFjZC00NzgyLThkYzEtZDg4ZTUwNjJhZjFkXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Một người mất trí nhớ thức tỉnh sức mạnh Agito giữa những vụ án bí ẩn và cuộc chiến với Unknown.",
+    episodeCount: 51,
+  },
+  {
+    id: "kr-ryuki",
+    title: "Kamen Rider Ryuki",
+    year: "2002",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "8.0",
+    imdbId: "tt0419343",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BNWU5OGEyMmQtZWY5Yi00YzEwLTg3ZWMtNDNjODdhOTRkZTlmXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BNWU5OGEyMmQtZWY5Yi00YzEwLTg3ZWMtNDNjODdhOTRkZTlmXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Shinji Kido trở thành Ryuki và bị cuốn vào cuộc chiến sinh tử giữa các Rider trong thế giới gương.",
+    episodeCount: 50,
+  },
+  {
+    id: "kr-faiz",
+    title: "Kamen Rider 555 (Faiz)",
+    year: "2003",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "8.3",
+    imdbId: "tt0401021",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BZGYzN2U4ZGQtOGUxYS00MzYzLTgwYjctOTUzYzg5MWQ1ZjgzXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BZGYzN2U4ZGQtOGUxYS00MzYzLTgwYjctOTUzYzg5MWQ1ZjgzXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Takumi Inui sử dụng thiết bị Faiz để chống lại Orphnoch và khám phá ranh giới giữa con người với quái vật.",
+    episodeCount: 50,
+  },
+  {
+    id: "kr-blade",
+    title: "Kamen Rider Blade",
+    year: "2004",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.8",
+    imdbId: "tt1491939",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BN2IwOTA4MWQtMmI2Ni00ODAxLWExYmItOWNkNzkxYTY1N2QxXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BN2IwOTA4MWQtMmI2Ni00ODAxLWExYmItOWNkNzkxYTY1N2QxXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Kazuma Kenzaki chiến đấu với Undead bằng sức mạnh của Blade trong cuộc chiến định đoạt số phận loài người.",
+    episodeCount: 49,
+  },
+  {
+    id: "kr-hibiki",
+    title: "Kamen Rider Hibiki",
+    year: "2005",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.2",
+    imdbId: "tt0454653",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BYWU1YzY1ODMtZTFjOC00ZWE1LTgzZTgtNTgxODBjZDYwNGVmXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BYWU1YzY1ODMtZTFjOC00ZWE1LTgzZTgtNTgxODBjZDYwNGVmXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Asumu trưởng thành bên cạnh Hibiki, một Oni chiến đấu với Makamou bằng âm nhạc và võ thuật.",
+    episodeCount: 48,
+  },
+  {
+    id: "kr-kabuto",
+    title: "Kamen Rider Kabuto",
+    year: "2006",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.9",
+    imdbId: "tt0875947",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BM2VmMmFiNjItMGUxZC00OTljLWE4NGUtYWQzNGU1ODJmM2JjXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BM2VmMmFiNjItMGUxZC00OTljLWE4NGUtYWQzNGU1ODJmM2JjXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Tendo Souji mang giáp Kabuto, đối đầu Worm và chiến đấu với tốc độ Clock Up để bảo vệ Trái Đất.",
+    episodeCount: 49,
+  },
+  {
+    id: "kr-den-o",
+    title: "Kamen Rider Den-O",
+    year: "2007",
+    genre: "Hành động, Phiêu lưu, Hài, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.8",
+    imdbId: "tt0997404",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BYjcwNmQ3NGEtNGNhOC00NzY4LTllYjQtMWYxZjAwMzQ0ZGIxXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BYjcwNmQ3NGEtNGNhOC00NzY4LTllYjQtMWYxZjAwMzQ0ZGIxXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Ryotaro Nogami cùng các Imagin du hành thời gian trên DenLiner để ngăn lịch sử bị thay đổi.",
+    episodeCount: 49,
+  },
+  {
+    id: "kr-kiva",
+    title: "Kamen Rider Kiva",
+    year: "2008",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Giả tưởng, Tokusatsu",
+    rating: "7.4",
+    imdbId: "tt1526067",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BMDBhZDUwZjYtZjNiMi00NTE5LWIxNWEtNWQ0NDI1NDAyMDJjXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BMDBhZDUwZjYtZjNiMi00NTE5LWIxNWEtNWQ0NDI1NDAyMDJjXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Wataru Kurenai thừa hưởng sức mạnh Kiva và chiến đấu với Fangire trong hai dòng thời gian đan xen.",
+    episodeCount: 48,
+  },
+  {
+    id: "kr-decade",
+    title: "Kamen Rider Decade",
+    year: "2009",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.0",
+    imdbId: "tt1473235",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BNzQ5MjY3MjUtZjhlYS00YjEwLWE5M2YtNTRkZDU4ZDc5ODZkXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BNzQ5MjY3MjUtZjhlYS00YjEwLWE5M2YtNTRkZDU4ZDc5ODZkXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Tsukasa Kadoya đi qua các thế giới Rider để ngăn những thế giới ấy sụp đổ.",
+    episodeCount: 31,
+  },
+  {
+    id: "kr-w",
+    title: "Kamen Rider W (Double)",
+    year: "2009",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "8.3",
+    imdbId: "tt1483620",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BMTAzZTU2ZGYtODg0My00Mzk4LWEwNmYtMGRkOTgzNzhmZDE1XkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BMTAzZTU2ZGYtODg0My00Mzk4LWEwNmYtMGRkOTgzNzhmZDE1XkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Shotaro và Philip hợp nhất thành Kamen Rider W để điều tra những vụ án Dopant tại Fuuto.",
+    episodeCount: 49,
+  },
+  {
+    id: "kr-ooo",
+    title: "Kamen Rider OOO",
+    year: "2010",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Giả tưởng, Tokusatsu",
+    rating: "8.1",
+    imdbId: "tt1825371",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BNWY1YWM0MzctODMyNS00YWM1LWJmNDItYzBlMTNiM2Y2YmZjXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BNWY1YWM0MzctODMyNS00YWM1LWJmNDItYzBlMTNiM2Y2YmZjXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Eiji Hino biến thân thành OOO bằng những Core Medal để ngăn Greeed chiếm lấy thế giới.",
+    episodeCount: 48,
+  },
+  {
+    id: "kr-fourze",
+    title: "Kamen Rider Fourze",
+    year: "2011",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.6",
+    imdbId: "tt2074027",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BOTYzYjI5N2UtNjE5My00MTU3LTg3NjItOGY2NTQwMzUzMTY4XkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BOTYzYjI5N2UtNjE5My00MTU3LTg3NjItOGY2NTQwMzUzMTY4XkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Gentaro Kisaragi kết bạn với mọi học sinh trong trường và dùng sức mạnh không gian của Fourze.",
+    episodeCount: 48,
+  },
+  {
+    id: "kr-wizard",
+    title: "Kamen Rider Wizard",
+    year: "2012",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Giả tưởng, Tokusatsu",
+    rating: "6.7",
+    imdbId: "tt2238472",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BNTkyOTViNDUtZTM5Ni00MGYzLTg4YTItZDgyMGM4YjdhYzcyXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BNTkyOTViNDUtZTM5Ni00MGYzLTg4YTItZDgyMGM4YjdhYzcyXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Haruto Soma trở thành Wizard để bảo vệ những người tuyệt vọng khỏi Phantom.",
+    episodeCount: 53,
+  },
+  {
+    id: "kr-gaim",
+    title: "Kamen Rider Gaim",
+    year: "2013",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Giả tưởng, Tokusatsu",
+    rating: "8.1",
+    imdbId: "tt3079058",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BMzI3MWVhMTEtNzFkNS00MDBiLTk3YmYtY2QzODVkOGExZTEyXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BMzI3MWVhMTEtNzFkNS00MDBiLTk3YmYtY2QzODVkOGExZTEyXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Kouta Kazuraba đối đầu với quái vật từ Helheim và cuộc chiến giành quyền lực giữa các Rider.",
+    episodeCount: 47,
+  },
+  {
+    id: "kr-drive",
+    title: "Kamen Rider Drive",
+    year: "2014",
+    genre: "Hành động, Phiêu lưu, Tội phạm, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.7",
+    imdbId: "tt3786488",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BYTAxOTMyY2QtMGViYi00YTA0LWEwYzEtODQ1YjYwNDQ3ZjJkXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BYTAxOTMyY2QtMGViYi00YTA0LWEwYzEtODQ1YjYwNDQ3ZjJkXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Thanh tra Shinnosuke Tomari và chiếc xe Tridoron chiến đấu với Roidmude đang đe dọa nhân loại.",
+    episodeCount: 48,
+  },
+  {
+    id: "kr-ghost",
+    title: "Kamen Rider Ghost",
+    year: "2015",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Giả tưởng, Tokusatsu",
+    rating: "6.0",
+    imdbId: "tt4727580",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BYjljNDA4ZTAtNWM5NC00ZGQ2LTk4MzktY2NlNGUxMmE2OTBmXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BYjljNDA4ZTAtNWM5NC00ZGQ2LTk4MzktY2NlNGUxMmE2OTBmXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Takeru Tenkuji có 99 ngày để thu thập Eyecon và trở lại cuộc sống sau khi trở thành Ghost.",
+    episodeCount: 50,
+  },
+  {
+    id: "kr-ex-aid",
+    title: "Kamen Rider Ex-Aid",
+    year: "2016",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "7.7",
+    imdbId: "tt5813014",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BN2NjNGI2ZGMtOWJhZS00OTBjLTg4ZDUtYjcxNzA0N2YxMWM2XkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BN2NjNGI2ZGMtOWJhZS00OTBjLTg4ZDUtYjcxNzA0N2YxMWM2XkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Bác sĩ Emu Hojo hóa thân thành Ex-Aid để cứu bệnh nhân khỏi virus Bugster trong trò chơi điện tử.",
+    episodeCount: 45,
+  },
+  {
+    id: "kr-zi-o",
+    title: "Kamen Rider Zi-O",
+    year: "2018",
+    genre: "Hành động, Phiêu lưu, Chính kịch, Khoa học viễn tưởng, Tokusatsu",
+    rating: "6.7",
+    imdbId: "tt8716268",
+    isNew: false,
+    poster:
+      "https://m.media-amazon.com/images/M/MV5BNTM1ZGQ0MTAtZTNmNS00MjRhLWE0MTktNTIwOTE0MTg3YjIxXkEyXkFqcGc@._V1_.jpg",
+    backdrop:
+      "https://m.media-amazon.com/images/M/MV5BNTM1ZGQ0MTAtZTNmNS00MjRhLWE0MTktNTIwOTE0MTg3YjIxXkEyXkFqcGc@._V1_.jpg",
+    description:
+      "Sougo Tokiwa du hành qua các thời đại Rider để đối mặt với định mệnh trở thành vua thời gian.",
+    episodeCount: 49,
+  },
 ];
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v9";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v10";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -529,6 +833,25 @@ const addedSeedMovieIds = new Set([
   "n30",
   "n31",
   "n32",
+  "kr-kuuga",
+  "kr-agito",
+  "kr-ryuki",
+  "kr-faiz",
+  "kr-blade",
+  "kr-hibiki",
+  "kr-kabuto",
+  "kr-den-o",
+  "kr-kiva",
+  "kr-decade",
+  "kr-w",
+  "kr-ooo",
+  "kr-fourze",
+  "kr-wizard",
+  "kr-gaim",
+  "kr-drive",
+  "kr-ghost",
+  "kr-ex-aid",
+  "kr-zi-o",
 ]);
 const removedSeedMovieIds = new Set([
   "m2",
