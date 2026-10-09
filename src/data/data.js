@@ -781,7 +781,8 @@ export const movieSeed = [
     description:
       "Sougo Tokiwa du hành qua các thời đại Rider để đối mặt với định mệnh trở thành vua thời gian.",
     episodeCount: 49,
-
+  },
+  {
     id: "n33",
     title: "Interstellar 2",
     year: "2026",
@@ -806,7 +807,6 @@ export const movieSeed = [
       "https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=1800&q=85",
     description:
       "Miles Morales du hành qua các vũ trụ Spider-Man và đối mặt với lựa chọn có thể thay đổi số phận của mọi người.",
-main
   },
 ];
 
@@ -893,10 +893,8 @@ const addedSeedMovieIds = new Set([
   "kr-ghost",
   "kr-ex-aid",
   "kr-zi-o",
-
   "n33",
   "n34",
- main
 ]);
 const removedSeedMovieIds = new Set([
   "m8",
