@@ -71,9 +71,15 @@ function renderWatchPage(current) {
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
   const rawEpisodeCount = Number(current.episodeCount ?? 0);
-  const episodeCount = Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
-    ? Math.max(rawEpisodeCount, 1)
-    : current.id === "n19" ? 49 : 1;
+  const isKamenRiderBuild =
+    current.id === "n19" ||
+    current.title.trim().toLocaleLowerCase("vi") === "kamen rider build";
+  const episodeCount =
+    Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
+      ? rawEpisodeCount
+      : isKamenRiderBuild
+        ? 49
+        : 1;
   const requestedEpisode = Number(params.get("episode"));
   let activeEpisode = Number.isInteger(requestedEpisode)
     ? Math.min(Math.max(requestedEpisode, 1), episodeCount)
