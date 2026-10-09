@@ -3,6 +3,7 @@ import "./genres-page.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
 import {
   bindAccountActions,
+  getPosterStyle,
   renderAccountActions,
   renderFooter,
   renderHeader,
@@ -100,7 +101,7 @@ document.querySelector("#genreMovieGrid").innerHTML = filteredMovies.length
   ? filteredMovies
       .map(
         (movie, index) =>
-          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${escapeHtml(movie.poster)}')" aria-label="Xem phim ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a><span class="card-rating">★ ${escapeHtml(movie.rating)}</span></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
+          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="${getPosterStyle(movie)}" aria-label="Xem phim ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a><span class="card-rating">★ ${escapeHtml(movie.rating)}</span></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
       )
       .join("")
   : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
