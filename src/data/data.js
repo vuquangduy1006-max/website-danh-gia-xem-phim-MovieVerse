@@ -307,8 +307,7 @@ export const movieSeed = [
     genre: "Hài, Hành động, Tình cảm, Gia đình, Giả tưởng",
     rating: "8.6",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/8/8f/Spy_x_Family_key_visual.jpg",
+    poster: "/src/assets/poster/spy.png",
     backdrop:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
     description:
@@ -351,8 +350,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Huyền bí",
     rating: "8.9",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/7/74/DBZ_DVD_cover_1.jpg",
+    poster: "/src/assets/poster/dragonballz.png",
     backdrop:
       "https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=1800&q=85",
     description:
@@ -366,7 +364,7 @@ export const movieSeed = [
     genre: "Hành động, Giả tưởng, Hài, Tâm lý, Tokusatsu",
     rating: "8.2",
     isNew: true,
-    poster: "https://upload.wikimedia.org/wikipedia/en/9/94/Bleach_01.jpg",
+    poster: "/src/assets/poster/bleach.png",
     backdrop:
       "https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?w=1800&q=85",
     description:
@@ -380,8 +378,7 @@ export const movieSeed = [
     genre: "Hành động, Hài, Phiêu aventure, Giả tưởng, Chính kịch",
     rating: "9.1",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/2/2b/Fullmetal-Alchemist-Brotherhood.jpg",
+    poster: "/src/assets/poster/fullmetal.png",
     backdrop:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
     description:
@@ -395,8 +392,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Gia đình",
     rating: "8.3",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/b/b9/Fairy_Tail_Volume_1.jpg",
+    poster: "/src/assets/poster/fairytail.png",
     backdrop:
       "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1800&q=85",
     description:
@@ -410,8 +406,7 @@ export const movieSeed = [
     genre: "Hành động, Hài, Siêu anh hùng, Phiêu lưu, Tâm lý",
     rating: "8.5",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/4/42/My_Hero_Academia_Volume_1_cover.jpg",
+    poster: "/src/assets/poster/heroacademia.png",
     backdrop:
       "https://images.unsplash.com/photo-1521985429101-21bed8b75e47?w=1800&q=85",
     description:
@@ -425,8 +420,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Tâm lý, Hài, Giả tưởng",
     rating: "9.0",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/8/8a/Hunter_x_Hunter_cover_-_vol._1.jpg",
+    poster: "/src/assets/poster/hunter.png",
     backdrop:
       "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=1800&q=85",
     description:
@@ -440,8 +434,7 @@ export const movieSeed = [
     genre: "Thể thao, Hành động, Tâm lý, Chiến tranh",
     rating: "8.3",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/4/4d/Blue_Lock_manga_volume_1_cover.jpg",
+    poster: "/src/assets/poster/bluelock.png",
     backdrop:
       "https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1800&q=85",
     description:
@@ -468,8 +461,7 @@ export const movieSeed = [
     genre: "Hoạt hình, Hành động, Phiêu lưu, Khoa học viễn tưởng",
     rating: "8.6",
     isNew: false,
-    poster:
-      "https://en.wikipedia.org/wiki/Special:FilePath/Spider-Man_Across_the_Spider-Verse_poster.jpg",
+    poster: "/src/assets/poster/spiderman.png",
     backdrop:
       "https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=1800&q=85",
     description:
