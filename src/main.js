@@ -1,11 +1,12 @@
 import "./style.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
+import { getTrailer } from "./data/media.js";
 import { loadReviews } from "./data/reviews.js";
 import { loadFavorites } from "./data/favorites.js";
 import { rankMovieRecommendations } from "./data/recommendations.js";
-import { initMovieAssistant } from "./assistant.js";
 import {
   bindAccountActions,
+  getPosterStyle,
   renderAccountActions,
   renderFooter,
   renderHeader,
@@ -178,7 +179,6 @@ ${renderFooter({
 `;
 
 bindAccountActions();
-initMovieAssistant(movies);
 
 renderGenrePills();
 renderHero();
@@ -222,7 +222,9 @@ document.querySelector("#headerSearch").addEventListener("submit", (event) => {
   const first = document.querySelector("#searchResults a.search-result");
   if (first) window.location.href = first.href;
 });
-document.querySelector("#searchInput").addEventListener("focus", (event) => renderSearch(event.target.value));
+document
+  .querySelector("#searchInput")
+  .addEventListener("focus", (event) => renderSearch(event.target.value));
 document
   .querySelector("#recommendationForm")
   .addEventListener("submit", (event) => {
@@ -253,7 +255,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 function posterStyle(movie) {
-  return `background-image:url('${movie.poster}')`;
+  return getPosterStyle(movie);
 }
 
 function renderGenrePills() {
@@ -277,10 +279,15 @@ function renderGenrePills() {
 
 function renderHero() {
   document.querySelector("#heroSlides").innerHTML = heroMovies
-    .map(
-      (movie, index) =>
-        `<article class="hero-slide ${index === 0 ? "active" : ""}" style="background-image:url('${movie.backdrop}')"><div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span><span>2h 46m</span></div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}">▶ &nbsp;Xem ngay</a></div></article>`,
-    )
+    .map((movie, index) => {
+      const trailer = getTrailer(movie);
+      const mediaMarkup =
+        trailer && trailer.kind === "file"
+          ? `<video class="hero-video" autoplay muted loop playsinline preload="metadata" poster="${movie.poster || movie.backdrop || ""}" src="${trailer.url}"></video>`
+          : `<div class="hero-bg" style="background-image:url('${movie.backdrop || movie.poster}')"></div>`;
+
+      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span><span>2h 46m</span></div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}">▶ &nbsp;Xem ngay</a></div></article>`;
+    })
     .join("");
   document.querySelector("#sliderDots").innerHTML = heroMovies
     .map(
@@ -350,7 +357,7 @@ function renderRecommendations(query = "") {
         .map(
           ({ movie, reasons }, index) => `
             <article class="recommendation-card" style="animation-delay:${index * 0.08}s">
-              <a class="recommendation-poster" href="${detailUrl(movie)}" style="background-image:url('${escapeHtml(movie.poster)}')" aria-label="Xem chi tiết ${escapeHtml(movie.title)}"></a>
+              <a class="recommendation-poster" href="${detailUrl(movie)}" style="${getPosterStyle(movie)}" aria-label="Xem chi tiết ${escapeHtml(movie.title)}"></a>
               <div class="recommendation-card-copy">
                 <p class="recommendation-reasons">${reasons.map(escapeHtml).join(" · ")}</p>
                 <h3><a href="${detailUrl(movie)}">${escapeHtml(movie.title)}</a></h3>
@@ -487,7 +494,11 @@ function renderSearch(query = "") {
   const resultsBox = document.querySelector("#searchResults");
   if (!resultsBox) return;
 
-  const suggestions = normalizedQuery ? results : [...movies].sort((a,b) => Number(b.rating)-Number(a.rating)).slice(0, 6);
+  const suggestions = normalizedQuery
+    ? results
+    : [...movies]
+        .sort((a, b) => Number(b.rating) - Number(a.rating))
+        .slice(0, 6);
 
   // Chỉ mở dropdown khi thực sự có kết quả để tránh hiện khung rỗng.
   searchForm?.classList.add("has-results");
