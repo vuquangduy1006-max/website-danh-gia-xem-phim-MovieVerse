@@ -14,7 +14,7 @@ const fullmetalPoster = new URL(
   import.meta.url,
 ).href;
 const fairytailPoster = new URL(
-  "../assets/poster/fairytail.png",
+  "../assets/poster/fairytail100.png",
   import.meta.url,
 ).href;
 const heroAcademiaPoster = new URL(
