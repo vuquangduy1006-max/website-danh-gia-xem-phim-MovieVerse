@@ -478,7 +478,7 @@ export const movieSeed = [
     episodeCount: 12,
   },
   {
- phim-moi
+
     id: "kr-kuuga",
     title: "Kamen Rider Kuuga",
     year: "2000",
@@ -874,7 +874,6 @@ const addedSeedMovieIds = new Set([
   "n30",
   "n31",
   "n32",
- phim-moi
   "kr-kuuga",
   "kr-agito",
   "kr-ryuki",
