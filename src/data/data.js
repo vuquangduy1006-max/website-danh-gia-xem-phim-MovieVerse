@@ -1,3 +1,39 @@
+const godvalleyPoster = new URL(
+  "../assets/poster/godvalley.png",
+  import.meta.url,
+).href;
+const spyPoster = new URL("../assets/poster/spy.png", import.meta.url).href;
+const dragonballzPoster = new URL(
+  "../assets/poster/dragonballz.png",
+  import.meta.url,
+).href;
+const bleachPoster = new URL("../assets/poster/bleach.png", import.meta.url)
+  .href;
+const fullmetalPoster = new URL(
+  "../assets/poster/fullmetal.png",
+  import.meta.url,
+).href;
+const fairytailPoster = new URL(
+  "../assets/poster/fairytail.png",
+  import.meta.url,
+).href;
+const heroAcademiaPoster = new URL(
+  "../assets/poster/heroacademia.png",
+  import.meta.url,
+).href;
+const hunterPoster = new URL("../assets/poster/hunter.png", import.meta.url)
+  .href;
+const blueLockPoster = new URL("../assets/poster/bluelock.png", import.meta.url)
+  .href;
+const interstellar2Poster = new URL(
+  "../assets/poster/interstellar2.png",
+  import.meta.url,
+).href;
+const spidermanPoster = new URL(
+  "../assets/poster/spiderman.png",
+  import.meta.url,
+).href;
+
 export const genreList = [
   "Hành động",
   "Phiêu lưu",
@@ -294,7 +330,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Hài, Gia đình, Giả tưởng",
     rating: "8.8",
     isNew: true,
-    poster: "/src/assets/poster/godvalley.png",
+    poster: godvalleyPoster,
     backdrop:
       "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1800&q=85",
     description:
@@ -307,7 +343,7 @@ export const movieSeed = [
     genre: "Hài, Hành động, Tình cảm, Gia đình, Giả tưởng",
     rating: "8.6",
     isNew: true,
-    poster: "/src/assets/poster/spy.png",
+    poster: spyPoster,
     backdrop:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
     description:
@@ -350,7 +386,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Huyền bí",
     rating: "8.9",
     isNew: true,
-    poster: "/src/assets/poster/dragonballz.png",
+    poster: dragonballzPoster,
     backdrop:
       "https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=1800&q=85",
     description:
@@ -364,7 +400,7 @@ export const movieSeed = [
     genre: "Hành động, Giả tưởng, Hài, Tâm lý, Tokusatsu",
     rating: "8.2",
     isNew: true,
-    poster: "/src/assets/poster/bleach.png",
+    poster: bleachPoster,
     backdrop:
       "https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?w=1800&q=85",
     description:
@@ -378,7 +414,7 @@ export const movieSeed = [
     genre: "Hành động, Hài, Phiêu aventure, Giả tưởng, Chính kịch",
     rating: "9.1",
     isNew: true,
-    poster: "/src/assets/poster/fullmetal.png",
+    poster: fullmetalPoster,
     backdrop:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1800&q=85",
     description:
@@ -392,7 +428,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Hài, Giả tưởng, Gia đình",
     rating: "8.3",
     isNew: true,
-    poster: "/src/assets/poster/fairytail.png",
+    poster: fairytailPoster,
     backdrop:
       "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1800&q=85",
     description:
@@ -406,7 +442,7 @@ export const movieSeed = [
     genre: "Hành động, Hài, Siêu anh hùng, Phiêu lưu, Tâm lý",
     rating: "8.5",
     isNew: true,
-    poster: "/src/assets/poster/heroacademia.png",
+    poster: heroAcademiaPoster,
     backdrop:
       "https://images.unsplash.com/photo-1521985429101-21bed8b75e47?w=1800&q=85",
     description:
@@ -420,7 +456,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Tâm lý, Hài, Giả tưởng",
     rating: "9.0",
     isNew: true,
-    poster: "/src/assets/poster/hunter.png",
+    poster: hunterPoster,
     backdrop:
       "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=1800&q=85",
     description:
@@ -434,7 +470,7 @@ export const movieSeed = [
     genre: "Thể thao, Hành động, Tâm lý, Chiến tranh",
     rating: "8.3",
     isNew: true,
-    poster: "/src/assets/poster/bluelock.png",
+    poster: blueLockPoster,
     backdrop:
       "https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1800&q=85",
     description:
@@ -448,7 +484,7 @@ export const movieSeed = [
     genre: "Khoa học viễn tưởng",
     rating: "0.0",
     isNew: true,
-    poster: "/src/assets/poster/interstellar2.png",
+    poster: interstellar2Poster,
     backdrop:
       "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1800&q=85",
     description:
@@ -461,7 +497,7 @@ export const movieSeed = [
     genre: "Hoạt hình, Hành động, Phiêu lưu, Khoa học viễn tưởng",
     rating: "8.6",
     isNew: false,
-    poster: "/src/assets/poster/spiderman.png",
+    poster: spidermanPoster,
     backdrop:
       "https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=1800&q=85",
     description:
@@ -470,17 +506,17 @@ export const movieSeed = [
 ];
 
 export const animePosterMap = {
-  n20: "/src/assets/poster/godvalley.png",
-  n21: "/src/assets/poster/spy.png",
-  n24: "/src/assets/poster/dragonballz.png",
-  n25: "/src/assets/poster/bleach.png",
-  n27: "/src/assets/poster/fullmetal.png",
-  n29: "/src/assets/poster/fairytail.png",
-  n30: "/src/assets/poster/heroacademia.png",
-  n31: "/src/assets/poster/hunter.png",
-  n32: "/src/assets/poster/bluelock.png",
-  n33: "/src/assets/poster/interstellar2.png",
-  n34: "/src/assets/poster/spiderman.png",
+  n20: godvalleyPoster,
+  n21: spyPoster,
+  n24: dragonballzPoster,
+  n25: bleachPoster,
+  n27: fullmetalPoster,
+  n29: fairytailPoster,
+  n30: heroAcademiaPoster,
+  n31: hunterPoster,
+  n32: blueLockPoster,
+  n33: interstellar2Poster,
+  n34: spidermanPoster,
 };
 
 for (const [id, poster] of Object.entries(animePosterMap)) {
