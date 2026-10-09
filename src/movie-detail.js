@@ -39,11 +39,11 @@ function renderNotFound() {
   document.querySelector("#app").innerHTML = `
     <header class="site-header new-page-header">
       <div class="container nav-wrap">
-        <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
+        <a class="brand" href="./"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="./">Trang chủ</a><a href="./new-movies.html">Phim mới</a><a href="./genres.html">Thể loại</a><a href="./reviews.html">Đánh giá</a><a href="./favorites.html">Yêu thích</a><a href="./ranking.html">Top phim</a>
         </nav>
-        <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
+        <div class="nav-actions"><a class="login-link" href="./">Về trang chủ →</a></div>
       </div>
     </header>
     <main class="detail-notfound">
@@ -51,7 +51,7 @@ function renderNotFound() {
         <p class="eyebrow">Lỗi 404</p>
         <h1>Không tìm thấy phim này</h1>
         <p>Bộ phim bạn tìm không còn tồn tại hoặc đã bị gỡ khỏi kho.</p>
-        <a class="watch-button" href="/">← Quay về trang chủ</a>
+        <a class="watch-button" href="./">← Quay về trang chủ</a>
       </div>
     </main>
   `;
@@ -61,18 +61,18 @@ function renderDetailPage(current) {
   const media = getMovieMedia(current, movieList);
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
-  const pageUrl = `${window.location.origin}/movie-detail.html?id=${encodeURIComponent(current.id)}`;
+  const pageUrl = `./movie-detail.html?id=${encodeURIComponent(current.id)}`;
   const shareText = `Xem phim ${current.title} (${current.year}) trên MovieVerse`;
 
   document.querySelector("#app").innerHTML = `
     <header class="site-header new-page-header">
       <div class="container nav-wrap">
-        <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
+        <a class="brand" href="./" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/genres.html" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="./">Trang chủ</a><a href="./new-movies.html">Phim mới</a><a class="active" href="./genres.html" aria-current="page">Thể loại</a><a href="./reviews.html">Đánh giá</a><a href="./favorites.html">Yêu thích</a><a href="./ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
-          <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
+          <a class="login-link" href="./new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
           <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>
         </div>
       </div>
@@ -83,8 +83,8 @@ function renderDetailPage(current) {
         <div class="detail-hero-scrim"></div>
         <div class="container detail-hero-inner">
           <nav class="detail-breadcrumb" aria-label="Đường dẫn">
-            <a href="/">Trang chủ</a><span aria-hidden="true">/</span>
-            <a href="/?genre=${encodeURIComponent(current.genre)}">${current.genre}</a><span aria-hidden="true">/</span>
+            <a href="./">Trang chủ</a><span aria-hidden="true">/</span>
+            <a href="./?genre=${encodeURIComponent(current.genre)}">${current.genre}</a><span aria-hidden="true">/</span>
             <strong>${current.title}</strong>
           </nav>
           <div class="detail-hero-body">
@@ -96,7 +96,7 @@ function renderDetailPage(current) {
               <div class="detail-metrics" id="detailMetrics"></div>
               <div class="detail-toolbar" role="toolbar" aria-label="Công cụ phim ${current.title}">
                     <button type="button" class="tb-btn tb-btn-primary" data-tool="play">▶ <span>Xem ngay</span></button>
-                    <a class="tb-btn" href="/watch.html?id=${encodeURIComponent(current.id)}">⛶ <span>Xem phim</span></a>
+                    <a class="tb-btn" href="./watch.html?id=${encodeURIComponent(current.id)}">⛶ <span>Xem phim</span></a>
                     <button type="button" class="tb-btn" data-tool="trailer">▷ <span>Trailer</span></button>
                 <button type="button" class="tb-btn" data-tool="favorite" aria-pressed="false">♡ <span>Yêu thích</span></button>
                 <button type="button" class="tb-btn" data-tool="watchlist" aria-pressed="false">＋ <span>Danh sách xem</span></button>
@@ -219,7 +219,7 @@ function renderDetailPage(current) {
     <footer class="site-footer">
       <div class="container footer-bottom">
         <span>© 2024 MovieVerse. Made for movie lovers.</span>
-        <a href="/">← Quay về MovieVerse</a>
+        <a href="./">← Quay về MovieVerse</a>
       </div>
     </footer>
 
@@ -352,7 +352,7 @@ function renderDetailPage(current) {
       ? list
           .map(
             (item) => `
-            <a class="similar-item" href="/movie-detail.html?id=${encodeURIComponent(item.id)}">
+            <a class="similar-item" href="./movie-detail.html?id=${encodeURIComponent(item.id)}">
               <span class="similar-poster" style="background-image:url('${item.poster}')"></span>
               <span class="similar-info">
                 <strong>${item.title}</strong>

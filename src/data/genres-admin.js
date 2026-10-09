@@ -10,7 +10,7 @@ import {
 } from "./data.js";
 
 if (!isAdmin()) {
-  window.location.replace("/login.html?next=/admin/genres.html");
+  window.location.replace("../login.html?next=../admin/genres.html");
 } else {
   let genres = getGenreList();
   let query = "";
@@ -18,12 +18,12 @@ if (!isAdmin()) {
   document.querySelector("#app").innerHTML = `
     <header class="admin-header">
       <div class="container header-inner">
-        <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
+        <a class="brand" href="../" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="admin-nav" aria-label="Điều hướng quản trị">
-          <a href="/admin/admin.html">Quản lý phim</a>
-          <a class="active" href="/admin/genres.html" aria-current="page">Thể loại</a>
-          <a href="/admin/comments.html">Bình luận</a>
-          <a href="/" class="back-link">← Trang chủ</a>
+          <a href="../admin/admin.html">Quản lý phim</a>
+          <a class="active" href="../admin/genres.html" aria-current="page">Thể loại</a>
+          <a href="../admin/comments.html">Bình luận</a>
+          <a href="../" class="back-link">← Trang chủ</a>
         </nav>
         <div class="header-actions"><span class="admin-role">ADMIN</span></div>
       </div>
@@ -93,7 +93,9 @@ if (!isAdmin()) {
   function render() {
     const counts = getUsageCounts();
     const filtered = genres.filter((genre) =>
-      genre.toLocaleLowerCase("vi").includes(query.trim().toLocaleLowerCase("vi")),
+      genre
+        .toLocaleLowerCase("vi")
+        .includes(query.trim().toLocaleLowerCase("vi")),
     );
     const usedCount = [...counts.values()].filter((count) => count > 0).length;
 
@@ -125,7 +127,10 @@ if (!isAdmin()) {
     toast.textContent = message;
     toast.className = `toast ${type} show`;
     window.clearTimeout(showToast.timer);
-    showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2600);
+    showToast.timer = window.setTimeout(
+      () => toast.classList.remove("show"),
+      2600,
+    );
   }
 
   document.querySelector("#genreForm").addEventListener("submit", (event) => {
@@ -133,7 +138,12 @@ if (!isAdmin()) {
     const input = document.querySelector("#genreName");
     const name = input.value.trim();
     if (!name) return;
-    if (genres.some((genre) => genre.toLocaleLowerCase("vi") === name.toLocaleLowerCase("vi"))) {
+    if (
+      genres.some(
+        (genre) =>
+          genre.toLocaleLowerCase("vi") === name.toLocaleLowerCase("vi"),
+      )
+    ) {
       showToast("Thể loại này đã tồn tại.", "error");
       input.focus();
       return;
@@ -150,49 +160,62 @@ if (!isAdmin()) {
     render();
   });
 
-  document.querySelector("#genreTableBody").addEventListener("click", (event) => {
-    const editButton = event.target.closest("[data-edit-genre]");
-    if (editButton) {
-      const oldName = editButton.dataset.editGenre;
-      const newName = window.prompt("Nhập tên thể loại mới:", oldName)?.trim();
-      if (!newName || newName === oldName) return;
-      if (genres.some((genre) => genre !== oldName && genre.toLocaleLowerCase("vi") === newName.toLocaleLowerCase("vi"))) {
-        showToast("Tên thể loại này đã được sử dụng.", "error");
+  document
+    .querySelector("#genreTableBody")
+    .addEventListener("click", (event) => {
+      const editButton = event.target.closest("[data-edit-genre]");
+      if (editButton) {
+        const oldName = editButton.dataset.editGenre;
+        const newName = window
+          .prompt("Nhập tên thể loại mới:", oldName)
+          ?.trim();
+        if (!newName || newName === oldName) return;
+        if (
+          genres.some(
+            (genre) =>
+              genre !== oldName &&
+              genre.toLocaleLowerCase("vi") === newName.toLocaleLowerCase("vi"),
+          )
+        ) {
+          showToast("Tên thể loại này đã được sử dụng.", "error");
+          return;
+        }
+        const movies = getMovieDB();
+        let moviesChanged = false;
+        movies.forEach((movie) => {
+          const movieGenres = getMovieGenres(movie);
+          if (movieGenres.includes(oldName)) {
+            movie.genre = movieGenres
+              .map((genre) => (genre === oldName ? newName : genre))
+              .join(", ");
+            moviesChanged = true;
+          }
+        });
+        genres = genres.map((genre) => (genre === oldName ? newName : genre));
+        saveGenreList(genres);
+        if (moviesChanged) saveMovieDB(movies);
+        render();
+        showToast(`Đã đổi tên thành "${newName}".`);
         return;
       }
-      const movies = getMovieDB();
-      let moviesChanged = false;
-      movies.forEach((movie) => {
-        const movieGenres = getMovieGenres(movie);
-        if (movieGenres.includes(oldName)) {
-          movie.genre = movieGenres
-            .map((genre) => (genre === oldName ? newName : genre))
-            .join(", ");
-          moviesChanged = true;
-        }
-      });
-      genres = genres.map((genre) => (genre === oldName ? newName : genre));
-      saveGenreList(genres);
-      if (moviesChanged) saveMovieDB(movies);
-      render();
-      showToast(`Đã đổi tên thành "${newName}".`);
-      return;
-    }
 
-    const deleteButton = event.target.closest("[data-delete-genre]");
-    if (!deleteButton) return;
-    const name = deleteButton.dataset.deleteGenre;
-    const usageCount = getUsageCounts().get(name) || 0;
-    if (usageCount) {
-      showToast(`Không thể xóa: còn ${usageCount} phim thuộc thể loại này.`, "error");
-      return;
-    }
-    if (!window.confirm(`Xóa thể loại "${name}"?`)) return;
-    genres = genres.filter((genre) => genre !== name);
-    saveGenreList(genres);
-    render();
-    showToast(`Đã xóa thể loại "${name}".`);
-  });
+      const deleteButton = event.target.closest("[data-delete-genre]");
+      if (!deleteButton) return;
+      const name = deleteButton.dataset.deleteGenre;
+      const usageCount = getUsageCounts().get(name) || 0;
+      if (usageCount) {
+        showToast(
+          `Không thể xóa: còn ${usageCount} phim thuộc thể loại này.`,
+          "error",
+        );
+        return;
+      }
+      if (!window.confirm(`Xóa thể loại "${name}"?`)) return;
+      genres = genres.filter((genre) => genre !== name);
+      saveGenreList(genres);
+      render();
+      showToast(`Đã xóa thể loại "${name}".`);
+    });
 
   render();
 }

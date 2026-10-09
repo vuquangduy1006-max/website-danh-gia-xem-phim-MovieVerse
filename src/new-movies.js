@@ -13,18 +13,18 @@ const newMovies = getMovieDB().filter((movie) => movie.isNew);
 document.querySelector("#app").innerHTML = `
 ${renderHeader({
   headerClass: " new-page-header",
-  homeHref: "/",
+  homeHref: "./",
   homeActive: "",
   homeCurrent: "",
-  newMoviesHref: "/new-movies.html",
+  newMoviesHref: "./new-movies.html",
   newMoviesActive: "active",
   newMoviesCurrent: 'aria-current="page"',
-  genresHref: "/genres.html",
-  reviewsHref: "/reviews.html",
-  favoritesHref: "/favorites.html",
+  genresHref: "./genres.html",
+  reviewsHref: "./reviews.html",
+  favoritesHref: "./favorites.html",
   favoritesActive: "",
   favoritesCurrent: "",
-  rankingHref: "/ranking.html",
+  rankingHref: "./ranking.html",
   rankingActive: "",
   rankingCurrent: "",
   headerActions: `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>`,
@@ -36,7 +36,7 @@ ${renderHeader({
         <p class="eyebrow">Vừa cập nhật · MovieVerse</p>
         <h1>Phim mới</h1>
         <p class="new-page-description">Những câu chuyện mới vừa có mặt trong kho phim.</p>
-        <a class="new-page-home-link" href="/#home">Khám phá trang chủ <span aria-hidden="true">↗</span></a>
+        <a class="new-page-home-link" href="./#home">Khám phá trang chủ <span aria-hidden="true">↗</span></a>
       </div>
     </section>
 
@@ -61,11 +61,11 @@ ${renderHeader({
 
 ${renderFooter({
   footerClass: " new-page-footer",
-  homeHref: "/",
-  newMoviesHref: "/new-movies.html",
-  rankingHref: "/#ranking",
-  genresHref: "/genres.html",
-  aboutHref: "/#home",
+  homeHref: "./",
+  newMoviesHref: "./new-movies.html",
+  rankingHref: "./#ranking",
+  genresHref: "./genres.html",
+  aboutHref: "./#home",
 })}
 `;
 
@@ -99,7 +99,7 @@ function renderMovies() {
     ? filteredMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/watch.html?id=${movie.id}" aria-label="Xem phim ${movie.title}"><div class="poster" style="${getPosterStyle(movie)}"><span class="new-movie-badge">Mới</span></div></a><h3><a href="/movie-detail.html?id=${movie.id}">${movie.title}</a><span class="card-rating">★ ${Number(movie.rating).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="./watch.html?id=${movie.id}" aria-label="Xem phim ${movie.title}"><div class="poster" style="${getPosterStyle(movie)}"><span class="new-movie-badge">Mới</span></div></a><h3><a href="./movie-detail.html?id=${movie.id}">${movie.title}</a><span class="card-rating">★ ${Number(movie.rating).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Không tìm thấy phim phù hợp.</p>';

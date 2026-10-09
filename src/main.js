@@ -50,15 +50,15 @@ ${renderHeader({
   homeHref: "#home",
   homeActive: "active",
   homeCurrent: 'aria-current="page"',
-  newMoviesHref: "/new-movies.html",
+  newMoviesHref: "./new-movies.html",
   newMoviesActive: "",
   newMoviesCurrent: "",
-  genresHref: "/genres.html",
-  reviewsHref: "/reviews.html",
-  favoritesHref: "/favorites.html",
+  genresHref: "./genres.html",
+  reviewsHref: "./reviews.html",
+  favoritesHref: "./favorites.html",
   favoritesActive: "",
   favoritesCurrent: "",
-  rankingHref: "/ranking.html",
+  rankingHref: "./ranking.html",
   rankingActive: "",
   rankingCurrent: "",
   headerActions,
@@ -80,7 +80,7 @@ ${renderHeader({
         <p class="eyebrow">Dành cho bạn</p>
         <h2>Khám phá điện ảnh</h2>
       </div>
-      <a class="text-link" href="/new-movies.html">Phim mới <span>→</span></a>
+      <a class="text-link" href="./new-movies.html">Phim mới <span>→</span></a>
     </div>
     <div class="genre-pills" id="genres"></div>
     <section class="recommendation-tool" aria-labelledby="recommendationHeading">
@@ -170,9 +170,9 @@ ${renderHeader({
 ${renderFooter({
   footerClass: "",
   homeHref: "#home",
-  newMoviesHref: "/new-movies.html",
-  rankingHref: "#ranking",
-  genresHref: "/genres.html",
+  newMoviesHref: "./new-movies.html",
+  rankingHref: "#/ranking",
+  genresHref: "./genres.html",
   aboutHref: "#home",
 })}
 

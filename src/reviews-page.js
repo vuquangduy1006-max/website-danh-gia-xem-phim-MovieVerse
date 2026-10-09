@@ -25,20 +25,20 @@ const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
     headerClass: " new-page-header",
-    homeHref: "/",
+    homeHref: "./",
     homeActive: "",
     homeCurrent: "",
-    newMoviesHref: "/new-movies.html",
+    newMoviesHref: "./new-movies.html",
     newMoviesActive: "",
     newMoviesCurrent: "",
-    genresHref: "/genres.html",
-    reviewsHref: "/reviews.html",
+    genresHref: "./genres.html",
+    reviewsHref: "./reviews.html",
     reviewsActive: "active",
     reviewsCurrent: 'aria-current="page"',
-    favoritesHref: "/favorites.html",
+    favoritesHref: "./favorites.html",
     favoritesActive: "",
     favoritesCurrent: "",
-    rankingHref: "/ranking.html",
+    rankingHref: "./ranking.html",
     rankingActive: "",
     rankingCurrent: "",
     headerActions,
@@ -99,7 +99,7 @@ document.querySelector("#app").innerHTML = `
       </aside>
     </section>
   </main>
-  ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/genres.html", aboutHref: "/" })}
+  ${renderFooter({ footerClass: "", homeHref: "./", newMoviesHref: "./new-movies.html", rankingHref: "./#ranking", genresHref: "./genres.html", aboutHref: "./" })}
 `;
 
 bindAccountActions();
@@ -198,7 +198,7 @@ function renderReviews() {
     ? shown
         .map((review) => {
           const movie = movieForReview(review);
-          return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p>${review.adminReply ? `<div class="community-admin-reply"><strong>MovieVerse Admin</strong><p>${escapeHtml(review.adminReply.comment)}</p></div>` : ""}<div class="community-review-actions"><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a>${adminUser ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div></div></article>`;
+          return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p>${review.adminReply ? `<div class="community-admin-reply"><strong>MovieVerse Admin</strong><p>${escapeHtml(review.adminReply.comment)}</p></div>` : ""}<div class="community-review-actions"><a href="./movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a>${adminUser ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div></div></article>`;
         })
         .join("")
     : '<p class="review-empty-note">Không tìm thấy review phù hợp. Thử đổi bộ lọc hoặc viết một review mới.</p>';

@@ -19,20 +19,20 @@ const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
     headerClass: " new-page-header",
-    homeHref: "/",
+    homeHref: "./",
     homeActive: "",
     homeCurrent: "",
-    newMoviesHref: "/new-movies.html",
+    newMoviesHref: "./new-movies.html",
     newMoviesActive: "",
     newMoviesCurrent: "",
-    genresHref: "/genres.html",
-    reviewsHref: "/reviews.html",
+    genresHref: "./genres.html",
+    reviewsHref: "./reviews.html",
     reviewsActive: "",
     reviewsCurrent: "",
-    favoritesHref: "/favorites.html",
+    favoritesHref: "./favorites.html",
     favoritesActive: "",
     favoritesCurrent: "",
-    rankingHref: "/ranking.html",
+    rankingHref: "./ranking.html",
     rankingActive: "",
     rankingCurrent: "",
     headerActions,
@@ -56,13 +56,13 @@ document.querySelector("#app").innerHTML = `
         </div>
         <div class="history-actions">
           <button type="button" class="text-link history-clear" id="clearHistoryBtn">Xoá lịch sử</button>
-          <a class="text-link" href="/">Khám phá thêm <span>→</span></a>
+          <a class="text-link" href="./">Khám phá thêm <span>→</span></a>
         </div>
       </div>
       <div class="favorites-grid" id="historyGrid"></div>
     </section>
   </main>
-  ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/genres.html", aboutHref: "/" })}
+  ${renderFooter({ footerClass: "", homeHref: "./", newMoviesHref: "./new-movies.html", rankingHref: "./#ranking", genresHref: "./genres.html", aboutHref: "./" })}
 `;
 
 bindAccountActions();
@@ -70,7 +70,10 @@ bindAccountActions();
 function escapeHtml(value) {
   return String(value).replace(
     /[&<>"']/g,
-    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]),
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
   );
 }
 
@@ -103,12 +106,12 @@ function renderHistory() {
         .map(
           (movie) => `
             <article class="favorite-card">
-              <a class="favorite-poster" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')">
+              <a class="favorite-poster" href="./watch.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')">
                 <span class="favorite-play" aria-hidden="true">▶</span>
               </a>
               <div class="favorite-card-body">
                 <div>
-                  <h3><a href="/watch.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3>
+                  <h3><a href="./watch.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3>
                   <p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p>
                   <p class="history-date">Xem lần cuối: ${escapeHtml(formatDate(movie.viewedAt))}</p>
                 </div>
@@ -121,7 +124,7 @@ function renderHistory() {
           `,
         )
         .join("")
-    : '<div class="favorites-empty"><span class="favorites-empty-mark">◉</span><h3>Chưa có lịch sử xem</h3><p>Bắt đầu phát phim để lưu lại những bộ bạn đã xem gần đây.</p><a class="watch-button" href="/">Khám phá phim <span aria-hidden="true">→</span></a></div>';
+    : '<div class="favorites-empty"><span class="favorites-empty-mark">◉</span><h3>Chưa có lịch sử xem</h3><p>Bắt đầu phát phim để lưu lại những bộ bạn đã xem gần đây.</p><a class="watch-button" href="./">Khám phá phim <span aria-hidden="true">→</span></a></div>';
 }
 
 document.querySelector("#historyGrid").addEventListener("click", (event) => {

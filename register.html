@@ -11,12 +11,12 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/src/auth.css" />
+    <link rel="stylesheet" href="./src/auth.css" />
   </head>
   <body class="auth-page">
     <main class="auth-layout">
       <section class="auth-scene" aria-label="MovieVerse">
-        <a class="auth-brand" href="/" aria-label="MovieVerse trang chủ">
+        <a class="auth-brand" href="./" aria-label="MovieVerse trang chủ">
           <span class="auth-brand-mark">M</span>
           <span>movie<span>verse</span></span>
         </a>
@@ -28,37 +28,68 @@
       </section>
 
       <section class="auth-panel" aria-labelledby="authTitle">
-        <a class="auth-home-link" href="/">← Trang chủ</a>
+        <a class="auth-home-link" href="./">← Trang chủ</a>
         <div class="auth-content">
           <p class="auth-eyebrow">Gia nhập cộng đồng</p>
           <h2 id="authTitle">Tạo tài khoản</h2>
-          <p class="auth-subtitle">Lưu lại những bộ phim và đánh giá bạn yêu thích.</p>
+          <p class="auth-subtitle">
+            Lưu lại những bộ phim và đánh giá bạn yêu thích.
+          </p>
 
           <form class="auth-form" method="post">
             <div class="auth-field">
               <label for="registerName">Tên hiển thị</label>
-              <input id="registerName" name="name" type="text" placeholder="Tên của bạn" autocomplete="name" maxlength="40" required />
+              <input
+                id="registerName"
+                name="name"
+                type="text"
+                placeholder="Tên của bạn"
+                autocomplete="name"
+                maxlength="40"
+                required
+              />
             </div>
             <div class="auth-field">
               <label for="registerEmail">Email</label>
-              <input id="registerEmail" name="email" type="email" placeholder="ten@email.com" autocomplete="email" required />
+              <input
+                id="registerEmail"
+                name="email"
+                type="email"
+                placeholder="ten@email.com"
+                autocomplete="email"
+                required
+              />
             </div>
             <div class="auth-field">
               <label for="registerPassword">Mật khẩu</label>
-              <input id="registerPassword" name="password" type="password" placeholder="Ít nhất 8 ký tự" autocomplete="new-password" minlength="8" required />
+              <input
+                id="registerPassword"
+                name="password"
+                type="password"
+                placeholder="Ít nhất 8 ký tự"
+                autocomplete="new-password"
+                minlength="8"
+                required
+              />
             </div>
             <label class="auth-checkbox auth-terms">
               <input type="checkbox" name="terms" required />
-              <span>Tôi đồng ý với <a href="#terms">điều khoản sử dụng</a>.</span>
+              <span
+                >Tôi đồng ý với <a href="#terms">điều khoản sử dụng</a>.</span
+              >
             </label>
-            <button class="auth-submit" type="submit">Tạo tài khoản <span aria-hidden="true">→</span></button>
+            <button class="auth-submit" type="submit">
+              Tạo tài khoản <span aria-hidden="true">→</span>
+            </button>
           </form>
 
-          <p class="auth-switch">Đã có tài khoản? <a href="/login.html">Đăng nhập</a></p>
+          <p class="auth-switch">
+            Đã có tài khoản? <a href="./login.html">Đăng nhập</a>
+          </p>
         </div>
         <p class="auth-legal">© 2024 MovieVerse</p>
       </section>
     </main>
-    <script type="module" src="/src/auth-page.js"></script>
+    <script type="module" src="./src/auth-page.js"></script>
   </body>
 </html>

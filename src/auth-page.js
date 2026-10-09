@@ -4,8 +4,17 @@ const form = document.querySelector(".auth-form");
 
 function safeNext(role) {
   const next = new URLSearchParams(window.location.search).get("next");
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
-  if (next.startsWith("/admin/") && role !== "admin") return null;
+  if (!next || next.startsWith("//")) return null;
+  const isRelative =
+    next.startsWith("./") || next.startsWith("../") || next.startsWith("/");
+  if (!isRelative) return null;
+  if (
+    (next.startsWith("/admin/") ||
+      next.startsWith("./admin/") ||
+      next.startsWith("../admin/")) &&
+    role !== "admin"
+  )
+    return null;
   return next;
 }
 
@@ -31,7 +40,10 @@ if (form) {
           email: String(data.get("email") || ""),
           password: String(data.get("password") || ""),
         })
-      : loginUser(String(data.get("email") || ""), String(data.get("password") || ""));
+      : loginUser(
+          String(data.get("email") || ""),
+          String(data.get("password") || ""),
+        );
 
     message.textContent = result.ok
       ? isRegister
@@ -49,9 +61,9 @@ if (form) {
       }
       window.setTimeout(() => {
         window.location.href = isRegister
-          ? "/login.html"
+          ? "./login.html"
           : (safeNext(result.session.role) ??
-            (result.session.role === "admin" ? "/admin/admin.html" : "/"));
+            (result.session.role === "admin" ? "./admin/admin.html" : "./"));
       }, 450);
     }
   });

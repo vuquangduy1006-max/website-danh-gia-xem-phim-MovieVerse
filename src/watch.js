@@ -41,11 +41,11 @@ function renderNotFound() {
   document.querySelector("#app").innerHTML = `
     <header class="site-header new-page-header">
       <div class="container nav-wrap">
-        <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
+        <a class="brand" href="./"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="./">Trang chủ</a><a href="./new-movies.html">Phim mới</a><a href="./genres.html">Thể loại</a><a href="./reviews.html">Đánh giá</a><a href="./favorites.html">Yêu thích</a><a href="./ranking.html">Top phim</a>
         </nav>
-        <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
+        <div class="nav-actions"><a class="login-link" href="./">Về trang chủ →</a></div>
       </div>
     </header>
     <main class="detail-notfound">
@@ -53,7 +53,7 @@ function renderNotFound() {
         <p class="eyebrow">Lỗi 404</p>
         <h1>Không tìm thấy phim này</h1>
         <p>Bộ phim bạn tìm không còn tồn tại hoặc đã bị gỡ khỏi kho.</p>
-        <a class="watch-button" href="/">← Quay về trang chủ</a>
+        <a class="watch-button" href="./">← Quay về trang chủ</a>
       </div>
     </main>
   `;
@@ -71,9 +71,12 @@ function renderWatchPage(current) {
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
   const rawEpisodeCount = Number(current.episodeCount ?? 0);
-  const episodeCount = Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
-    ? Math.max(rawEpisodeCount, 1)
-    : current.id === "n19" ? 49 : 1;
+  const episodeCount =
+    Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
+      ? Math.max(rawEpisodeCount, 1)
+      : current.id === "n19"
+        ? 49
+        : 1;
   const requestedEpisode = Number(params.get("episode"));
   let activeEpisode = Number.isInteger(requestedEpisode)
     ? Math.min(Math.max(requestedEpisode, 1), episodeCount)
@@ -85,7 +88,7 @@ function renderWatchPage(current) {
     0,
     8,
   );
-  const pageUrl = `${window.location.origin}/watch.html?id=${encodeURIComponent(current.id)}`;
+  const pageUrl = `./watch.html?id=${encodeURIComponent(current.id)}`;
   const shareText = `Đang xem ${current.title} (${current.year}) trên MovieVerse`;
   const reviews = getMovieReviews(current.title);
   const average = reviews.length
@@ -96,12 +99,12 @@ function renderWatchPage(current) {
   document.querySelector("#app").innerHTML = `
     <header class="site-header watch-header">
       <div class="container nav-wrap">
-        <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
+        <a class="brand" href="./" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="./">Trang chủ</a><a href="./new-movies.html">Phim mới</a><a href="./genres.html">Thể loại</a><a href="./reviews.html">Đánh giá</a><a href="./favorites.html">Yêu thích</a><a href="./ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
-          <a class="login-link" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">Chi tiết phim <span aria-hidden="true">→</span></a>
+          <a class="login-link" href="./movie-detail.html?id=${encodeURIComponent(current.id)}">Chi tiết phim <span aria-hidden="true">→</span></a>
           <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>
         </div>
       </div>
@@ -110,8 +113,8 @@ function renderWatchPage(current) {
     <main class="watch-main">
       <div class="container">
         <nav class="detail-breadcrumb" aria-label="Đường dẫn">
-          <a href="/">Trang chủ</a><span aria-hidden="true">/</span>
-          <a href="/movie-detail.html?id=${encodeURIComponent(current.id)}">${current.title}</a><span aria-hidden="true">/</span>
+          <a href="./">Trang chủ</a><span aria-hidden="true">/</span>
+          <a href="./movie-detail.html?id=${encodeURIComponent(current.id)}">${current.title}</a><span aria-hidden="true">/</span>
           <strong>Xem phim</strong>
         </nav>
 
@@ -127,7 +130,7 @@ function renderWatchPage(current) {
                   <strong>${current.title}</strong> chưa có trailer hay nội dung chính thức
                   được thêm vào kho. Hãy xem chi tiết phim hoặc chọn một bộ khác trong danh sách phát.
                 </p>
-                <a class="tb-btn" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">ⓘ <span>Xem trang chi tiết</span></a>
+                <a class="tb-btn" href="./movie-detail.html?id=${encodeURIComponent(current.id)}">ⓘ <span>Xem trang chi tiết</span></a>
               </div>
 
               <div class="player-spinner" id="playerSpinner" hidden><span></span></div>
@@ -226,7 +229,7 @@ function renderWatchPage(current) {
                         </div>
                       </div>
                     </div>
-                    <a class="tb-btn" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">ⓘ <span>Chi tiết & đánh giá</span></a>
+                    <a class="tb-btn" href="./movie-detail.html?id=${encodeURIComponent(current.id)}">ⓘ <span>Chi tiết & đánh giá</span></a>
                   </div>
                 </div>
               </div>
@@ -276,7 +279,7 @@ function renderWatchPage(current) {
     <footer class="site-footer">
       <div class="container footer-bottom">
         <span>© 2024 MovieVerse. Made for movie lovers.</span>
-        <a href="/">← Quay về MovieVerse</a>
+        <a href="./">← Quay về MovieVerse</a>
       </div>
     </footer>
 
@@ -488,7 +491,10 @@ function renderWatchPage(current) {
     const list = document.querySelector("#episodeList");
     list.innerHTML = Array.from({ length: episodeCount }, (_, index) => {
       const episode = index + 1;
-      const label = episodeCount === 1 ? "Phim lẻ" : `Tập ${String(episode).padStart(2, "0")}`;
+      const label =
+        episodeCount === 1
+          ? "Phim lẻ"
+          : `Tập ${String(episode).padStart(2, "0")}`;
       return `<button type="button" class="episode-btn ${episode === activeEpisode ? "is-current" : ""}" data-episode="${episode}" aria-pressed="${episode === activeEpisode}">${label}</button>`;
     }).join("");
   }
@@ -519,21 +525,26 @@ function renderWatchPage(current) {
   }
 
   function bindEpisodes() {
-    document.querySelector("#episodeList").addEventListener("click", (event) => {
-      const button = event.target.closest("[data-episode]");
-      if (!button) return;
-      goToEpisode(Number(button.dataset.episode));
-    });
+    document
+      .querySelector("#episodeList")
+      .addEventListener("click", (event) => {
+        const button = event.target.closest("[data-episode]");
+        if (!button) return;
+        goToEpisode(Number(button.dataset.episode));
+      });
   }
 
   function confirmNextEpisode() {
-    if (episodeCount <= 1 || activeEpisode >= episodeCount) return Promise.resolve(false);
+    if (episodeCount <= 1 || activeEpisode >= episodeCount)
+      return Promise.resolve(false);
 
     const overlay = document.querySelector("#nextEpisodeOverlay");
     const current = document.querySelector("#nextEpisodeCurrent");
     const target = document.querySelector("#nextEpisodeTarget");
     const confirmButton = document.querySelector("[data-confirm-next-episode]");
-    const cancelButtons = document.querySelectorAll("[data-close-next-episode]");
+    const cancelButtons = document.querySelectorAll(
+      "[data-close-next-episode]",
+    );
 
     current.textContent = String(activeEpisode);
     target.textContent = String(activeEpisode + 1);
@@ -569,7 +580,7 @@ function renderWatchPage(current) {
     document.querySelector("#playlistList").innerHTML = playlist
       .map(
         (item, index) => `
-        <a class="similar-item playlist-item ${item.id === current.id ? "is-current" : ""}" href="/watch.html?id=${encodeURIComponent(item.id)}">
+        <a class="similar-item playlist-item ${item.id === current.id ? "is-current" : ""}" href="./watch.html?id=${encodeURIComponent(item.id)}">
           <span class="playlist-order">${String(index + 1).padStart(2, "0")}</span>
           <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">${item.id === current.id ? "Ⅱ" : "▶"}</span></span>
           <span class="similar-copy">
@@ -591,7 +602,7 @@ function renderWatchPage(current) {
     document.querySelector("#watchSimilarList").innerHTML = similar
       .map(
         (item, index) => `
-        <a class="similar-item recommendation-item" style="--item-index:${index}" href="/watch.html?id=${encodeURIComponent(item.id)}">
+        <a class="similar-item recommendation-item" style="--item-index:${index}" href="./watch.html?id=${encodeURIComponent(item.id)}">
           <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">▶</span></span>
           <span class="similar-copy">
             <strong>${item.title}</strong>
@@ -754,7 +765,11 @@ function renderWatchPage(current) {
     } else if (event.data === states.PAUSED || event.data === states.ENDED) {
       setPlayIcon(false);
       stopYouTubeTicker(player);
-      if (event.data === states.ENDED && episodeCount > 1 && activeEpisode < episodeCount) {
+      if (
+        event.data === states.ENDED &&
+        episodeCount > 1 &&
+        activeEpisode < episodeCount
+      ) {
         confirmNextEpisode().then((shouldContinue) => {
           if (!shouldContinue) return;
           const nextEpisode = activeEpisode + 1;

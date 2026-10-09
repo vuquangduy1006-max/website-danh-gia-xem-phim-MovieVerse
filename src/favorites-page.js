@@ -16,20 +16,20 @@ const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
     headerClass: " new-page-header",
-    homeHref: "/",
+    homeHref: "./",
     homeActive: "",
     homeCurrent: "",
-    newMoviesHref: "/new-movies.html",
+    newMoviesHref: "./new-movies.html",
     newMoviesActive: "",
     newMoviesCurrent: "",
-    genresHref: "/genres.html",
-    reviewsHref: "/reviews.html",
+    genresHref: "./genres.html",
+    reviewsHref: "./reviews.html",
     reviewsActive: "",
     reviewsCurrent: "",
-    favoritesHref: "/favorites.html",
+    favoritesHref: "./favorites.html",
     favoritesActive: "active",
     favoritesCurrent: 'aria-current="page"',
-    rankingHref: "/ranking.html",
+    rankingHref: "./ranking.html",
     rankingActive: "",
     rankingCurrent: "",
     headerActions,
@@ -46,11 +46,11 @@ document.querySelector("#app").innerHTML = `
       </div>
     </section>
     <section class="container favorites-content">
-      <div class="favorites-heading"><div><p class="eyebrow">Đã lưu cho sau này</p><h2>Danh sách của bạn</h2></div><a class="text-link" href="/">Khám phá thêm <span>→</span></a></div>
+      <div class="favorites-heading"><div><p class="eyebrow">Đã lưu cho sau này</p><h2>Danh sách của bạn</h2></div><a class="text-link" href="./">Khám phá thêm <span>→</span></a></div>
       <div class="favorites-grid" id="favoritesGrid"></div>
     </section>
   </main>
-  ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/#ranking", genresHref: "/genres.html", aboutHref: "/" })}
+  ${renderFooter({ footerClass: "", homeHref: "./", newMoviesHref: "./new-movies.html", rankingHref: "./#ranking", genresHref: "./genres.html", aboutHref: "./" })}
 `;
 
 bindAccountActions();
@@ -75,10 +75,10 @@ function renderFavorites() {
     ? favoriteMovies
         .map(
           (movie) =>
-            `<article class="favorite-card"><a class="favorite-poster" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')"><span class="favorite-play" aria-hidden="true">▶</span></a><div class="favorite-card-body"><div><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p></div><div class="favorite-card-foot"><span class="favorite-score">★ ${escapeHtml(movie.rating)}</span><button type="button" class="remove-favorite" data-remove-favorite="${escapeHtml(movie.id)}">Bỏ yêu thích</button></div></div></article>`,
+            `<article class="favorite-card"><a class="favorite-poster" href="./movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')"><span class="favorite-play" aria-hidden="true">▶</span></a><div class="favorite-card-body"><div><h3><a href="./movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p></div><div class="favorite-card-foot"><span class="favorite-score">★ ${escapeHtml(movie.rating)}</span><button type="button" class="remove-favorite" data-remove-favorite="${escapeHtml(movie.id)}">Bỏ yêu thích</button></div></div></article>`,
         )
         .join("")
-    : '<div class="favorites-empty"><span class="favorites-empty-mark">♡</span><h3>Chưa có phim yêu thích</h3><p>Bấm “Yêu thích” trên trang chi tiết phim để lưu những bộ phim bạn muốn xem lại.</p><a class="watch-button" href="/">Khám phá phim <span aria-hidden="true">→</span></a></div>';
+    : '<div class="favorites-empty"><span class="favorites-empty-mark">♡</span><h3>Chưa có phim yêu thích</h3><p>Bấm “Yêu thích” trên trang chi tiết phim để lưu những bộ phim bạn muốn xem lại.</p><a class="watch-button" href="./">Khám phá phim <span aria-hidden="true">→</span></a></div>';
 }
 
 document.querySelector("#favoritesGrid").addEventListener("click", (event) => {

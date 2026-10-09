@@ -33,20 +33,20 @@ const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
     headerClass: " new-page-header",
-    homeHref: "/",
+    homeHref: "./",
     homeActive: "",
     homeCurrent: "",
-    newMoviesHref: "/new-movies.html",
+    newMoviesHref: "./new-movies.html",
     newMoviesActive: "",
     newMoviesCurrent: "",
-    genresHref: "/genres.html",
-    reviewsHref: "/reviews.html",
+    genresHref: "./genres.html",
+    reviewsHref: "./reviews.html",
     reviewsActive: "",
     reviewsCurrent: "",
-    favoritesHref: "/favorites.html",
+    favoritesHref: "./favorites.html",
     favoritesActive: "",
     favoritesCurrent: "",
-    rankingHref: "/ranking.html",
+    rankingHref: "./ranking.html",
     rankingActive: "",
     rankingCurrent: "",
     headerActions,
@@ -67,11 +67,11 @@ document.querySelector("#app").innerHTML = `
         </div>
       </div>
       <nav class="genre-page-choices" aria-label="Chọn thể loại phim">
-        <a class="genre-choice ${activeGenre === "all" ? "active" : ""}" href="/genres.html" ${activeGenre === "all" ? 'aria-current="page"' : ""}>Tất cả</a>
+        <a class="genre-choice ${activeGenre === "all" ? "active" : ""}" href="./genres.html" ${activeGenre === "all" ? 'aria-current="page"' : ""}>Tất cả</a>
         ${availableGenres
           .map(
             (genre) =>
-              `<a class="genre-choice ${activeGenre === genre ? "active" : ""}" href="/genres.html?genre=${encodeURIComponent(genre)}" ${activeGenre === genre ? 'aria-current="page"' : ""}>${escapeHtml(genre)}</a>`,
+              `<a class="genre-choice ${activeGenre === genre ? "active" : ""}" href="./genres.html?genre=${encodeURIComponent(genre)}" ${activeGenre === genre ? 'aria-current="page"' : ""}>${escapeHtml(genre)}</a>`,
           )
           .join("")}
       </nav>
@@ -80,11 +80,11 @@ document.querySelector("#app").innerHTML = `
   </main>
   ${renderFooter({
     footerClass: " new-page-footer",
-    homeHref: "/",
-    newMoviesHref: "/new-movies.html",
-    rankingHref: "/ranking.html",
-    genresHref: "/genres.html",
-    aboutHref: "/",
+    homeHref: "./",
+    newMoviesHref: "./new-movies.html",
+    rankingHref: "./ranking.html",
+    genresHref: "./genres.html",
+    aboutHref: "./",
   })}
 `;
 
@@ -101,7 +101,7 @@ document.querySelector("#genreMovieGrid").innerHTML = filteredMovies.length
   ? filteredMovies
       .map(
         (movie, index) =>
-          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="${getPosterStyle(movie)}" aria-label="Xem phim ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a><span class="card-rating">★ ${escapeHtml(movie.rating)}</span></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
+          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="./watch.html?id=${encodeURIComponent(movie.id)}" style="${getPosterStyle(movie)}" aria-label="Xem phim ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="./movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a><span class="card-rating">★ ${escapeHtml(movie.rating)}</span></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
       )
       .join("")
   : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';

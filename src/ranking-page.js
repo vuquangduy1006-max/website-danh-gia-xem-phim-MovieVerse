@@ -39,7 +39,7 @@ function reviewCount(movie) {
 
 const rankedMovies = [...movies].sort((a, b) => scoreFor(b) - scoreFor(a));
 document.querySelector("#app").innerHTML = `
-  ${renderHeader({ headerClass: " new-page-header", homeHref: "/", homeActive: "", homeCurrent: "", newMoviesHref: "/new-movies.html", newMoviesActive: "", newMoviesCurrent: "", genresHref: "/genres.html", reviewsHref: "/reviews.html", reviewsActive: "", reviewsCurrent: "", favoritesHref: "/favorites.html", favoritesActive: "", favoritesCurrent: "", rankingHref: "/ranking.html", rankingActive: "active", rankingCurrent: 'aria-current="page"', headerActions: `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>` })}
+  ${renderHeader({ headerClass: " new-page-header", homeHref: "./", homeActive: "", homeCurrent: "", newMoviesHref: "./new-movies.html", newMoviesActive: "", newMoviesCurrent: "", genresHref: "./genres.html", reviewsHref: "./reviews.html", reviewsActive: "", reviewsCurrent: "", favoritesHref: "./favorites.html", favoritesActive: "", favoritesCurrent: "", rankingHref: "./ranking.html", rankingActive: "active", rankingCurrent: 'aria-current="page"', headerActions: `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>` })}
   <main class="ranking-page">
     <section class="ranking-intro"><div class="container ranking-intro-inner"><div><p class="eyebrow">MovieVerse chart</p><h1>Top phim<br /><em>được yêu thích.</em></h1><p>Những bộ phim đang dẫn đầu bảng xếp hạng dựa trên điểm đánh giá từ cộng đồng MovieVerse.</p></div><div class="ranking-mark">TOP<br /><strong>10</strong></div></div></section>
     <section class="container ranking-content">
@@ -49,7 +49,7 @@ document.querySelector("#app").innerHTML = `
       <div class="ranking-table" id="rankingTable"></div>
     </section>
   </main>
-  ${renderFooter({ footerClass: "", homeHref: "/", newMoviesHref: "/new-movies.html", rankingHref: "/ranking.html", genresHref: "/genres.html", aboutHref: "/" })}
+  ${renderFooter({ footerClass: "", homeHref: "./", newMoviesHref: "./new-movies.html", rankingHref: "./ranking.html", genresHref: "./genres.html", aboutHref: "./" })}
 `;
 
 bindAccountActions();
@@ -88,14 +88,14 @@ function render() {
   document.querySelector("#rankingPodium").innerHTML = podium
     .map(
       (movie, index) =>
-        `<a class="podium-item podium-${index + 1}" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}"><span class="podium-rank">0${index + 1}</span><span class="podium-poster" style="${getPosterStyle(movie)}"></span><span class="podium-info"><strong>${escapeHtml(movie.title)}</strong><small>${escapeHtml(movie.genre)} · ${reviewCount(movie)} review</small><b>★ ${scoreFor(movie).toFixed(1)}</b></span></a>`,
+        `<a class="podium-item podium-${index + 1}" href="./movie-detail.html?id=${encodeURIComponent(movie.id)}"><span class="podium-rank">0${index + 1}</span><span class="podium-poster" style="${getPosterStyle(movie)}"></span><span class="podium-info"><strong>${escapeHtml(movie.title)}</strong><small>${escapeHtml(movie.genre)} · ${reviewCount(movie)} review</small><b>★ ${scoreFor(movie).toFixed(1)}</b></span></a>`,
     )
     .join("");
   document.querySelector("#rankingTable").innerHTML = shown.length
     ? shown
         .map(
           (movie) =>
-            `<a class="ranking-row" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}"><span class="ranking-number">${String(rankedMovies.indexOf(movie) + 1).padStart(2, "0")}</span><span class="ranking-row-poster" style="${getPosterStyle(movie)}"></span><span class="ranking-row-title"><strong>${escapeHtml(movie.title)}</strong><small>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</small></span><span class="ranking-row-reviews">${reviewCount(movie)} review</span><span class="ranking-row-score"><b>★ ${scoreFor(movie).toFixed(1)}</b><small>${scoreStars(scoreFor(movie))}</small></span></a>`,
+            `<a class="ranking-row" href="./movie-detail.html?id=${encodeURIComponent(movie.id)}"><span class="ranking-number">${String(rankedMovies.indexOf(movie) + 1).padStart(2, "0")}</span><span class="ranking-row-poster" style="${getPosterStyle(movie)}"></span><span class="ranking-row-title"><strong>${escapeHtml(movie.title)}</strong><small>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</small></span><span class="ranking-row-reviews">${reviewCount(movie)} review</span><span class="ranking-row-score"><b>★ ${scoreFor(movie).toFixed(1)}</b><small>${scoreStars(scoreFor(movie))}</small></span></a>`,
         )
         .join("")
     : '<p class="empty-note">Không tìm thấy phim phù hợp.</p>';
