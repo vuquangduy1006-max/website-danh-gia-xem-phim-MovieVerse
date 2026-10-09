@@ -294,8 +294,7 @@ export const movieSeed = [
     genre: "Hành động, Phiêu lưu, Hài, Gia đình, Giả tưởng",
     rating: "8.8",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/9/90/One_Piece_2023_series_poster.jpg",
+    poster: "/src/assets/poster/godvalley.png",
     backdrop:
       "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1800&q=85",
     description:
@@ -367,8 +366,7 @@ export const movieSeed = [
     genre: "Hành động, Giả tưởng, Hài, Tâm lý, Tokusatsu",
     rating: "8.2",
     isNew: true,
-    poster:
-      "https://upload.wikimedia.org/wikipedia/en/9/94/Bleach_01.jpg",
+    poster: "https://upload.wikimedia.org/wikipedia/en/9/94/Bleach_01.jpg",
     backdrop:
       "https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?w=1800&q=85",
     description:
@@ -457,8 +455,7 @@ export const movieSeed = [
     genre: "Khoa học viễn tưởng",
     rating: "0.0",
     isNew: true,
-    poster:
-      "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&q=85",
+    poster: "/src/assets/poster/interstellar2.png",
     backdrop:
       "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1800&q=85",
     description:
@@ -479,6 +476,39 @@ export const movieSeed = [
       "Miles Morales du hành qua các vũ trụ Spider-Man và đối mặt với lựa chọn có thể thay đổi số phận của mọi người.",
   },
 ];
+
+export const animePosterMap = {
+  n20: "/src/assets/poster/godvalley.png",
+  n21: "/src/assets/poster/spy.png",
+  n24: "/src/assets/poster/dragonballz.png",
+  n25: "/src/assets/poster/bleach.png",
+  n27: "/src/assets/poster/fullmetal.png",
+  n29: "/src/assets/poster/fairytail.png",
+  n30: "/src/assets/poster/heroacademia.png",
+  n31: "/src/assets/poster/hunter.png",
+  n32: "/src/assets/poster/bluelock.png",
+  n33: "/src/assets/poster/interstellar2.png",
+  n34: "/src/assets/poster/spiderman.png",
+};
+
+for (const [id, poster] of Object.entries(animePosterMap)) {
+  const movie = movieSeed.find((entry) => entry.id === id);
+  if (movie) {
+    movie.poster = poster;
+  }
+}
+
+function normalizeAnimePosters(movies) {
+  if (!Array.isArray(movies)) return movies;
+  return movies.map((movie) => {
+    if (!movie || typeof movie !== "object") return movie;
+    const normalizedMovie = { ...movie };
+    if (animePosterMap[normalizedMovie.id]) {
+      normalizedMovie.poster = animePosterMap[normalizedMovie.id];
+    }
+    return normalizedMovie;
+  });
+}
 
 const DB_KEY = "movieverse_db";
 const SEED_MIGRATION_KEY = "movieverse_seed_migration_v10";
@@ -597,6 +627,7 @@ export function getMovieDB() {
             const title = titleMigrations.get(movie.id);
             if (title) movie.title = title;
           });
+          parsed.movies = normalizeAnimePosters(parsed.movies);
           const posterMigrations = new Map([
             [
               "n11",
@@ -753,11 +784,24 @@ export function getMovieDB() {
           }
           localStorage.setItem(SEED_MIGRATION_KEY, "done");
         }
-        return parsed.movies;
+        const normalized = normalizeAnimePosters(parsed.movies);
+        const hasPosterChanges = parsed.movies.some(
+          (movie, index) =>
+            movie?.id &&
+            normalized[index] &&
+            normalized[index].poster !== movie.poster,
+        );
+        if (hasPosterChanges || normalized.length !== parsed.movies.length) {
+          saveMovieDB(normalized);
+          parsed.movies = normalized;
+        }
+        return normalized;
       }
     }
   } catch (_) {}
-  return movieSeed;
+  const normalizedSeed = normalizeAnimePosters(movieSeed);
+  saveMovieDB(normalizedSeed);
+  return normalizedSeed;
 }
 
 export function saveMovieDB(movies) {

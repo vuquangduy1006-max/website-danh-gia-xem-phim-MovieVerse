@@ -4,7 +4,12 @@ import {
   answerFromCatalog,
   hasMovieRecommendationIntent,
 } from "../assistant-recommendations.js";
-import { getMovieGenres, movieSeed } from "../src/data/data.js";
+import {
+  animePosterMap,
+  getMovieDB,
+  getMovieGenres,
+  movieSeed,
+} from "../src/data/data.js";
 
 const catalog = [
   {
@@ -81,19 +86,13 @@ test("filters recommendations by year and minimum IMDb rating", () => {
 });
 
 test("does not recommend movies that fail an explicit runtime limit", () => {
-  const answer = answerFromCatalog(
-    "Phim hành động dưới 2 tiếng.",
-    catalog,
-  );
+  const answer = answerFromCatalog("Phim hành động dưới 2 tiếng.", catalog);
 
   assert.match(answer, /chưa tìm thấy phim nào khớp tất cả tiêu chí/i);
 });
 
 test("does not recommend movies outside an explicit release-year range", () => {
-  const answer = answerFromCatalog(
-    "Phim hành động từ 2025 đến 2026.",
-    catalog,
-  );
+  const answer = answerFromCatalog("Phim hành động từ 2025 đến 2026.", catalog);
 
   assert.match(answer, /Superman/);
   assert.doesNotMatch(answer, /Dune: Part Two/);
@@ -121,8 +120,7 @@ test("understands casual sadness and picks an empathetic relationship story", ()
 });
 
 test("understands needing comfort and recommends a warm, uplifting movie", () => {
-  const question =
-    "Hôm nay mình mệt mỏi và áp lực, muốn được an ủi một chút.";
+  const question = "Hôm nay mình mệt mỏi và áp lực, muốn được an ủi một chút.";
   const answer = answerFromCatalog(question, moodCatalog);
 
   assert.equal(hasMovieRecommendationIntent(question), true);
@@ -133,10 +131,7 @@ test("understands needing comfort and recommends a warm, uplifting movie", () =>
 test("does not map work stress to a tense action movie", () => {
   const question =
     "Sau một ngày làm việc căng thẳng, mình muốn thư giãn nhẹ nhàng.";
-  const answer = answerFromCatalog(question, [
-    catalog[2],
-    moodCatalog[0],
-  ]);
+  const answer = answerFromCatalog(question, [catalog[2], moodCatalog[0]]);
 
   assert.match(answer, /Kiki’s Delivery/);
   assert.doesNotMatch(answer, /Superman/);
@@ -179,7 +174,10 @@ test("does not interpret negated genres or moods as recommendations", () => {
   const question = "Tâm trạng mình hơi buồn mà không muốn phim kinh dị.";
 
   assert.equal(hasMovieRecommendationIntent(question), true);
-  assert.match(answerFromCatalog(question, [catalog[1], moodCatalog[0]]), /Past Lives/);
+  assert.match(
+    answerFromCatalog(question, [catalog[1], moodCatalog[0]]),
+    /Past Lives/,
+  );
   assert.doesNotMatch(
     answerFromCatalog(question, [catalog[1], moodCatalog[0]]),
     /chưa tìm thấy phim nào khớp tất cả tiêu chí/i,
@@ -208,10 +206,7 @@ test("does not mistake the Vietnamese word 'chỉ' for an English greeting", () 
 test("understands feeling empty and left out as a need for an empathetic story", () => {
   const question =
     "Dạo này mình thấy trống rỗng, lạc lõng, như chẳng ai hiểu mình.";
-  const answer = answerFromCatalog(question, [
-    ...moodCatalog,
-    catalog[1],
-  ]);
+  const answer = answerFromCatalog(question, [...moodCatalog, catalog[1]]);
 
   assert.equal(hasMovieRecommendationIntent(question), true);
   assert.match(answer, /Past Lives/);
@@ -261,10 +256,7 @@ test("understands a low mood and explicitly requested humor as a mood-lifting ta
 test("prioritizes the requested cheering-up mood over the user's initial sadness", () => {
   const question =
     "Mình hơi buồn nhưng không muốn phim buồn, kiếm gì vui vui để cười lên đi.";
-  const answer = answerFromCatalog(question, [
-    catalog[1],
-    ...moodCatalog,
-  ]);
+  const answer = answerFromCatalog(question, [catalog[1], ...moodCatalog]);
 
   assert.match(answer, /Kiki’s Delivery/);
   assert.match(answer, /vui vẻ, giải trí/);
@@ -284,12 +276,60 @@ test("understands a spontaneous celebration and recommends a feel-good movie", (
 test("understands relationship conflict and recommends an emotionally relatable movie", () => {
   const question =
     "Vừa cãi nhau với bạn thân, lòng nặng trĩu, mình cần một phim thật đồng cảm.";
-  const answer = answerFromCatalog(question, [
-    catalog[1],
-    ...moodCatalog,
-  ]);
+  const answer = answerFromCatalog(question, [catalog[1], ...moodCatalog]);
 
   assert.equal(hasMovieRecommendationIntent(question), true);
   assert.match(answer, /Past Lives/);
   assert.match(answer, /đồng cảm/);
+});
+
+test("keeps the 10 anime poster assignments aligned to the requested covers", () => {
+  const expected = {
+    n20: "/src/assets/poster/godvalley.png",
+    n21: "/src/assets/poster/spy.png",
+    n24: "/src/assets/poster/dragonballz.png",
+    n25: "/src/assets/poster/bleach.png",
+    n27: "/src/assets/poster/fullmetal.png",
+    n29: "/src/assets/poster/fairytail.png",
+    n30: "/src/assets/poster/heroacademia.png",
+    n31: "/src/assets/poster/hunter.png",
+    n32: "/src/assets/poster/bluelock.png",
+    n33: "/src/assets/poster/interstellar2.png",
+    n34: "/src/assets/poster/spiderman.png",
+  };
+
+  assert.deepEqual(animePosterMap, expected);
+  for (const [id, poster] of Object.entries(expected)) {
+    const movie = movieSeed.find((item) => item.id === id);
+    assert.ok(movie, `Missing movie ${id}`);
+    assert.equal(movie.poster, poster);
+  }
+});
+
+test("reapplies the canonical anime poster map when movies are reloaded from localStorage", () => {
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => store.set(key, String(value)),
+    removeItem: (key) => store.delete(key),
+  };
+
+  store.set(
+    "movieverse_db",
+    JSON.stringify({
+      movies: [
+        {
+          id: "n20",
+          title: "One Piece Film: God Valley",
+          poster: "old-poster",
+        },
+      ],
+    }),
+  );
+
+  const movies = getMovieDB();
+  const saved = JSON.parse(store.get("movieverse_db") || '{"movies":[]}');
+
+  assert.equal(movies[0].poster, animePosterMap.n20);
+  assert.equal(saved.movies[0].poster, animePosterMap.n20);
 });

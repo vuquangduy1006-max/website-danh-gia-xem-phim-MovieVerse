@@ -24,11 +24,22 @@ export function renderFooter(values) {
   return renderTemplate(footerTemplate, values);
 }
 
+export function getPosterStyle(movie) {
+  const images = [movie?.poster, movie?.backdrop].filter(
+    (image) => typeof image === "string" && image.trim(),
+  );
+  return `background-image:${images.map((image) => `url('${image}')`).join(",")}`;
+}
+
 export function renderAccountActions() {
   const session = getSession();
   if (!session) return '<a class="login-link" href="/login.html">Đăng nhập</a>';
+
   const initial = session.name?.charAt(0).toUpperCase() || "U";
-  const adminLink = session.role === "admin" ? '<a href="/admin/admin.html">Quản lý phim</a>' : "";
+  const adminLink =
+    session.role === "admin"
+      ? '<a href="/admin/admin.html">Quản lý phim</a>'
+      : "";
   return `<details class="account-menu"><summary class="account-chip"><span class="account-avatar">${initial}</span><span>${session.name}</span></summary><div class="account-dropdown">${adminLink}<a href="/history.html">🕘 Lịch sử xem</a><a href="/favorites.html">♡ Phim yêu thích</a><button class="logout-button" id="logoutButton" type="button">↪ Đăng xuất</button></div></details>`;
 }
 

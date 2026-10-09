@@ -6,17 +6,11 @@ import {
   getMovieGenres,
 } from "./data.js";
 import { isAdmin } from "./auth.js";
-import {
-  deleteReview,
-  loadReviews,
-  setReviewHidden,
-} from "./reviews.js";
-import { initMovieAssistant } from "../assistant.js";
+import { deleteReview, loadReviews, setReviewHidden } from "./reviews.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
 }
-
 
 const DB_KEY = "movieverse_db";
 let movies = loadDB();
@@ -39,9 +33,7 @@ function persist() {
 }
 
 function uid() {
-  return (
-    Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
-  );
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
 let currentFilter = "all";
@@ -202,7 +194,6 @@ document.querySelector("#app").innerHTML = `
 `;
 
 init();
-initMovieAssistant(() => movies);
 
 function init() {
   fillGenreSelects();
@@ -213,21 +204,30 @@ function init() {
 function fillGenreSelects() {
   const genres = getGenreList();
   const filter = document.querySelector("#genreFilter");
-  filter.innerHTML = `<option value="all">Tất cả thể loại</option>` +
+  filter.innerHTML =
+    `<option value="all">Tất cả thể loại</option>` +
     genres
-      .map((genre) => `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`)
+      .map(
+        (genre) =>
+          `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`,
+      )
       .join("");
 
   const field = document.querySelector("#fieldGenre");
   field.innerHTML = genres
-    .map((genre) => `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`)
+    .map(
+      (genre) =>
+        `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`,
+    )
     .join("");
 }
 
 function bindEvents() {
   document.querySelector("#addMovieBtn").addEventListener("click", openAddForm);
   document.querySelector("#movieForm").addEventListener("submit", onSave);
-  document.querySelector("#confirmDeleteBtn").addEventListener("click", onDelete);
+  document
+    .querySelector("#confirmDeleteBtn")
+    .addEventListener("click", onDelete);
   document.querySelector("#searchInput").addEventListener("input", (event) => {
     currentQuery = event.target.value;
     renderTable();
@@ -236,15 +236,19 @@ function bindEvents() {
     currentFilter = event.target.value;
     renderAll();
   });
-  document.querySelector("#commentSearchInput").addEventListener("input", (event) => {
-    reviewQuery = event.target.value;
-    renderComments();
-  });
-  document.querySelectorAll("[data-close]").forEach((button) =>
-    button.addEventListener("click", () =>
-      closeOverlay(button.dataset.close),
-    ),
-  );
+  document
+    .querySelector("#commentSearchInput")
+    .addEventListener("input", (event) => {
+      reviewQuery = event.target.value;
+      renderComments();
+    });
+  document
+    .querySelectorAll("[data-close]")
+    .forEach((button) =>
+      button.addEventListener("click", () =>
+        closeOverlay(button.dataset.close),
+      ),
+    );
   document.querySelectorAll(".overlay").forEach((overlay) =>
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) closeOverlay(overlay.id);
@@ -267,17 +271,30 @@ function renderAll() {
 
 function renderComments() {
   const query = reviewQuery.trim().toLocaleLowerCase("vi");
-  const shown = reviews.filter((review) =>
-    !query || `${review.author} ${review.movieTitle} ${review.comment}`.toLocaleLowerCase("vi").includes(query),
+  const shown = reviews.filter(
+    (review) =>
+      !query ||
+      `${review.author} ${review.movieTitle} ${review.comment}`
+        .toLocaleLowerCase("vi")
+        .includes(query),
   );
-  document.querySelector("#commentAdminCount").textContent = `${shown.length}/${reviews.length} bình luận`;
+  document.querySelector("#commentAdminCount").textContent =
+    `${shown.length}/${reviews.length} bình luận`;
   document.querySelector("#commentTableBody").innerHTML = shown.length
-    ? shown.map((review) => `<tr><td><strong>${escapeHtml(review.author)}</strong></td><td>${escapeHtml(review.movieTitle)}</td><td><span class="badge rating">★ ${review.rating}/5</span></td><td class="comment-table-text">${escapeHtml(review.comment)}</td><td>${escapeHtml(review.date)}</td><td><div class="row-actions"><button class="btn btn-danger btn-sm" data-delete-comment="${escapeHtml(review.id)}">Xóa</button></div></td></tr>`).join("")
+    ? shown
+        .map(
+          (review) =>
+            `<tr><td><strong>${escapeHtml(review.author)}</strong></td><td>${escapeHtml(review.movieTitle)}</td><td><span class="badge rating">★ ${review.rating}/5</span></td><td class="comment-table-text">${escapeHtml(review.comment)}</td><td>${escapeHtml(review.date)}</td><td><div class="row-actions"><button class="btn btn-danger btn-sm" data-delete-comment="${escapeHtml(review.id)}">Xóa</button></div></td></tr>`,
+        )
+        .join("")
     : `<tr><td colspan="6"><div class="empty-state"><h3>Không tìm thấy bình luận</h3><p>Thử thay đổi từ khóa tìm kiếm.</p></div></td></tr>`;
   document.querySelectorAll("[data-delete-comment]").forEach((button) => {
     button.addEventListener("click", () => {
-      const review = reviews.find((item) => item.id === button.dataset.deleteComment);
-      if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`)) return;
+      const review = reviews.find(
+        (item) => item.id === button.dataset.deleteComment,
+      );
+      if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
+        return;
       deleteReview(review.id);
       reviews = loadReviews();
       renderComments();
@@ -287,14 +304,21 @@ function renderComments() {
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+  return String(value).replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
+  );
 }
 
 function renderStats() {
   const total = movies.length;
   const avg =
     total > 0
-      ? (movies.reduce((sum, movie) => sum + Number(movie.rating) || 0, 0) / total)
+      ? movies.reduce((sum, movie) => sum + Number(movie.rating) || 0, 0) /
+        total
       : 0;
   const genreCount = new Set(movies.flatMap(getMovieGenres)).size;
   const newCount = movies.filter((movie) => movie.isNew).length;
@@ -312,8 +336,7 @@ function filteredMovies() {
   return movies.filter((movie) => {
     const matchGenre =
       currentFilter === "all" || getMovieGenres(movie).includes(currentFilter);
-    const matchQuery =
-      !query || movie.title.toLowerCase().includes(query);
+    const matchQuery = !query || movie.title.toLowerCase().includes(query);
     return matchGenre && matchQuery;
   });
 }
@@ -351,12 +374,18 @@ function renderTable() {
     )
     .join("");
 
-  body.querySelectorAll("[data-edit]").forEach((button) =>
-    button.addEventListener("click", () => openEditForm(button.dataset.edit)),
-  );
-  body.querySelectorAll("[data-delete]").forEach((button) =>
-    button.addEventListener("click", () => openDeleteConfirm(button.dataset.delete)),
-  );
+  body
+    .querySelectorAll("[data-edit]")
+    .forEach((button) =>
+      button.addEventListener("click", () => openEditForm(button.dataset.edit)),
+    );
+  body
+    .querySelectorAll("[data-delete]")
+    .forEach((button) =>
+      button.addEventListener("click", () =>
+        openDeleteConfirm(button.dataset.delete),
+      ),
+    );
 }
 
 function openAddForm() {
@@ -404,9 +433,7 @@ function onSave(event) {
   }
 
   const movie = {
-    id:
-      editingId ||
-      (document.querySelector("#fieldId").value || uid()),
+    id: editingId || document.querySelector("#fieldId").value || uid(),
     title,
     year: document.querySelector("#fieldYear").value.trim() || "2024",
     genre: [...document.querySelector("#fieldGenre").selectedOptions]
@@ -456,10 +483,7 @@ function onDelete() {
   persist();
   closeOverlay("deleteOverlay");
   renderAll();
-  showToast(
-    movie ? `Đã xóa "${movie.title}".` : "Đã xóa phim.",
-    "success",
-  );
+  showToast(movie ? `Đã xóa "${movie.title}".` : "Đã xóa phim.", "success");
 }
 
 function openOverlay(id) {
@@ -484,24 +508,38 @@ function showToast(message, type = "success") {
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
 }
 function escapeReviewText(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
+  );
 }
 
 function renderReviewTable() {
   const body = document.querySelector("#reviewTableBody");
   if (!body) return;
   const reviews = loadReviews();
-  body.innerHTML = reviews.length ? reviews.map((review) => `
+  body.innerHTML = reviews.length
+    ? reviews
+        .map(
+          (review) => `
     <tr>
       <td>${escapeReviewText(review.author)}</td>
       <td>${escapeReviewText(review.movieTitle)}</td>
       <td>${escapeReviewText(review.comment)}</td>
       <td>${review.hidden ? "Đã ẩn" : "Đang hiển thị"}</td>
       <td><button type="button" class="btn btn-ghost btn-sm" data-review-id="${escapeReviewText(review.id)}">${review.hidden ? "Hiện" : "Ẩn"}</button></td>
-    </tr>`).join("") : '<tr><td colspan="5">Chưa có bình luận.</td></tr>';
+    </tr>`,
+        )
+        .join("")
+    : '<tr><td colspan="5">Chưa có bình luận.</td></tr>';
   body.querySelectorAll("[data-review-id]").forEach((button) => {
     button.addEventListener("click", () => {
-      const review = loadReviews().find((item) => String(item.id) === button.dataset.reviewId);
+      const review = loadReviews().find(
+        (item) => String(item.id) === button.dataset.reviewId,
+      );
       if (review && setReviewHidden(review.id, !review.hidden)) {
         renderReviewTable();
         showToast(review.hidden ? "Đã hiện bình luận." : "Đã ẩn bình luận.");
