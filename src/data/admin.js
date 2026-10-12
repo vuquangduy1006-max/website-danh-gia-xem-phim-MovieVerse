@@ -7,11 +7,13 @@ import {
 } from "./data.js";
 import { isAdmin } from "./auth.js";
 import { deleteReview, loadReviews, setReviewHidden } from "./reviews.js";
+import { isValidReleaseYear } from "./movie-validation.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
 }
 
+const currentYear = new Date().getFullYear();
 const DB_KEY = "movieverse_db";
 let movies = loadDB();
 
@@ -141,7 +143,8 @@ document.querySelector("#app").innerHTML = `
           </div>
           <div class="field">
             <label for="fieldYear">Năm phát hành</label>
-            <input id="fieldYear" type="number" min="1900" max="2100" placeholder="2024">
+            <input id="fieldYear" type="number" min="1900" max="${currentYear}" placeholder="${currentYear}" aria-describedby="fieldYearError">
+            <small class="field-error" id="fieldYearError" aria-live="polite"></small>
           </div>
           <div class="field">
             <label for="fieldRating">Đánh giá (0 - 10)</label>
@@ -225,6 +228,26 @@ function fillGenreSelects() {
 function bindEvents() {
   document.querySelector("#addMovieBtn").addEventListener("click", openAddForm);
   document.querySelector("#movieForm").addEventListener("submit", onSave);
+  document.querySelector("#fieldYear").addEventListener("input", (event) => {
+    const input = event.currentTarget;
+    showYearError(
+      input.validity.rangeOverflow
+        ? `Năm phát hành không được vượt quá ${currentYear}.`
+        : input.validity.rangeUnderflow
+          ? "Năm phát hành không được nhỏ hơn 1900."
+          : "",
+    );
+  });
+  document.querySelector("#fieldYear").addEventListener("blur", (event) => {
+    const input = event.currentTarget;
+    if (!input.validity.rangeOverflow && !input.validity.rangeUnderflow) return;
+
+    const message = input.validity.rangeOverflow
+      ? `Năm phát hành không được vượt quá ${currentYear}.`
+      : "Năm phát hành không được nhỏ hơn 1900.";
+    input.value = "";
+    showYearError(message);
+  });
   document
     .querySelector("#confirmDeleteBtn")
     .addEventListener("click", onDelete);
@@ -393,6 +416,8 @@ function openAddForm() {
   document.querySelector("#formTitle").textContent = "Thêm phim mới";
   document.querySelector("#movieForm").reset();
   document.querySelector("#fieldId").value = "";
+  document.querySelector("#fieldYear").value = String(currentYear);
+  showYearError("");
   [...document.querySelector("#fieldGenre").options].forEach((option) => {
     option.selected = option.value === "Hành động";
   });
@@ -409,6 +434,7 @@ function openEditForm(id) {
   document.querySelector("#fieldId").value = movie.id;
   document.querySelector("#fieldTitle").value = movie.title;
   document.querySelector("#fieldYear").value = movie.year || "";
+  showYearError("");
   document.querySelector("#fieldRating").value = movie.rating || "";
   const selectedGenres = getMovieGenres(movie);
   [...document.querySelector("#fieldGenre").options].forEach((option) => {
@@ -426,16 +452,24 @@ function onSave(event) {
   event.preventDefault();
   const form = document.querySelector("#movieForm");
   const title = document.querySelector("#fieldTitle").value.trim();
+  const yearInput = document.querySelector("#fieldYear");
+  const year = yearInput.value.trim() || String(currentYear);
   if (!title) {
     showToast("Vui lòng nhập tên phim.", "error");
     document.querySelector("#fieldTitle").focus();
     return;
   }
+  if (!isValidReleaseYear(year, currentYear)) {
+    showYearError(`Năm phát hành phải từ 1900 đến ${currentYear}.`);
+    yearInput.focus();
+    return;
+  }
+  showYearError("");
 
   const movie = {
     id: editingId || document.querySelector("#fieldId").value || uid(),
     title,
-    year: document.querySelector("#fieldYear").value.trim() || "2024",
+    year,
     genre: [...document.querySelector("#fieldGenre").selectedOptions]
       .map((option) => option.value)
       .join(", "),
@@ -465,6 +499,13 @@ function onSave(event) {
   closeOverlay("formOverlay");
   renderAll();
   form.reset();
+}
+
+function showYearError(message) {
+  const error = document.querySelector("#fieldYearError");
+  error.textContent = message;
+  error.classList.toggle("is-visible", Boolean(message));
+  document.querySelector("#fieldYear").setAttribute("aria-invalid", String(Boolean(message)));
 }
 
 function openDeleteConfirm(id) {

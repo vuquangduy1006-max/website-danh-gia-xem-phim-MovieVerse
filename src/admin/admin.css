@@ -421,6 +421,15 @@ button {
   color: var(--muted);
   letter-spacing: 0.4px;
 }
+.field-error {
+  display: none;
+  color: #ff786b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.field-error.is-visible {
+  display: block;
+}
 .field input,
 .field select,
 .field textarea {
@@ -436,6 +445,10 @@ button {
 .field select:focus,
 .field textarea:focus {
   border-color: var(--accent);
+}
+.field input[aria-invalid="true"] {
+  border-color: #ff6b5c;
+  box-shadow: 0 0 0 2px rgba(255, 107, 92, 0.1);
 }
 .field textarea {
   resize: vertical;
