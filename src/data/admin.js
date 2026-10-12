@@ -181,6 +181,34 @@ document.querySelector("#app").innerHTML = `
             <label for="fieldDescription">Mô tả</label>
             <textarea id="fieldDescription" placeholder="Tóm tắt nội dung phim..."></textarea>
           </div>
+          <div class="field full">
+            <label for="fieldDirector">Đạo diễn</label>
+            <input id="fieldDirector" type="text" placeholder="VD: Denis Villeneuve">
+          </div>
+          <div class="field full">
+            <label for="fieldCast">Diễn viên (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldCast" type="text" placeholder="VD: Timothée Chalamet, Zendaya">
+          </div>
+          <div class="field full">
+            <label for="fieldWriters">Biên kịch / tác giả (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldWriters" type="text" placeholder="VD: Jon Spaihts, Denis Villeneuve">
+          </div>
+          <div class="field full">
+            <label for="fieldProducers">Nhà sản xuất (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldProducers" type="text" placeholder="VD: Mary Parent, Denis Villeneuve">
+          </div>
+          <div class="field full">
+            <label for="fieldStudio">Hãng phim / đơn vị sản xuất</label>
+            <input id="fieldStudio" type="text" placeholder="VD: Warner Bros. Pictures">
+          </div>
+          <div class="field full">
+            <label for="fieldCinematographers">Quay phim (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldCinematographers" type="text" placeholder="VD: Greig Fraser">
+          </div>
+          <div class="field full">
+            <label for="fieldComposers">Âm nhạc (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldComposers" type="text" placeholder="VD: Hans Zimmer">
+          </div>
         </div>
         <p class="form-note">* là trường bắt buộc. Dữ liệu được lưu trên trình duyệt (localStorage).</p>
       </div>
@@ -460,6 +488,19 @@ function openEditForm(id) {
   document.querySelector("#fieldPoster").value = movie.poster || "";
   document.querySelector("#fieldBackdrop").value = movie.backdrop || "";
   document.querySelector("#fieldDescription").value = movie.description || "";
+  document.querySelector("#fieldDirector").value = movie.director || "";
+  document.querySelector("#fieldCast").value = formatNames(movie.cast);
+  document.querySelector("#fieldWriters").value = formatNames(movie.writers);
+  document.querySelector("#fieldProducers").value = formatNames(movie.producers);
+  document.querySelector("#fieldStudio").value = formatNames(
+    movie.productionCompanies,
+  );
+  document.querySelector("#fieldCinematographers").value = formatNames(
+    movie.cinematographers,
+  );
+  document.querySelector("#fieldComposers").value = formatNames(
+    movie.composers,
+  );
   openOverlay("formOverlay");
   document.querySelector("#fieldTitle").focus();
 }
@@ -500,6 +541,17 @@ function onSave(event) {
     description:
       document.querySelector("#fieldDescription").value.trim() ||
       "Chưa có mô tả cho phim này.",
+    director: document.querySelector("#fieldDirector").value.trim(),
+    cast: parseNames(document.querySelector("#fieldCast").value),
+    writers: parseNames(document.querySelector("#fieldWriters").value),
+    producers: parseNames(document.querySelector("#fieldProducers").value),
+    productionCompanies: parseNames(
+      document.querySelector("#fieldStudio").value,
+    ),
+    cinematographers: parseNames(
+      document.querySelector("#fieldCinematographers").value,
+    ),
+    composers: parseNames(document.querySelector("#fieldComposers").value),
   };
 
   const index = movies.findIndex((item) => item.id === movie.id);
@@ -515,6 +567,17 @@ function onSave(event) {
   closeOverlay("formOverlay");
   renderAll();
   form.reset();
+}
+
+function parseNames(value) {
+  return value
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+function formatNames(value) {
+  return Array.isArray(value) ? value.join(", ") : value || "";
 }
 
 function showYearError(message) {
