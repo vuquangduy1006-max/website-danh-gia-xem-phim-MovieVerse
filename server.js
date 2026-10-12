@@ -1,18 +1,35 @@
 import { createServer } from "node:http";
+import { randomBytes } from "node:crypto";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   answerFromCatalog,
   hasMovieRecommendationIntent,
 } from "./assistant-recommendations.js";
+import { REVIEW_SEED } from "./src/data/review-seed.js";
 
 const port = Number(process.env.API_PORT || 3001);
 const apiKey = process.env.AI_API_KEY;
 const apiUrl =
   process.env.AI_API_URL || "https://api.openai.com/v1/chat/completions";
 const model = process.env.AI_MODEL || "gpt-4o-mini";
+const adminEmail = (process.env.ADMIN_EMAIL || "admin@movieverse.local")
+  .trim()
+  .toLowerCase();
+const adminPassword = process.env.ADMIN_PASSWORD;
 const MAX_BODY_BYTES = 48 * 1024;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 12;
 const requestsByIp = new Map();
+const adminTokens = new Map();
+const reviewsFilePath = resolve(
+  process.env.REVIEWS_STORE_PATH ||
+    fileURLToPath(new URL("./.data/reviews.json", import.meta.url)),
+);
+let reviewWriteQueue = Promise.resolve();
+let reviewStoreInitialization;
+
 function sendJson(response, status, payload) {
   response.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -52,6 +69,289 @@ async function readJson(request) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+async function initializeReviewStore() {
+  try {
+    const saved = JSON.parse(await readFile(reviewsFilePath, "utf8"));
+    if (!Array.isArray(saved)) throw new Error("Review storage is invalid");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    await persistReviews(REVIEW_SEED);
+  }
+}
+
+async function readReviews() {
+  if (!reviewStoreInitialization) {
+    reviewStoreInitialization = initializeReviewStore();
+  }
+  await reviewStoreInitialization;
+  const saved = JSON.parse(await readFile(reviewsFilePath, "utf8"));
+  if (!Array.isArray(saved)) throw new Error("Review storage is invalid");
+  return saved;
+}
+
+async function persistReviews(reviews) {
+  await mkdir(dirname(reviewsFilePath), { recursive: true });
+  const temporaryPath = `${reviewsFilePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify(reviews, null, 2), "utf8");
+  await rename(temporaryPath, reviewsFilePath);
+}
+
+function updateReviews(update) {
+  const operation = reviewWriteQueue.then(async () => {
+    const reviews = await readReviews();
+    const result = update(reviews);
+    if (!result.ok) return result;
+    await persistReviews(reviews);
+    return { ...result, reviews };
+  });
+  reviewWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
+function formatDate(date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function createId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function validText(value, maxLength) {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= maxLength
+  );
+}
+
+function isAdminRequest(request) {
+  const token = request.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
+  const expiresAt = adminTokens.get(token);
+  if (!expiresAt) return false;
+  if (expiresAt <= Date.now()) {
+    adminTokens.delete(token);
+    return false;
+  }
+  return true;
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+async function handleReviewsApi(request, response, pathname) {
+  if (request.method === "POST" && pathname === "/api/admin/session") {
+    try {
+      const ip = request.socket.remoteAddress || "unknown";
+      if (isRateLimited(ip)) {
+        sendJson(response, 429, {
+          error: "Bạn thử đăng nhập quá nhiều lần. Vui lòng chờ một phút.",
+        });
+        return true;
+      }
+      const body = await readJson(request);
+      if (!isRecord(body) || !validText(body.email, 254) || typeof body.password !== "string") {
+        sendJson(response, 400, { error: "Thông tin đăng nhập không hợp lệ." });
+        return true;
+      }
+      if (!adminPassword) {
+        sendJson(response, 503, {
+          error: "Máy chủ chưa cấu hình mật khẩu quản trị. Hãy đặt ADMIN_PASSWORD.",
+        });
+        return true;
+      }
+      if (
+        body.email.trim().toLowerCase() !== adminEmail ||
+        body.password !== adminPassword
+      ) {
+        sendJson(response, 401, { error: "Email hoặc mật khẩu không đúng." });
+        return true;
+      }
+      const token = randomBytes(32).toString("base64url");
+      adminTokens.set(token, Date.now() + 12 * 60 * 60 * 1000);
+      sendJson(response, 200, {
+        token,
+        name: "MovieVerse Admin",
+        email: adminEmail,
+      });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to start admin session:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu đăng nhập không hợp lệ."
+          : "Không thể đăng nhập quản trị.",
+      });
+    }
+    return true;
+  }
+
+  if (request.method === "GET" && pathname === "/api/reviews") {
+    try {
+      sendJson(response, 200, { reviews: await readReviews() });
+    } catch (error) {
+      console.error("Unable to read shared reviews:", error);
+      sendJson(response, 500, { error: "Không thể tải bình luận từ máy chủ." });
+    }
+    return true;
+  }
+
+  if (request.method === "POST" && pathname === "/api/reviews") {
+    try {
+      const body = await readJson(request);
+      if (!isRecord(body)) {
+        sendJson(response, 400, { error: "Thông tin bình luận không hợp lệ." });
+        return true;
+      }
+      const rating = Number(body.rating);
+      if (
+        !validText(body.movieTitle, 120) ||
+        !validText(body.author, 30) ||
+        !validText(body.comment, 280) ||
+        !Number.isInteger(rating) ||
+        rating < 1 ||
+        rating > 5
+      ) {
+        sendJson(response, 400, { error: "Thông tin bình luận không hợp lệ." });
+        return true;
+      }
+      const result = await updateReviews((reviews) => {
+        reviews.unshift({
+          id: createId(),
+          movieTitle: body.movieTitle.trim(),
+          author: body.author.trim(),
+          rating,
+          comment: body.comment.trim(),
+          date: formatDate(new Date()),
+        });
+        return { ok: true };
+      });
+      sendJson(response, 201, { reviews: result.reviews });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to save shared review:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu bình luận không hợp lệ hoặc quá lớn."
+          : "Không thể lưu bình luận trên máy chủ.",
+      });
+    }
+    return true;
+  }
+
+  const replyMatch = pathname.match(/^\/api\/reviews\/([^/]+)\/replies$/);
+  if (request.method === "POST" && replyMatch) {
+    try {
+      const body = await readJson(request);
+      if (!isRecord(body)) {
+        sendJson(response, 400, { error: "Thông tin trả lời không hợp lệ." });
+        return true;
+      }
+      if (
+        !validText(body.author, 30) ||
+        !validText(body.comment, 280) ||
+        !["user", "admin"].includes(body.role)
+      ) {
+        sendJson(response, 400, { error: "Thông tin trả lời không hợp lệ." });
+        return true;
+      }
+      if (body.role === "admin" && !isAdminRequest(request)) {
+        sendJson(response, 403, {
+          error: "Cần đăng nhập quản trị để gửi phản hồi với vai trò admin.",
+        });
+        return true;
+      }
+      const reviewId = decodeURIComponent(replyMatch[1]);
+      const result = await updateReviews((reviews) => {
+        const review = reviews.find((item) => String(item.id) === reviewId);
+        if (!review) return { ok: false };
+        review.replies = Array.isArray(review.replies) ? review.replies : [];
+        review.replies.push({
+          id: createId(),
+          author: body.role === "admin" ? "MovieVerse Admin" : body.author.trim(),
+          role: body.role,
+          comment: body.comment.trim(),
+          date: formatDate(new Date()),
+        });
+        return { ok: true };
+      });
+      if (!result.ok) {
+        sendJson(response, 404, { error: "Không tìm thấy bình luận cần trả lời." });
+        return true;
+      }
+      sendJson(response, 201, { reviews: result.reviews });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to save shared reply:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu trả lời không hợp lệ hoặc quá lớn."
+          : "Không thể lưu câu trả lời trên máy chủ.",
+      });
+    }
+    return true;
+  }
+
+  const reviewMatch = pathname.match(/^\/api\/reviews\/([^/]+)$/);
+  if (reviewMatch && ["DELETE", "PATCH"].includes(request.method)) {
+    if (!isAdminRequest(request)) {
+      sendJson(response, 403, {
+        error: "Cần đăng nhập quản trị để kiểm duyệt bình luận.",
+      });
+      return true;
+    }
+    try {
+      const reviewId = decodeURIComponent(reviewMatch[1]);
+      const body = request.method === "PATCH" ? await readJson(request) : {};
+      if (
+        request.method === "PATCH" &&
+        (!isRecord(body) || typeof body.hidden !== "boolean")
+      ) {
+        sendJson(response, 400, { error: "Trạng thái bình luận không hợp lệ." });
+        return true;
+      }
+      const result = await updateReviews((reviews) => {
+        const index = reviews.findIndex(
+          (item) => String(item.id) === reviewId,
+        );
+        if (index === -1) return { ok: false };
+        if (request.method === "DELETE") reviews.splice(index, 1);
+        else reviews[index].hidden = body.hidden;
+        return { ok: true };
+      });
+      if (!result.ok) {
+        sendJson(response, 404, { error: "Không tìm thấy bình luận." });
+        return true;
+      }
+      sendJson(response, 200, { reviews: result.reviews });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to moderate shared review:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Yêu cầu kiểm duyệt không hợp lệ."
+          : "Không thể cập nhật bình luận trên máy chủ.",
+      });
+    }
+    return true;
+  }
+
+  return false;
+}
+
 const server = createServer(async (request, response) => {
   const pathname = new URL(request.url, `http://${request.headers.host}`)
     .pathname;
@@ -59,6 +359,13 @@ const server = createServer(async (request, response) => {
   if (request.method === "GET" && pathname === "/api/health") {
     sendJson(response, 200, { ok: true, configured: Boolean(apiKey) });
     return;
+  }
+
+  if (
+    pathname.startsWith("/api/reviews") ||
+    pathname === "/api/admin/session"
+  ) {
+    if (await handleReviewsApi(request, response, pathname)) return;
   }
 
   if (request.method !== "POST" || pathname !== "/api/assistant") {

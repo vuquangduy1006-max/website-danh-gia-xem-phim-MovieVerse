@@ -1,12 +1,15 @@
 import "./style.css";
 import "./reviews-page.css";
 import { getMovieDB, getGenreList } from "./data/data.js";
-import { isAdmin } from "./data/auth.js";
+import { getSession, isAdmin } from "./data/auth.js";
 import {
   addReview,
+  addReviewReply,
   deleteReview,
   getMovieReviews,
+  getReviewReplies,
   loadReviews,
+  syncReviews,
 } from "./data/reviews.js";
 import {
   bindAccountActions,
@@ -14,6 +17,12 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
 
 const movies = getMovieDB();
 let reviews = loadReviews();
@@ -198,7 +207,27 @@ function renderReviews() {
     ? shown
         .map((review) => {
           const movie = movieForReview(review);
-          return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p>${review.adminReply ? `<div class="community-admin-reply"><strong>MovieVerse Admin</strong><p>${escapeHtml(review.adminReply.comment)}</p></div>` : ""}<div class="community-review-actions"><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a>${adminUser ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div></div></article>`;
+          const replies = getReviewReplies(review);
+          const session = getSession();
+          const replyForm = session
+            ? `<form class="community-reply-form" data-review-reply="${escapeHtml(review.id)}">
+                <div class="community-reply-identity">
+                  <span class="community-reply-avatar">${escapeHtml(session.name.charAt(0))}</span>
+                  <span>Trả lời với tư cách <strong>${escapeHtml(session.name)}</strong></span>
+                  ${session.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}
+                </div>
+                <label class="sr-only" for="community-reply-comment-${escapeHtml(review.id)}">Nội dung trả lời</label>
+                <textarea id="community-reply-comment-${escapeHtml(review.id)}" name="comment" maxlength="280" rows="2" placeholder="Viết câu trả lời..." required></textarea>
+                <div class="community-reply-submit-row">
+                  <span class="community-reply-hint" aria-live="polite"></span>
+                  <button type="submit">Gửi trả lời <span aria-hidden="true">→</span></button>
+                </div>
+              </form>`
+            : `<div class="community-reply-login">
+                <span>Đăng nhập để tham gia thảo luận</span>
+                <a href="/login.html?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}">Đăng nhập <span aria-hidden="true">→</span></a>
+              </div>`;
+          return `<article class="community-review-card"><div class="community-review-poster" style="background-image:url('${movie?.poster || ""}')"></div><div class="community-review-content"><div class="community-review-heading"><div><span class="review-card-movie">${escapeHtml(review.movieTitle)}</span><h3>${escapeHtml(review.author)}</h3></div><span class="community-review-date">${escapeHtml(review.date)}</span></div><div class="community-rating"><span>${stars(review.rating)}</span><b>${review.rating}.0</b></div><p>${escapeHtml(review.comment)}</p>${replies.length ? `<div class="community-reply-thread" aria-label="Các câu trả lời">${replies.map((reply) => `<div class="community-reply${reply.role === "admin" ? " is-admin" : ""}"><div><strong>${escapeHtml(reply.author)}</strong>${reply.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}<small>${escapeHtml(reply.date)}</small></div><p>${escapeHtml(reply.comment)}</p></div>`).join("")}</div>` : ""}${replyForm}<div class="community-review-actions"><a href="/movie-detail.html?id=${encodeURIComponent(movie?.id || "")}">Xem trang phim <span>↗</span></a>${adminUser ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div></div></article>`;
         })
         .join("")
     : '<p class="review-empty-note">Không tìm thấy review phù hợp. Thử đổi bộ lọc hoặc viết một review mới.</p>';
@@ -261,7 +290,7 @@ document.querySelector("#reviewSort").addEventListener("change", renderReviews);
 movieSelect.addEventListener("change", renderSelectedMovieRating);
 document
   .querySelector("#communityReviewList")
-  .addEventListener("click", (event) => {
+  .addEventListener("click", async (event) => {
     const deleteButton = event.target.closest("[data-delete-review]");
     if (!deleteButton || !isAdmin()) return;
     const review = reviews.find(
@@ -269,11 +298,38 @@ document
     );
     if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
       return;
-    deleteReview(review.id);
+    try {
+      await deleteReview(review.id);
+    } catch (error) {
+      window.alert(error.message);
+      return;
+    }
     reviews = loadReviews();
     renderStats();
     renderReviews();
     renderSelectedMovieRating();
+  });
+document
+  .querySelector("#communityReviewList")
+  .addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-review-reply]");
+    if (!form) return;
+    event.preventDefault();
+    const hint = form.querySelector(".community-reply-hint");
+    const comment = form.elements.comment.value.trim();
+    try {
+      if (!await addReviewReply(form.dataset.reviewReply, comment)) {
+        hint.textContent = "Hãy đăng nhập để gửi câu trả lời.";
+        hint.classList.add("is-error");
+        return;
+      }
+    } catch (error) {
+      hint.textContent = error.message;
+      hint.classList.add("is-error");
+      return;
+    }
+    reviews = loadReviews();
+    renderReviews();
   });
 document
   .querySelector("#communityComment")
@@ -283,7 +339,7 @@ document
   });
 document
   .querySelector("#communityReviewForm")
-  .addEventListener("submit", (event) => {
+  .addEventListener("submit", async (event) => {
     event.preventDefault();
     const hint = document.querySelector("#composeHint");
     const author = document.querySelector("#communityAuthor").value.trim();
@@ -297,12 +353,18 @@ document
       hint.classList.add("is-error");
       return;
     }
-    addReview({
-      movieTitle: movieSelect.value,
-      author,
-      rating: selectedRating,
-      comment,
-    });
+    try {
+      await addReview({
+        movieTitle: movieSelect.value,
+        author,
+        rating: selectedRating,
+        comment,
+      });
+    } catch (error) {
+      hint.textContent = error.message;
+      hint.classList.add("is-error");
+      return;
+    }
     reviews = loadReviews();
     event.target.reset();
     selectedRating = 0;

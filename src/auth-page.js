@@ -22,7 +22,7 @@ if (form) {
     localStorage.removeItem("movieverse_auth_notice");
   }
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(form);
     const result = isRegister
@@ -31,7 +31,10 @@ if (form) {
           email: String(data.get("email") || ""),
           password: String(data.get("password") || ""),
         })
-      : loginUser(String(data.get("email") || ""), String(data.get("password") || ""));
+      : await loginUser(
+          String(data.get("email") || ""),
+          String(data.get("password") || ""),
+        );
 
     message.textContent = result.ok
       ? isRegister

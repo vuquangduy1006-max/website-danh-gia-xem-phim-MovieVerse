@@ -1,5 +1,6 @@
 const REVIEWS_KEY = "movieverse_reviews";
-import { isAdmin } from "./auth.js";
+import { getSession, isAdmin } from "./auth.js";
+import { REVIEW_SEED } from "./review-seed.js";
 
 const removedMovieTitles = new Set(
   [
@@ -14,34 +15,6 @@ const removedMovieTitles = new Set(
     "Moana 2",
   ].map((title) => title.toLocaleLowerCase("vi")),
 );
-
-const reviewSeed = [
-  {
-    id: "rv1",
-    movieTitle: "Dune: Part Two",
-    author: "Minh Anh",
-    rating: 5,
-    comment:
-      "Visual mãn nhãn, âm thanh vang dội. Đúng là bom tấn điện ảnh năm nay!",
-    date: "12/06/2025",
-  },
-  {
-    id: "rv2",
-    movieTitle: "Dune: Part Two",
-    author: "Hoàng Nam",
-    rating: 4,
-    comment: "Kịch bản tốt nhưng hơi dài ở phân đoạn giữa phim.",
-    date: "03/06/2025",
-  },
-  {
-    id: "rv5",
-    movieTitle: "Past Lives",
-    author: "Linh Chi",
-    rating: 5,
-    comment: "Một bộ phim nhẹ nhàng nhưng chạm đến trái tim.",
-    date: "02/06/2025",
-  },
-];
 
 export function loadReviews() {
   try {
@@ -59,7 +32,20 @@ export function loadReviews() {
       return activeReviews;
     }
   } catch (_) {}
-  return [...reviewSeed];
+  return [...REVIEW_SEED];
+}
+
+export async function syncReviews() {
+  const response = await fetch("/api/reviews", { cache: "no-store" });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Không thể tải bình luận từ máy chủ.");
+  }
+  if (!Array.isArray(payload.reviews)) {
+    throw new Error("Máy chủ trả về danh sách bình luận không hợp lệ.");
+  }
+  saveReviews(payload.reviews);
+  return payload.reviews;
 }
 
 export function getMovieReviews(title) {
@@ -79,59 +65,93 @@ export function getRatingSummary(title) {
   return { total, average, distribution };
 }
 
-export function addReview(review) {
+export async function addReview(review) {
   const rating = Number(review.rating);
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     throw new Error("Rating must be an integer from 1 to 5");
   }
-  const all = loadReviews();
-  all.unshift({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-    date: formatDate(new Date()),
-    ...review,
+  await mutateReviews("/api/reviews", "POST", {
+    movieTitle: review.movieTitle,
+    author: review.author,
+    comment: review.comment,
     rating,
   });
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(all));
 }
 
-export function deleteReview(id) {
+export async function deleteReview(id) {
   if (!isAdmin()) return false;
-  const remaining = loadReviews().filter((review) => review.id !== id);
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(remaining));
+  await mutateReviews(`/api/reviews/${encodeURIComponent(id)}`, "DELETE");
   return true;
 }
 
-export function replyToReview(id, comment) {
+export async function replyToReview(id, comment) {
   if (!isAdmin() || !comment.trim()) return false;
-  const reviews = loadReviews();
-  const index = reviews.findIndex((review) => review.id === id);
-  if (index === -1) return false;
-  reviews[index] = {
-    ...reviews[index],
-    adminReply: {
-      author: "MovieVerse Admin",
-      comment: comment.trim(),
-      date: formatDate(new Date()),
-    },
-  };
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+  return addReviewReply(id, comment);
+}
+
+export async function addReviewReply(id, comment) {
+  const session = getSession();
+  const author = session?.name?.trim();
+  const text = comment.trim();
+  if (!author || !text || text.length > 280) return false;
+
+  await mutateReviews(`/api/reviews/${encodeURIComponent(id)}/replies`, "POST", {
+    author,
+    role: session?.role === "admin" ? "admin" : "user",
+    comment: text,
+  });
   return true;
 }
 
-function formatDate(date) {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${day}/${month}/${date.getFullYear()}`;
+export function getReviewReplies(review) {
+  const replies = Array.isArray(review.replies) ? [...review.replies] : [];
+  if (
+    review.adminReply?.comment &&
+    !replies.some((reply) => reply.id === `legacy-admin-${review.id}`)
+  ) {
+    replies.unshift({
+      id: `legacy-admin-${review.id}`,
+      author: review.adminReply.author || "MovieVerse Admin",
+      role: "admin",
+      comment: review.adminReply.comment,
+      date: review.adminReply.date,
+    });
+  }
+  return replies;
 }
 
-// Admin moderation: hide without deleting the review.
-export function setReviewHidden(id, hidden) {
-  const reviews = loadReviews();
-  const review = reviews.find((item) => String(item.id) === String(id));
-  if (!review) return false;
-  review.hidden = Boolean(hidden);
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+export async function setReviewHidden(id, hidden) {
+  if (!isAdmin()) return false;
+  await mutateReviews(`/api/reviews/${encodeURIComponent(id)}`, "PATCH", {
+    hidden: Boolean(hidden),
+  });
   return true;
+}
+
+async function mutateReviews(url, method, body) {
+  const session = getSession();
+  const headers = { "Content-Type": "application/json" };
+  if (session?.adminToken) {
+    headers.Authorization = `Bearer ${session.adminToken}`;
+  }
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Không thể cập nhật bình luận.");
+  }
+  if (!Array.isArray(payload.reviews)) {
+    throw new Error("Máy chủ trả về danh sách bình luận không hợp lệ.");
+  }
+  saveReviews(payload.reviews);
+  return payload.reviews;
+}
+
+function saveReviews(reviews) {
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
 }
 
 export function getVisibleMovieReviews(title) {
