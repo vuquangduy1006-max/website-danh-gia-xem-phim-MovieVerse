@@ -36,10 +36,43 @@ export function registerUser({ name, email, password }) {
   return { ok: true, user };
 }
 
-export function loginUser(email, password) {
-  const user = loadUsers().find(
-    (item) => item.email === email.trim().toLowerCase() && item.password === password,
-  );
+export async function loginUser(email, password) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const localUser = loadUsers().find((item) => item.email === normalizedEmail);
+  if (normalizedEmail === DEFAULT_ADMIN.email || !localUser) {
+    let response;
+    let result;
+    try {
+      response = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+      result = await response.json();
+    } catch {
+      return {
+        ok: false,
+        message: "Không kết nối được máy chủ quản trị. Hãy thử lại sau.",
+      };
+    }
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: result.error || "Không thể đăng nhập quản trị.",
+      };
+    }
+    const session = {
+      id: "admin-default",
+      name: result.name,
+      email: result.email,
+      role: "admin",
+      adminToken: result.token,
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return { ok: true, session };
+  }
+
+  const user = localUser.password === password ? localUser : null;
   if (!user) return { ok: false, message: "Email hoặc mật khẩu không đúng." };
   const session = { id: user.id, name: user.name, email: user.email, role: user.role };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));

@@ -1,7 +1,7 @@
 import "./style.css";
 import "./ranking-page.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
-import { loadReviews } from "./data/reviews.js";
+import { loadReviews, syncReviews } from "./data/reviews.js";
 import {
   bindAccountActions,
   getPosterStyle,
@@ -9,6 +9,12 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
 
 const movies = getMovieDB();
 const reviews = loadReviews();

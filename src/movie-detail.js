@@ -6,14 +6,27 @@ import {
   getMovieCredits,
   getSimilarMovies,
 } from "./data/media.js";
-import { addReview, deleteReview, getMovieReviews } from "./data/reviews.js";
-import { isAdmin } from "./data/auth.js";
+import {
+  addReview,
+  addReviewReply,
+  deleteReview,
+  getMovieReviews,
+  getReviewReplies,
+  syncReviews,
+} from "./data/reviews.js";
+import { getSession, isAdmin } from "./data/auth.js";
 import {
   loadFavorites,
   toggleFavorite as toggleFavoriteStorage,
 } from "./data/favorites.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
+
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
 
 const movieList = getMovieDB();
 const params = new URLSearchParams(window.location.search);
@@ -548,17 +561,39 @@ function renderDetailPage(current) {
     document.querySelector("#detailReviewList").innerHTML = sorted.length
       ? sorted
           .map(
-            (review) => `
+            (review) => {
+              const replies = getReviewReplies(review);
+              const session = getSession();
+              return `
         <article class="review-item">
           <div class="review-avatar">${escapeHtml(review.author.charAt(0))}</div>
           <div class="review-body">
             <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
             <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
             <p>${escapeHtml(review.comment)}</p>
-            ${review.adminReply ? `<div class="detail-admin-reply"><strong>MovieVerse Admin</strong><p>${escapeHtml(review.adminReply.comment)}</p><small>${escapeHtml(review.adminReply.date)}</small></div>` : ""}
+            ${replies.length ? `<div class="detail-reply-thread" aria-label="Các câu trả lời">${replies.map((reply) => `<div class="detail-admin-reply${reply.role === "admin" ? " is-admin" : ""}"><div class="detail-reply-heading"><strong>${escapeHtml(reply.author)}</strong>${reply.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}<small>${escapeHtml(reply.date)}</small></div><p>${escapeHtml(reply.comment)}</p></div>`).join("")}</div>` : ""}
+            ${session
+              ? `<form class="detail-reply-form" data-review-reply="${escapeHtml(review.id)}">
+                  <div class="detail-reply-identity">
+                    <span class="detail-reply-avatar">${escapeHtml(session.name.charAt(0))}</span>
+                    <span>Trả lời với tư cách <strong>${escapeHtml(session.name)}</strong></span>
+                    ${session.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}
+                  </div>
+                  <label class="sr-only" for="reply-comment-${escapeHtml(review.id)}">Nội dung trả lời</label>
+                  <textarea id="reply-comment-${escapeHtml(review.id)}" name="comment" maxlength="280" rows="2" placeholder="Viết câu trả lời..." required></textarea>
+                  <div class="detail-reply-submit-row">
+                    <span class="detail-reply-hint" aria-live="polite"></span>
+                    <button type="submit" class="detail-reply-submit">Gửi trả lời <span aria-hidden="true">→</span></button>
+                  </div>
+                </form>`
+              : `<div class="detail-reply-login">
+                  <span>Đăng nhập để tham gia thảo luận</span>
+                  <a href="/login.html?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}">Đăng nhập <span aria-hidden="true">→</span></a>
+                </div>`}
             <div class="detail-review-actions"><span></span>${isAdmin() ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div>
           </div>
-        </article>`,
+        </article>`;
+            },
           )
           .join("")
       : '<p class="review-empty">Chưa có đánh giá nào cho phim này. Hãy là người đầu tiên chia sẻ cảm nhận!</p>';
@@ -566,7 +601,7 @@ function renderDetailPage(current) {
 
   document
     .querySelector("#detailReviewForm")
-    .addEventListener("submit", (event) => {
+    .addEventListener("submit", async (event) => {
       event.preventDefault();
       const authorInput = document.querySelector("#detailAuthor");
       const commentInput = document.querySelector("#detailComment");
@@ -592,12 +627,18 @@ function renderDetailPage(current) {
         return;
       }
 
-      addReview({
-        movieTitle: current.title,
-        author,
-        rating: selectedRating,
-        comment,
-      });
+      try {
+        await addReview({
+          movieTitle: current.title,
+          author,
+          rating: selectedRating,
+          comment,
+        });
+      } catch (error) {
+        hint.textContent = error.message;
+        hint.style.color = "#ff6b5c";
+        return;
+      }
 
       event.target.reset();
       selectedRating = 0;
@@ -612,7 +653,7 @@ function renderDetailPage(current) {
 
   document
     .querySelector("#detailReviewList")
-    .addEventListener("click", (event) => {
+    .addEventListener("click", async (event) => {
       const deleteButton = event.target.closest("[data-delete-review]");
       if (!deleteButton || !isAdmin()) return;
       const review = getMovieReviews(current.title).find(
@@ -620,8 +661,34 @@ function renderDetailPage(current) {
       );
       if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
         return;
-      deleteReview(review.id);
+      try {
+        await deleteReview(review.id);
+      } catch (error) {
+        window.alert(error.message);
+        return;
+      }
       renderMetrics();
+      renderReviews();
+    });
+  document
+    .querySelector("#detailReviewList")
+    .addEventListener("submit", async (event) => {
+      const form = event.target.closest("[data-review-reply]");
+      if (!form) return;
+      event.preventDefault();
+      const hint = form.querySelector(".detail-reply-hint");
+      const comment = form.elements.comment.value.trim();
+      try {
+        if (!await addReviewReply(form.dataset.reviewReply, comment)) {
+          hint.textContent = "Hãy đăng nhập để gửi câu trả lời.";
+          hint.classList.add("is-error");
+          return;
+        }
+      } catch (error) {
+        hint.textContent = error.message;
+        hint.classList.add("is-error");
+        return;
+      }
       renderReviews();
     });
 }
