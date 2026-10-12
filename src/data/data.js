@@ -397,7 +397,7 @@ export const movieSeed = [
     id: "n25",
     title: "Bleach: Thousand-Year Blood War",
     year: "2004",
-    genre: "Hành động, Giả tưởng, Hài, Tâm lý, Tokusatsu",
+    genre: "Hoạt hình, Hành động, Phiêu lưu, Giả tưởng",
     rating: "8.2",
     isNew: true,
     poster: bleachPoster,
@@ -844,7 +844,7 @@ function normalizeAnimePosters(movies) {
 }
 
 const DB_KEY = "movieverse_db";
-const SEED_MIGRATION_KEY = "movieverse_seed_migration_v10";
+const SEED_MIGRATION_KEY = "movieverse_seed_migration_v11";
 const addedSeedMovieIds = new Set([
   "n5",
   "n6",
@@ -1117,6 +1117,16 @@ export function getMovieDB() {
               postersUpdated = true;
             }
           });
+          let genresUpdated = false;
+          parsed.movies.forEach((movie) => {
+            if (
+              movie.id === "n25" &&
+              getMovieGenres(movie).includes("Tokusatsu")
+            ) {
+              movie.genre = "Hoạt hình, Hành động, Phiêu lưu, Giả tưởng";
+              genresUpdated = true;
+            }
+          });
 
           const existingIds = new Set(parsed.movies.map((movie) => movie.id));
           const existingTitles = new Set(
@@ -1130,7 +1140,7 @@ export function getMovieDB() {
               !existingIds.has(movie.id) &&
               !existingTitles.has(movie.title.trim().toLocaleLowerCase("vi")),
           );
-          if (additions.length || postersUpdated) {
+          if (additions.length || postersUpdated || genresUpdated) {
             parsed.movies.push(...additions);
             saveMovieDB(parsed.movies);
           }

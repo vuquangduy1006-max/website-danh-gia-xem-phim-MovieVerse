@@ -6,7 +6,12 @@ import {
   getMovieGenres,
 } from "./data.js";
 import { isAdmin } from "./auth.js";
-import { deleteReview, loadReviews, setReviewHidden } from "./reviews.js";
+import {
+  deleteReview,
+  loadReviews,
+  setReviewHidden,
+  syncReviews,
+} from "./reviews.js";
 import { isValidReleaseYear } from "./movie-validation.js";
 
 if (!isAdmin()) {
@@ -14,6 +19,12 @@ if (!isAdmin()) {
 }
 
 const currentYear = new Date().getFullYear();
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
+
 const DB_KEY = "movieverse_db";
 let movies = loadDB();
 
@@ -312,13 +323,18 @@ function renderComments() {
         .join("")
     : `<tr><td colspan="6"><div class="empty-state"><h3>Không tìm thấy bình luận</h3><p>Thử thay đổi từ khóa tìm kiếm.</p></div></td></tr>`;
   document.querySelectorAll("[data-delete-comment]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const review = reviews.find(
         (item) => item.id === button.dataset.deleteComment,
       );
       if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
         return;
-      deleteReview(review.id);
+      try {
+        await deleteReview(review.id);
+      } catch (error) {
+        showToast(error.message, "error");
+        return;
+      }
       reviews = loadReviews();
       renderComments();
       showToast("Đã xóa bình luận.", "success");
@@ -577,13 +593,18 @@ function renderReviewTable() {
         .join("")
     : '<tr><td colspan="5">Chưa có bình luận.</td></tr>';
   body.querySelectorAll("[data-review-id]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const review = loadReviews().find(
         (item) => String(item.id) === button.dataset.reviewId,
       );
-      if (review && setReviewHidden(review.id, !review.hidden)) {
-        renderReviewTable();
-        showToast(review.hidden ? "Đã hiện bình luận." : "Đã ẩn bình luận.");
+      if (!review) return;
+      try {
+        if (await setReviewHidden(review.id, !review.hidden)) {
+          renderReviewTable();
+          showToast(review.hidden ? "Đã hiện bình luận." : "Đã ẩn bình luận.");
+        }
+      } catch (error) {
+        showToast(error.message, "error");
       }
     });
   });

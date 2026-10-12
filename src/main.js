@@ -1,7 +1,7 @@
 import "./style.css";
 import { getMovieDB, getMovieGenres } from "./data/data.js";
 import { getTrailer } from "./data/media.js";
-import { loadReviews } from "./data/reviews.js";
+import { loadReviews, syncReviews } from "./data/reviews.js";
 import { loadFavorites } from "./data/favorites.js";
 import { rankMovieRecommendations } from "./data/recommendations.js";
 import {
@@ -11,6 +11,12 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
 
 const movies = getMovieDB();
 const availableGenres = [...new Set(movies.flatMap(getMovieGenres))].sort(
