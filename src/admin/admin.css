@@ -430,6 +430,14 @@ button {
 .field-error.is-visible {
   display: block;
 }
+.field-hint {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.field-hint.is-error {
+  color: #ff786b;
+}
 .field input,
 .field select,
 .field textarea {
