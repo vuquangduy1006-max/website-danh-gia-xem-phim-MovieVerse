@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
+import { createServer as createHttpServer } from "node:http";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
@@ -37,6 +38,32 @@ async function waitForServer(child, url, readErrors) {
 test("review API shares replies, persists moderation and protects admin actions", async (t) => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "movieverse-reviews-"));
   const port = await getAvailablePort();
+  const omdbPort = await getAvailablePort();
+  const omdbServer = createHttpServer((request, response) => {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    if (url.searchParams.get("t") === "Invalid Key Test") {
+      response.writeHead(401, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ Response: "False", Error: "Invalid API key!" }));
+    } else if (url.searchParams.get("apikey") !== "test-omdb-key") {
+      response.writeHead(401, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ Response: "False", Error: "Invalid API key!" }));
+    } else if (url.searchParams.get("t") === "Lookup Film") {
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(
+        JSON.stringify({
+          Response: "True",
+          Title: "Lookup Film",
+          Year: "2024",
+          imdbID: "tt1234567",
+          imdbRating: "7.8",
+        }),
+      );
+    } else {
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ Response: "False", Error: "Movie not found!" }));
+    }
+  });
+  await new Promise((resolve) => omdbServer.listen(omdbPort, "127.0.0.1", resolve));
   const baseUrl = `http://127.0.0.1:${port}/api`;
   const child = spawn(process.execPath, ["server.js"], {
     cwd: process.cwd(),
@@ -45,6 +72,8 @@ test("review API shares replies, persists moderation and protects admin actions"
       API_PORT: String(port),
       ADMIN_EMAIL: "admin@test.local",
       ADMIN_PASSWORD: "test-password",
+      OMDB_API_KEY: "test-omdb-key",
+      OMDB_API_URL: `http://127.0.0.1:${omdbPort}/`,
       REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
     },
     stdio: ["ignore", "ignore", "pipe"],
@@ -62,6 +91,9 @@ test("review API shares replies, persists moderation and protects admin actions"
         new Promise((resolve) => setTimeout(resolve, 3000)),
       ]);
     }
+    await new Promise((resolve, reject) =>
+      omdbServer.close((error) => (error ? reject(error) : resolve())),
+    );
     await rm(directory, { recursive: true, force: true });
   });
 
@@ -149,6 +181,37 @@ test("review API shares replies, persists moderation and protects admin actions"
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
+  const unauthorizedRating = await fetch(
+    `${baseUrl}/admin/movie-rating?title=Lookup%20Film`,
+  );
+  assert.equal(unauthorizedRating.status, 403);
+  const movieRating = await fetch(
+    `${baseUrl}/admin/movie-rating?title=Lookup%20Film`,
+    { headers: adminHeaders },
+  );
+  assert.equal(movieRating.status, 200);
+  assert.deepEqual(await movieRating.json(), {
+    rating: 7.8,
+    title: "Lookup Film",
+    year: "2024",
+    imdbId: "tt1234567",
+    source: "IMDb qua OMDb",
+  });
+  const missingRating = await fetch(
+    `${baseUrl}/admin/movie-rating?title=Unknown%20Film`,
+    { headers: adminHeaders },
+  );
+  assert.equal(missingRating.status, 404);
+  const invalidProviderKey = await fetch(
+    `${baseUrl}/admin/movie-rating?title=Invalid%20Key%20Test`,
+    { headers: adminHeaders },
+  );
+  assert.equal(invalidProviderKey.status, 503);
+  assert.match(
+    (await invalidProviderKey.json()).error,
+    /OMDb không chấp nhận API key/,
+  );
+
   const adminReply = await fetch(`${baseUrl}/reviews/${review.id}/replies`, {
     method: "POST",
     headers: adminHeaders,

@@ -5,7 +5,7 @@ import {
   getGenreList,
   getMovieGenres,
 } from "./data.js";
-import { isAdmin } from "./auth.js";
+import { getSession, isAdmin } from "./auth.js";
 import {
   deleteReview,
   loadReviews,
@@ -55,6 +55,10 @@ let editingId = null;
 let deleteId = null;
 let reviewQuery = "";
 let reviews = loadReviews();
+let ratingLookupTimer;
+let ratingLookupController;
+let ratingManuallyEdited = false;
+let selectedRatingSource = null;
 
 document.querySelector("#app").innerHTML = `
 <header class="admin-header">
@@ -160,6 +164,7 @@ document.querySelector("#app").innerHTML = `
           <div class="field">
             <label for="fieldRating">Đánh giá (0 - 10)</label>
             <input id="fieldRating" type="number" min="0" max="10" step="0.1" placeholder="8.5">
+            <small class="field-hint" id="ratingLookupStatus" aria-live="polite">Khi thêm phim, nhập tên để tự tra cứu điểm IMDb.</small>
           </div>
           <div class="field">
             <label for="fieldGenre">Thể loại (có thể chọn nhiều)</label>
@@ -180,6 +185,34 @@ document.querySelector("#app").innerHTML = `
           <div class="field full">
             <label for="fieldDescription">Mô tả</label>
             <textarea id="fieldDescription" placeholder="Tóm tắt nội dung phim..."></textarea>
+          </div>
+          <div class="field full">
+            <label for="fieldDirector">Đạo diễn</label>
+            <input id="fieldDirector" type="text" placeholder="VD: Denis Villeneuve">
+          </div>
+          <div class="field full">
+            <label for="fieldCast">Diễn viên (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldCast" type="text" placeholder="VD: Timothée Chalamet, Zendaya">
+          </div>
+          <div class="field full">
+            <label for="fieldWriters">Biên kịch / tác giả (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldWriters" type="text" placeholder="VD: Jon Spaihts, Denis Villeneuve">
+          </div>
+          <div class="field full">
+            <label for="fieldProducers">Nhà sản xuất (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldProducers" type="text" placeholder="VD: Mary Parent, Denis Villeneuve">
+          </div>
+          <div class="field full">
+            <label for="fieldStudio">Hãng phim / đơn vị sản xuất</label>
+            <input id="fieldStudio" type="text" placeholder="VD: Warner Bros. Pictures">
+          </div>
+          <div class="field full">
+            <label for="fieldCinematographers">Quay phim (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldCinematographers" type="text" placeholder="VD: Greig Fraser">
+          </div>
+          <div class="field full">
+            <label for="fieldComposers">Âm nhạc (cách nhau bằng dấu phẩy)</label>
+            <input id="fieldComposers" type="text" placeholder="VD: Hans Zimmer">
           </div>
         </div>
         <p class="form-note">* là trường bắt buộc. Dữ liệu được lưu trên trình duyệt (localStorage).</p>
@@ -239,6 +272,22 @@ function fillGenreSelects() {
 function bindEvents() {
   document.querySelector("#addMovieBtn").addEventListener("click", openAddForm);
   document.querySelector("#movieForm").addEventListener("submit", onSave);
+  document.querySelector("#fieldTitle").addEventListener("input", () => {
+    const title = document.querySelector("#fieldTitle").value.trim();
+    if (selectedRatingSource && selectedRatingSource.title !== title) {
+      document.querySelector("#fieldRating").value = "";
+      selectedRatingSource = null;
+    }
+    if (editingId) return;
+    scheduleRatingLookup();
+  });
+  document.querySelector("#fieldRating").addEventListener("input", () => {
+    ratingManuallyEdited = true;
+    selectedRatingSource = null;
+    clearTimeout(ratingLookupTimer);
+    ratingLookupController?.abort();
+    setRatingLookupStatus("Bạn đang nhập rating thủ công.");
+  });
   document.querySelector("#fieldYear").addEventListener("input", (event) => {
     const input = event.currentTarget;
     showYearError(
@@ -428,9 +477,14 @@ function renderTable() {
 }
 
 function openAddForm() {
+  clearTimeout(ratingLookupTimer);
+  ratingLookupController?.abort();
   editingId = null;
+  ratingManuallyEdited = false;
+  selectedRatingSource = null;
   document.querySelector("#formTitle").textContent = "Thêm phim mới";
   document.querySelector("#movieForm").reset();
+  setRatingLookupStatus("Khi thêm phim, nhập tên để tự tra cứu điểm IMDb.");
   document.querySelector("#fieldId").value = "";
   document.querySelector("#fieldYear").value = String(currentYear);
   showYearError("");
@@ -445,13 +499,22 @@ function openAddForm() {
 function openEditForm(id) {
   const movie = movies.find((item) => item.id === id);
   if (!movie) return;
+  clearTimeout(ratingLookupTimer);
+  ratingLookupController?.abort();
   editingId = id;
+  ratingManuallyEdited = true;
+  selectedRatingSource = movie.ratingSource || null;
   document.querySelector("#formTitle").textContent = "Chỉnh sửa phim";
   document.querySelector("#fieldId").value = movie.id;
   document.querySelector("#fieldTitle").value = movie.title;
   document.querySelector("#fieldYear").value = movie.year || "";
   showYearError("");
   document.querySelector("#fieldRating").value = movie.rating || "";
+  setRatingLookupStatus(
+    selectedRatingSource
+      ? `Rating lưu từ ${selectedRatingSource.name}.`
+      : "Chỉnh sửa rating thủ công nếu cần.",
+  );
   const selectedGenres = getMovieGenres(movie);
   [...document.querySelector("#fieldGenre").options].forEach((option) => {
     option.selected = selectedGenres.includes(option.value);
@@ -460,6 +523,19 @@ function openEditForm(id) {
   document.querySelector("#fieldPoster").value = movie.poster || "";
   document.querySelector("#fieldBackdrop").value = movie.backdrop || "";
   document.querySelector("#fieldDescription").value = movie.description || "";
+  document.querySelector("#fieldDirector").value = movie.director || "";
+  document.querySelector("#fieldCast").value = formatNames(movie.cast);
+  document.querySelector("#fieldWriters").value = formatNames(movie.writers);
+  document.querySelector("#fieldProducers").value = formatNames(movie.producers);
+  document.querySelector("#fieldStudio").value = formatNames(
+    movie.productionCompanies,
+  );
+  document.querySelector("#fieldCinematographers").value = formatNames(
+    movie.cinematographers,
+  );
+  document.querySelector("#fieldComposers").value = formatNames(
+    movie.composers,
+  );
   openOverlay("formOverlay");
   document.querySelector("#fieldTitle").focus();
 }
@@ -500,6 +576,18 @@ function onSave(event) {
     description:
       document.querySelector("#fieldDescription").value.trim() ||
       "Chưa có mô tả cho phim này.",
+    director: document.querySelector("#fieldDirector").value.trim(),
+    cast: parseNames(document.querySelector("#fieldCast").value),
+    writers: parseNames(document.querySelector("#fieldWriters").value),
+    producers: parseNames(document.querySelector("#fieldProducers").value),
+    productionCompanies: parseNames(
+      document.querySelector("#fieldStudio").value,
+    ),
+    cinematographers: parseNames(
+      document.querySelector("#fieldCinematographers").value,
+    ),
+    composers: parseNames(document.querySelector("#fieldComposers").value),
+    ratingSource: selectedRatingSource,
   };
 
   const index = movies.findIndex((item) => item.id === movie.id);
@@ -515,6 +603,84 @@ function onSave(event) {
   closeOverlay("formOverlay");
   renderAll();
   form.reset();
+}
+
+function setRatingLookupStatus(message, state = "") {
+  const status = document.querySelector("#ratingLookupStatus");
+  status.textContent = message;
+  status.classList.toggle("is-error", state === "error");
+}
+
+function scheduleRatingLookup() {
+  clearTimeout(ratingLookupTimer);
+  ratingLookupController?.abort();
+  if (ratingManuallyEdited) {
+    setRatingLookupStatus("Bạn đang nhập rating thủ công.");
+    return;
+  }
+
+  const title = document.querySelector("#fieldTitle").value.trim();
+  if (title.length < 2) {
+    setRatingLookupStatus("Nhập tên để tự tra cứu điểm IMDb.");
+    return;
+  }
+  setRatingLookupStatus("Đang chờ nhập tên phim...");
+  ratingLookupTimer = setTimeout(() => lookupMovieRating(title), 650);
+}
+
+async function lookupMovieRating(title) {
+  const session = getSession();
+  if (!session?.adminToken) {
+    setRatingLookupStatus("Phiên quản trị không hợp lệ. Hãy đăng nhập lại.", "error");
+    return;
+  }
+  const controller = new AbortController();
+  ratingLookupController = controller;
+  setRatingLookupStatus("Đang tra cứu rating IMDb...");
+  try {
+    const response = await fetch(
+      `/api/admin/movie-rating?title=${encodeURIComponent(title)}`,
+      {
+        headers: { Authorization: `Bearer ${session.adminToken}` },
+        signal: controller.signal,
+      },
+    );
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Không tra cứu được rating.");
+    if (
+      controller.signal.aborted ||
+      ratingManuallyEdited ||
+      document.querySelector("#fieldTitle").value.trim() !== title
+    ) {
+      return;
+    }
+    document.querySelector("#fieldRating").value = result.rating.toFixed(1);
+    selectedRatingSource = {
+      name: result.source,
+      title,
+      year: result.year || "",
+      imdbId: result.imdbId || "",
+    };
+    setRatingLookupStatus(
+      `Đã điền ${result.rating.toFixed(1)}/10 từ ${result.source}${result.year ? ` · ${result.year}` : ""}.`,
+    );
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    setRatingLookupStatus(error.message, "error");
+  } finally {
+    if (ratingLookupController === controller) ratingLookupController = null;
+  }
+}
+
+function parseNames(value) {
+  return value
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+function formatNames(value) {
+  return Array.isArray(value) ? value.join(", ") : value || "";
 }
 
 function showYearError(message) {

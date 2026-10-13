@@ -11,6 +11,8 @@ import { REVIEW_SEED } from "./src/data/review-seed.js";
 
 const port = Number(process.env.API_PORT || 3001);
 const apiKey = process.env.AI_API_KEY;
+const omdbApiKey = process.env.OMDB_API_KEY;
+const omdbApiUrl = process.env.OMDB_API_URL || "https://www.omdbapi.com/";
 const apiUrl =
   process.env.AI_API_URL || "https://api.openai.com/v1/chat/completions";
 const model = process.env.AI_MODEL || "gpt-4o-mini";
@@ -22,6 +24,7 @@ const MAX_BODY_BYTES = 48 * 1024;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 12;
 const requestsByIp = new Map();
+const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
 const reviewsFilePath = resolve(
   process.env.REVIEWS_STORE_PATH ||
@@ -47,11 +50,11 @@ function sendCatalogFallback(response, question, catalog, notice) {
   });
 }
 
-function isRateLimited(ip) {
+function isRateLimited(ip, requests = requestsByIp) {
   const now = Date.now();
-  const current = requestsByIp.get(ip);
+  const current = requests.get(ip);
   if (!current || now - current.startedAt >= RATE_WINDOW_MS) {
-    requestsByIp.set(ip, { startedAt: now, count: 1 });
+    requests.set(ip, { startedAt: now, count: 1 });
     return false;
   }
   current.count += 1;
@@ -352,9 +355,101 @@ async function handleReviewsApi(request, response, pathname) {
   return false;
 }
 
+async function handleMovieRatingApi(request, response, url) {
+  if (request.method !== "GET" || url.pathname !== "/api/admin/movie-rating") {
+    return false;
+  }
+  if (!isAdminRequest(request)) {
+    sendJson(response, 403, {
+      error: "Cần đăng nhập quản trị để tra cứu rating phim.",
+    });
+    return true;
+  }
+  if (!omdbApiKey) {
+    sendJson(response, 503, {
+      error: "Máy chủ chưa cấu hình OMDB_API_KEY. Hãy thêm khóa OMDb vào file .env rồi khởi động lại máy chủ.",
+    });
+    return true;
+  }
+
+  const title = url.searchParams.get("title")?.trim();
+  if (!validText(title, 120)) {
+    sendJson(response, 400, {
+      error: "Tên phim cần tra cứu phải dài từ 1 đến 120 ký tự.",
+    });
+    return true;
+  }
+  const ip = request.socket.remoteAddress || "unknown";
+  if (isRateLimited(ip, movieRatingRequestsByIp)) {
+    sendJson(response, 429, {
+      error: "Bạn tra cứu rating quá nhanh. Vui lòng chờ một phút rồi thử lại.",
+    });
+    return true;
+  }
+
+  try {
+    const upstreamUrl = new URL(omdbApiUrl);
+    upstreamUrl.searchParams.set("apikey", omdbApiKey);
+    upstreamUrl.searchParams.set("t", title);
+    upstreamUrl.searchParams.set("type", "movie");
+    upstreamUrl.searchParams.set("r", "json");
+    const upstream = await fetch(upstreamUrl, {
+      signal: AbortSignal.timeout(8_000),
+    });
+    const result = await upstream.json();
+    if (/invalid api key/i.test(String(result.Error))) {
+      sendJson(response, 503, {
+        error: "OMDb không chấp nhận API key. Hãy kiểm tra email xác nhận OMDb rồi cập nhật key còn hiệu lực vào OMDB_API_KEY trong file .env.",
+      });
+      return true;
+    }
+    if (/too many requests/i.test(String(result.Error))) {
+      sendJson(response, 429, {
+        error: "OMDb đã giới hạn lượt tra cứu. Vui lòng thử lại sau.",
+      });
+      return true;
+    }
+    if (!upstream.ok) {
+      console.error(`OMDb returned HTTP ${upstream.status} for a rating lookup.`);
+      sendJson(response, 502, {
+        error: "Nguồn rating phim hiện không phản hồi. Vui lòng thử lại sau.",
+      });
+      return true;
+    }
+
+    if (result.Response !== "True") {
+      sendJson(response, 404, {
+        error: "Không tìm thấy phim trên OMDb. Bạn có thể nhập rating thủ công.",
+      });
+      return true;
+    }
+    const rating = Number(result.imdbRating);
+    if (!Number.isFinite(rating) || rating < 0 || rating > 10) {
+      sendJson(response, 422, {
+        error: "IMDb chưa có rating cho phim này. Bạn có thể nhập rating thủ công.",
+      });
+      return true;
+    }
+
+    sendJson(response, 200, {
+      rating,
+      title: result.Title,
+      year: result.Year,
+      imdbId: result.imdbID,
+      source: "IMDb qua OMDb",
+    });
+  } catch (error) {
+    console.error("Unable to look up a movie rating:", error);
+    sendJson(response, 502, {
+      error: "Không thể kết nối nguồn rating phim. Vui lòng thử lại sau.",
+    });
+  }
+  return true;
+}
+
 const server = createServer(async (request, response) => {
-  const pathname = new URL(request.url, `http://${request.headers.host}`)
-    .pathname;
+  const url = new URL(request.url, `http://${request.headers.host}`);
+  const pathname = url.pathname;
 
   if (request.method === "GET" && pathname === "/api/health") {
     sendJson(response, 200, { ok: true, configured: Boolean(apiKey) });
@@ -367,6 +462,7 @@ const server = createServer(async (request, response) => {
   ) {
     if (await handleReviewsApi(request, response, pathname)) return;
   }
+  if (await handleMovieRatingApi(request, response, url)) return;
 
   if (request.method !== "POST" || pathname !== "/api/assistant") {
     sendJson(response, 404, { error: "Không tìm thấy endpoint." });

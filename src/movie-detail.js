@@ -199,14 +199,18 @@ function renderDetailPage(current) {
           <section class="aside-card" aria-labelledby="infoHeading">
             <h3 id="infoHeading">Thông tin phim</h3>
             <dl class="info-list">
-              <div><dt>Đạo diễn</dt><dd>${credits.director}</dd></div>
-              <div><dt>Diễn viên</dt><dd>${credits.cast.join(", ")}</dd></div>
+              <div><dt>Đạo diễn</dt><dd>${escapeHtml(credits.director)}</dd></div>
+              <div><dt>Diễn viên</dt><dd>${escapeHtml(credits.cast.join(", "))}</dd></div>
+              ${credits.writers.length ? `<div><dt>Biên kịch / tác giả</dt><dd>${escapeHtml(credits.writers.join(", "))}</dd></div>` : ""}
+              ${credits.producers.length ? `<div><dt>Nhà sản xuất</dt><dd>${escapeHtml(credits.producers.join(", "))}</dd></div>` : ""}
+              ${credits.cinematographers.length ? `<div><dt>Quay phim</dt><dd>${escapeHtml(credits.cinematographers.join(", "))}</dd></div>` : ""}
+              ${credits.composers.length ? `<div><dt>Âm nhạc</dt><dd>${escapeHtml(credits.composers.join(", "))}</dd></div>` : ""}
               <div><dt>Ngày phát hành</dt><dd>${credits.releaseDate}</dd></div>
               <div><dt>Thời lượng</dt><dd>${credits.runtime}</dd></div>
               <div><dt>Quốc gia</dt><dd>${credits.country}</dd></div>
               <div><dt>Ngôn ngữ</dt><dd>${credits.language}</dd></div>
               <div><dt>Đối tượng</dt><dd>${credits.ageRating}</dd></div>
-              <div><dt>Hãng phim</dt><dd>${credits.studio}</dd></div>
+              <div><dt>Hãng phim</dt><dd>${escapeHtml(credits.studio)}</dd></div>
             </dl>
           </section>
 

@@ -295,12 +295,25 @@ export function getMovieMedia(movie, movieList = []) {
 export function getMovieCredits(movie) {
   const seed = hash(`${movie.id}:${movie.title}`);
   const pick = (list, offset) => list[(seed + offset * 7) % list.length];
-  const cast = [0, 1, 2].map((offset) => pick(CAST, offset));
+  const names = (value) =>
+    (Array.isArray(value) ? value : String(value ?? "").split(","))
+      .map((name) => String(name).trim())
+      .filter(Boolean);
+  const cast = names(movie.cast);
+  const productionCompanies = names(movie.productionCompanies);
 
   return {
-    director: pick(DIRECTORS, 0),
-    cast,
-    studio: pick(STUDIOS, 0),
+    director: String(movie.director ?? "").trim() || pick(DIRECTORS, 0),
+    cast: cast.length
+      ? cast
+      : [0, 1, 2].map((offset) => pick(CAST, offset)),
+    writers: names(movie.writers),
+    producers: names(movie.producers),
+    cinematographers: names(movie.cinematographers),
+    composers: names(movie.composers),
+    studio: productionCompanies.length
+      ? productionCompanies.join(", ")
+      : pick(STUDIOS, 0),
     country: pick(COUNTRIES, 0),
     runtime: pick(RUNTIMES, 0),
     language: pick(LANGUAGES, 0),
