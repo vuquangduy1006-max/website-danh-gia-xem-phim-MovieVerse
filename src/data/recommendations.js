@@ -50,14 +50,39 @@ function normalize(value) {
     .toLocaleLowerCase("vi");
 }
 
+export function findReferencedMovies(query, movies) {
+  const normalizedQuery = normalize(query);
+  if (!/(?:giong|tuong tu|na na|similar to|like)/.test(normalizedQuery)) {
+    return [];
+  }
+
+  const queryWords = new Set(normalizedQuery.split(/[^a-z0-9]+/));
+  return movies.filter((movie) =>
+    normalize(movie.title)
+      .split(/[^a-z0-9]+/)
+      .some((word) => word.length >= 4 && queryWords.has(word)),
+  );
+}
+
+export function isMoreRecommendationsRequest(query) {
+  const normalizedQuery = normalize(query);
+  return (
+    /\bthem\b/.test(normalizedQuery) &&
+    /\b(?:phim|bo)\b/.test(normalizedQuery) &&
+    /\b(?:khac|nua)\b/.test(normalizedQuery)
+  );
+}
+
 export function rankMovieRecommendations({
   movies,
   reviews = [],
   favoriteIds = [],
   query = "",
-  limit = 3,
+  limit = 6,
+  excludeMovieIds = [],
 }) {
   const favoriteSet = new Set(favoriteIds);
+  const excludedSet = new Set(excludeMovieIds);
   const movieByTitle = new Map(movies.map((movie) => [movie.title, movie]));
   const preferredGenres = new Map();
   const addGenrePreference = (movie, weight) => {
@@ -76,6 +101,8 @@ export function rankMovieRecommendations({
   });
 
   const normalizedQuery = normalize(query.trim());
+  const referencedMovies = findReferencedMovies(normalizedQuery, movies);
+  const referencedMovieIds = new Set(referencedMovies.map((movie) => movie.id));
   const words = normalizedQuery
     .split(/[^a-z0-9]+/)
     .filter((word) => word.length > 2 && !IGNORED_WORDS.has(word));
@@ -91,7 +118,12 @@ export function rankMovieRecommendations({
   );
 
   return movies
-    .filter((movie) => !favoriteSet.has(movie.id))
+    .filter(
+      (movie) =>
+        !favoriteSet.has(movie.id) &&
+        !referencedMovieIds.has(movie.id) &&
+        !excludedSet.has(movie.id),
+    )
     .map((movie) => {
       const genres = getMovieGenres(movie);
       const content = normalize(
@@ -102,6 +134,14 @@ export function rankMovieRecommendations({
       );
       const matchingMoods = genres.filter((genre) => moodGenres.has(genre));
       const matchingWords = words.filter((word) => content.includes(word));
+      const similarReferences = referencedMovies
+        .map((reference) => ({
+          movie: reference,
+          genres: genres.filter((genre) =>
+            getMovieGenres(reference).includes(genre),
+          ),
+        }))
+        .filter((reference) => reference.genres.length);
       const preferredGenre = genres
         .map((genre) => [genre, preferredGenres.get(genre) || 0])
         .sort((a, b) => b[1] - a[1])[0];
@@ -115,6 +155,13 @@ export function rankMovieRecommendations({
       if (matchingMoods.length) {
         score += 2.5;
         if (!matchingGenres.length) reasons.push("Hợp tâm trạng bạn chọn");
+      }
+      if (similarReferences.length) {
+        const reference = similarReferences[0];
+        score += 3 + reference.genres.length * 2;
+        reasons.push(
+          `Có điểm chung với ${reference.movie.title}: ${reference.genres.join(", ")}`,
+        );
       }
       if (matchingWords.length) {
         score += Math.min(matchingWords.length, 3) * 1.1;

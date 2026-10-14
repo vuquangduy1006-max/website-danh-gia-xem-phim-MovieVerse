@@ -1,3 +1,5 @@
+import { findReferencedMovies } from "./src/data/recommendations.js";
+
 const KNOWN_MOVIE_FACTS = new Map([
   [
     "dune: part two",
@@ -633,11 +635,12 @@ function recommendationFilters(query) {
   };
 }
 
-export function hasMovieRecommendationIntent(question) {
+export function hasMovieRecommendationIntent(question, catalog = []) {
   const query = normalizeAssistantText(question);
   return (
     requestedGenres(query).length > 0 ||
     requestedMoods(query).length > 0 ||
+    findReferencedMovies(query, catalog).length > 0 ||
     requestedRuntimeMinutes(query) !== null ||
     recommendationFilters(query).yearFrom !== null ||
     recommendationFilters(query).minimumRating !== null ||
@@ -670,50 +673,65 @@ export function answerFromCatalog(question, catalog) {
     return "Chào bạn! Hãy cho mình biết thể loại phim hoặc thời lượng bạn muốn xem, mình sẽ tìm phim phù hợp trong kho MovieVerse.";
   }
 
-  const movies = catalog
-    .map(movieFacts)
-    .map((movie) => ({
-      ...movie,
-      matchingGenres: movie.genres.filter((genre) => genres.includes(genre)),
-      matchingMoods: moods
-        .map((mood) => {
-          const movieText = normalizeAssistantText(
-            `${movie.title} ${movie.description} ${movie.genres.join(" ")}`,
-          );
-          const contentMatchCount = mood.contentTerms.filter((term) =>
-            movieText.includes(term),
-          ).length;
-          const genreMatch = mood.genres.some((genre) =>
-            movie.genres.includes(genre),
-          );
-          const goalMatch = (mood.goalTerms ?? []).some((term) =>
-            matchesRequestedTerm(query, term),
-          );
-          const relevanceScore = contentMatchCount
-            ? 2 + contentMatchCount + Number(genreMatch)
-            : genreMatch
-              ? 0.25
-              : 0;
-          return {
-            mood,
-            relevanceScore,
-            score: relevanceScore + Number(goalMatch) * 8,
-          };
-        })
-        .filter((match) => match.relevanceScore > 0)
-        .sort((first, second) => second.score - first.score),
-      moodScore: 0,
-    }));
-  for (const movie of movies) {
+  const movies = catalog.map(movieFacts);
+  const referencedMovies = findReferencedMovies(query, movies);
+  const referencedMovieIds = new Set(
+    referencedMovies.map((movie) => movie.id),
+  );
+  const ratedMovies = movies.map((movie) => ({
+    ...movie,
+    matchingGenres: movie.genres.filter((genre) => genres.includes(genre)),
+    similarReferences: referencedMovies
+      .map((reference) => ({
+        movie: reference,
+        genres: movie.genres.filter((genre) =>
+          reference.genres.includes(genre),
+        ),
+      }))
+      .filter((reference) => reference.genres.length),
+    matchingMoods: moods
+      .map((mood) => {
+        const movieText = normalizeAssistantText(
+          `${movie.title} ${movie.description} ${movie.genres.join(" ")}`,
+        );
+        const contentMatchCount = mood.contentTerms.filter((term) =>
+          movieText.includes(term),
+        ).length;
+        const genreMatch = mood.genres.some((genre) =>
+          movie.genres.includes(genre),
+        );
+        const goalMatch = (mood.goalTerms ?? []).some((term) =>
+          matchesRequestedTerm(query, term),
+        );
+        const relevanceScore = contentMatchCount
+          ? 2 + contentMatchCount + Number(genreMatch)
+          : genreMatch
+            ? 0.25
+            : 0;
+        return {
+          mood,
+          relevanceScore,
+          score: relevanceScore + Number(goalMatch) * 8,
+        };
+      })
+      .filter((match) => match.relevanceScore > 0)
+      .sort((first, second) => second.score - first.score),
+    moodScore: 0,
+  }));
+  for (const movie of ratedMovies) {
     movie.moodScore = movie.matchingMoods.reduce(
       (total, match) => total + match.score,
       0,
     );
   }
-  const requestedMovies = movies.filter((movie) => {
+  const requestedMovies = ratedMovies.filter((movie) => {
     const year = Number(movie.year);
     const rating = Number(movie.rating);
+    if (referencedMovieIds.has(movie.id)) return false;
     if (genres.length && !movie.matchingGenres.length) return false;
+    if (referencedMovies.length && !movie.similarReferences.length) {
+      return false;
+    }
     if (
       targetMoods.length &&
       !movie.matchingMoods.some((match) => targetMoods.includes(match.mood))
@@ -763,6 +781,17 @@ export function answerFromCatalog(question, catalog) {
       if (genreDifference) return genreDifference;
     }
 
+    const similarityDifference =
+      second.similarReferences.reduce(
+        (count, reference) => count + reference.genres.length,
+        0,
+      ) -
+      first.similarReferences.reduce(
+        (count, reference) => count + reference.genres.length,
+        0,
+      );
+    if (similarityDifference) return similarityDifference;
+
     const moodDifference = second.moodScore - first.moodScore;
     if (moodDifference) return moodDifference;
 
@@ -805,6 +834,12 @@ export function answerFromCatalog(question, catalog) {
   if (movie.matchingMoods.length) {
     const mood = movie.matchingMoods[0].mood;
     details.push(`hợp với tâm trạng của bạn: ${mood.reason}`);
+  }
+  if (movie.similarReferences.length) {
+    const reference = movie.similarReferences[0];
+    details.push(
+      `có điểm chung với ${reference.movie.title} ở thể loại ${reference.genres.join(", ")}`,
+    );
   }
   if (Number.isFinite(Number(movie.year))) {
     details.push(`ra mắt năm ${movie.year}`);

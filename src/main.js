@@ -3,7 +3,10 @@ import { getMovieDB, getMovieGenres } from "./data/data.js";
 import { getTrailer } from "./data/media.js";
 import { loadReviews, syncReviews } from "./data/reviews.js";
 import { loadFavorites } from "./data/favorites.js";
-import { rankMovieRecommendations } from "./data/recommendations.js";
+import {
+  isMoreRecommendationsRequest,
+  rankMovieRecommendations,
+} from "./data/recommendations.js";
 import {
   bindAccountActions,
   getPosterStyle,
@@ -29,6 +32,8 @@ const newMovies = movies.filter((movie) => movie.isNew);
 
 let currentSlide = 0;
 let slideTimer;
+let previousRecommendationQuery = "";
+const displayedRecommendationIds = new Set();
 
 const reviews = loadReviews().filter((review) => !review.hidden);
 
@@ -93,11 +98,11 @@ ${renderHeader({
       <div class="recommendation-copy">
         <p class="eyebrow">MovieVerse Match</p>
         <h2 id="recommendationHeading">Tối nay bạn muốn xem gì?</h2>
-        <p>Gợi ý dựa trên mô tả, phim yêu thích và đánh giá trên thiết bị này.</p>
+        <p>Mô tả thể loại, nội dung hoặc một phim bạn yêu thích để nhận gợi ý kèm lý do.</p>
       </div>
       <form class="recommendation-form" id="recommendationForm">
         <label class="sr-only" for="recommendationQuery">Mô tả phim bạn muốn xem</label>
-        <input id="recommendationQuery" type="search" maxlength="120" placeholder="Ví dụ: hoạt hình ấm áp cho cả nhà">
+        <input id="recommendationQuery" type="search" maxlength="120" placeholder="Ví dụ: hành động, khoa học viễn tưởng, giống Dune">
         <button class="recommendation-submit" type="submit">Gợi ý phim <span aria-hidden="true">→</span></button>
       </form>
       <div class="recommendation-results" id="recommendationResults" aria-live="polite"></div>
@@ -352,16 +357,41 @@ function renderMovies(filter = "all") {
 }
 
 function renderRecommendations(query = "") {
+  const resultsBox = document.querySelector("#recommendationResults");
+  const showMore = isMoreRecommendationsRequest(query);
+  if (showMore && !previousRecommendationQuery.trim()) {
+    resultsBox.innerHTML =
+      '<p class="empty-note">Bạn hãy nhập thể loại hoặc tên một phim muốn xem trước nhé.</p>';
+    return;
+  }
+
+  if (!showMore) {
+    previousRecommendationQuery = query;
+    displayedRecommendationIds.clear();
+    resultsBox.innerHTML = "";
+  }
+
   const results = rankMovieRecommendations({
     movies,
     reviews,
     favoriteIds: loadFavorites(),
-    query,
+    query: showMore ? previousRecommendationQuery : query,
+    excludeMovieIds: [...displayedRecommendationIds],
   });
-  document.querySelector("#recommendationResults").innerHTML = results.length
-    ? results
-        .map(
-          ({ movie, reasons }, index) => `
+  if (!results.length) {
+    resultsBox.insertAdjacentHTML(
+      "beforeend",
+      showMore
+        ? '<p class="empty-note">Đã hiển thị hết phim phù hợp trong kho. Bạn thử thể loại khác nhé.</p>'
+        : '<p class="empty-note">Chưa đủ dữ liệu để đưa ra gợi ý.</p>',
+    );
+    return;
+  }
+
+  const cards = results
+    .map(({ movie, reasons }, index) => {
+      displayedRecommendationIds.add(movie.id);
+      return `
             <article class="recommendation-card" style="animation-delay:${index * 0.08}s">
               <a class="recommendation-poster" href="${detailUrl(movie)}" style="${getPosterStyle(movie)}" aria-label="Xem chi tiết ${escapeHtml(movie.title)}"></a>
               <div class="recommendation-card-copy">
@@ -370,10 +400,10 @@ function renderRecommendations(query = "") {
                 <p>${escapeHtml(movie.year)} · ★ ${escapeHtml(movie.rating)}</p>
               </div>
             </article>
-          `,
-        )
-        .join("")
-    : '<p class="empty-note">Chưa đủ dữ liệu để đưa ra gợi ý.</p>';
+          `;
+    })
+    .join("");
+  resultsBox.insertAdjacentHTML("beforeend", cards);
 }
 
 function detailUrl(movie) {

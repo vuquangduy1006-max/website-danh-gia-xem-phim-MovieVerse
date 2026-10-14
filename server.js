@@ -514,7 +514,7 @@ const server = createServer(async (request, response) => {
       }))
       .filter((movie) => movie.id && movie.title);
 
-    if (hasMovieRecommendationIntent(fallbackQuestion)) {
+    if (hasMovieRecommendationIntent(fallbackQuestion, catalog)) {
       sendJson(response, 200, {
         answer: answerFromCatalog(fallbackQuestion, catalog),
         mode: "catalog",
