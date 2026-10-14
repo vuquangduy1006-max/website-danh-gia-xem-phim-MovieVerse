@@ -38,6 +38,58 @@ function getLocalTrailer(movie) {
   };
 }
 
+export function getVideoSource(value, title, label) {
+  const url = String(value ?? "").trim();
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+
+    const host = parsed.hostname.toLowerCase();
+    const isYouTube =
+      host === "youtu.be" ||
+      host === "youtube.com" ||
+      host.endsWith(".youtube.com") ||
+      host === "youtube-nocookie.com" ||
+      host.endsWith(".youtube-nocookie.com");
+    const videoId = isYouTube
+      ? host === "youtu.be"
+        ? parsed.pathname.split("/").filter(Boolean)[0]
+        : parsed.searchParams.get("v") ||
+          parsed.pathname.match(/\/(?:embed|shorts|live)\/([^/]+)/)?.[1]
+      : null;
+
+    if (videoId && /^[\w-]{11}$/.test(videoId)) {
+      return {
+        kind: "youtube",
+        id: videoId,
+        videoId,
+        title,
+        channel: "YouTube",
+        label,
+        variant: label,
+        quality: "YouTube",
+        note: "YouTube",
+        watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
+      };
+    }
+
+    if (isYouTube) return null;
+    return {
+      kind: "file",
+      url,
+      title,
+      channel: "Thư viện MovieVerse",
+      label,
+      variant: label,
+      quality: "MP4",
+      note: "Thư viện MovieVerse",
+      watchUrl: url,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Mỗi phim sở hữu riêng danh sách nguồn của chính nó.
 // Mọi video ID đều đã kiểm tra phát được và thuộc kênh nhà phát chính thức.
 // clip[0] luôn là trailer chính, dùng làm nguồn mặc định ở trang chi tiết.
@@ -135,92 +187,32 @@ const MOVIE_SOURCES = {
 };
 
 
-const DIRECTORS = [
-  "Lena Kovač",
-  "Marcus Delgado",
-  "Hải Yến",
-  "Thuận Nguyễn",
-  "Elias Bergström",
-  "Priya Raman",
-  "Đức Thành",
-  "Sofia Marchetti",
-  "Minh Khoa",
-  "Aria Fontaine",
-];
-
-const CAST = [
-  "Nguyễn Thị Bích Ngọc",
-  "Trần Anh Tuấn",
-  "Lê Hoàng Phúc",
-  "Phạm Quỳnh Anh",
-  "Đỗ Thanh Hà",
-  "Vũ Đức Thắng",
-  "Ngô Bảo Châu",
-  "Huỳnh Mai Vy",
-  "Bùi Gia Hân",
-  "Đặng Tuấn Kiệt",
-  "Lý Gia Linh",
-  "Tạ Quang Minh",
-  "Chu Yến Nhi",
-  "Hoàng Anh Tuấn",
-  "Mai Khánh Vy",
-  "Đinh Trung Kiên",
-  "Phan Ngọc Ánh",
-  "Trịnh Bảo Châu",
-  "Võ Thành Long",
-  "Lâm Kim Nhã",
-];
-
-const STUDIOS = [
-  "MovieVerse Studios",
-  "Nordlight Pictures",
-  "Sóng Film Works",
-  "Aurora Entertainment",
-  "Hải Đăng Media",
-  "Silver Fox Collective",
-];
-
-const COUNTRIES = ["Hoa Kỳ", "Anh", "Hàn Quốc", "Nhật Bản", "Pháp", "Việt Nam"];
-const LANGUAGES = [
-  "Tiếng Anh",
-  "Tiếng Việt",
-  "Tiếng Hàn",
-  "Tiếng Nhật",
-  "Tiếng Pháp",
-];
-const RUNTIMES = [
-  "1h 47m",
-  "1h 58m",
-  "2h 06m",
-  "2h 14m",
-  "2h 22m",
-  "2h 35m",
-  "2h 46m",
-];
-const AGE_RATINGS = ["Tất cả độ tuổi", "13+", "16+", "18+"];
-
-function hash(value) {
-  let result = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    result = (result * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return result;
-}
-
-function buildReleaseDate(year, seed) {
-  const day = (Math.floor(seed / 8) % 27) + 1;
-  const month = (seed % 12) + 1;
-  return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
-}
-
 export function getTrailer(movie) {
+  const savedTrailer = movie.trailerUrl
+    ? getVideoSource(movie.trailerUrl, `${movie.title} · Trailer`, "Trailer")
+    : null;
+  if (savedTrailer) return savedTrailer;
   return getLocalTrailer(movie) || MOVIE_SOURCES[movie.title]?.[0] || null;
+}
+
+export function getEpisodeSource(movie, episodeNumber) {
+  const url = Array.isArray(movie.episodes)
+    ? movie.episodes[episodeNumber - 1]
+    : "";
+  return getVideoSource(
+    url,
+    `${movie.title} · Tập ${String(episodeNumber).padStart(2, "0")}`,
+    `Tập ${String(episodeNumber).padStart(2, "0")}`,
+  );
 }
 
 // Chỉ trả về nguồn của chính phim này. Không bao giờ trộn nguồn của phim khác vào.
 export function getWatchSources(movie) {
   const clips = MOVIE_SOURCES[movie.title];
-  const localTrailer = getLocalTrailer(movie);
+  const savedTrailer = movie.trailerUrl
+    ? getVideoSource(movie.trailerUrl, `${movie.title} · Trailer`, "Trailer")
+    : null;
+  const localTrailer = savedTrailer ? null : getLocalTrailer(movie);
   const sources = localTrailer
     ? [
         {
@@ -234,6 +226,13 @@ export function getWatchSources(movie) {
         },
       ]
     : [];
+
+  if (savedTrailer) {
+    sources.push({
+      ...savedTrailer,
+      index: 0,
+    });
+  }
 
   if (!clips || !clips.length) return sources;
 
@@ -293,32 +292,43 @@ export function getMovieMedia(movie, movieList = []) {
 }
 
 export function getMovieCredits(movie) {
-  const seed = hash(`${movie.id}:${movie.title}`);
-  const pick = (list, offset) => list[(seed + offset * 7) % list.length];
   const names = (value) =>
     (Array.isArray(value) ? value : String(value ?? "").split(","))
       .map((name) => String(name).trim())
       .filter(Boolean);
   const cast = names(movie.cast);
   const productionCompanies = names(movie.productionCompanies);
+  let website = "";
+  try {
+    const parsedWebsite = new URL(String(movie.officialWebsite ?? "").trim());
+    if (parsedWebsite.protocol === "http:" || parsedWebsite.protocol === "https:") {
+      website = parsedWebsite.href;
+    }
+  } catch {
+    website = "";
+  }
 
   return {
-    director: String(movie.director ?? "").trim() || pick(DIRECTORS, 0),
-    cast: cast.length
-      ? cast
-      : [0, 1, 2].map((offset) => pick(CAST, offset)),
+    director: String(movie.director ?? "").trim() || "Chưa cập nhật",
+    cast,
     writers: names(movie.writers),
     producers: names(movie.producers),
     cinematographers: names(movie.cinematographers),
     composers: names(movie.composers),
     studio: productionCompanies.length
       ? productionCompanies.join(", ")
-      : pick(STUDIOS, 0),
-    country: pick(COUNTRIES, 0),
-    runtime: pick(RUNTIMES, 0),
-    language: pick(LANGUAGES, 0),
-    ageRating: pick(AGE_RATINGS, 0),
-    releaseDate: buildReleaseDate(movie.year, seed),
+      : "Chưa cập nhật",
+    awards: String(movie.awards ?? "").trim() || "Chưa cập nhật",
+    boxOffice: String(movie.boxOffice ?? "").trim() || "Chưa cập nhật",
+    website,
+    country: String(movie.country ?? "").trim() || "Chưa cập nhật",
+    runtime: String(movie.runtime ?? "").trim() || "Chưa cập nhật",
+    language: String(movie.language ?? "").trim() || "Chưa cập nhật",
+    ageRating: String(movie.ageRating ?? "").trim() || "Chưa cập nhật",
+    releaseDate:
+      String(movie.releaseDate ?? "").trim() ||
+      String(movie.year ?? "").trim() ||
+      "Chưa cập nhật",
   };
 }
 

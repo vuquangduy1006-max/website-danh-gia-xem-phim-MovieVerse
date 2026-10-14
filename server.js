@@ -13,6 +13,8 @@ const port = Number(process.env.API_PORT || 3001);
 const apiKey = process.env.AI_API_KEY;
 const omdbApiKey = process.env.OMDB_API_KEY;
 const omdbApiUrl = process.env.OMDB_API_URL || "https://www.omdbapi.com/";
+const tmdbApiKey = process.env.TMDB_API_KEY;
+const tmdbApiUrl = process.env.TMDB_API_URL || "https://api.themoviedb.org/3/";
 const apiUrl =
   process.env.AI_API_URL || "https://api.openai.com/v1/chat/completions";
 const model = process.env.AI_MODEL || "gpt-4o-mini";
@@ -356,12 +358,17 @@ async function handleReviewsApi(request, response, pathname) {
 }
 
 async function handleMovieRatingApi(request, response, url) {
-  if (request.method !== "GET" || url.pathname !== "/api/admin/movie-rating") {
+  const isMovieDetailsLookup =
+    url.pathname === "/api/admin/movie-details";
+  if (
+    request.method !== "GET" ||
+    (!isMovieDetailsLookup && url.pathname !== "/api/admin/movie-rating")
+  ) {
     return false;
   }
   if (!isAdminRequest(request)) {
     sendJson(response, 403, {
-      error: "Cần đăng nhập quản trị để tra cứu rating phim.",
+      error: "Cần đăng nhập quản trị để tra cứu thông tin phim.",
     });
     return true;
   }
@@ -382,7 +389,7 @@ async function handleMovieRatingApi(request, response, url) {
   const ip = request.socket.remoteAddress || "unknown";
   if (isRateLimited(ip, movieRatingRequestsByIp)) {
     sendJson(response, 429, {
-      error: "Bạn tra cứu rating quá nhanh. Vui lòng chờ một phút rồi thử lại.",
+      error: "Bạn tra cứu quá nhanh. Vui lòng chờ một phút rồi thử lại.",
     });
     return true;
   }
@@ -410,24 +417,82 @@ async function handleMovieRatingApi(request, response, url) {
       return true;
     }
     if (!upstream.ok) {
-      console.error(`OMDb returned HTTP ${upstream.status} for a rating lookup.`);
+      console.error(`OMDb returned HTTP ${upstream.status} for a movie lookup.`);
       sendJson(response, 502, {
-        error: "Nguồn rating phim hiện không phản hồi. Vui lòng thử lại sau.",
+        error: "Nguồn thông tin phim hiện không phản hồi. Vui lòng thử lại sau.",
       });
       return true;
     }
 
     if (result.Response !== "True") {
       sendJson(response, 404, {
-        error: "Không tìm thấy phim trên OMDb. Bạn có thể nhập rating thủ công.",
+        error: isMovieDetailsLookup
+          ? "Không tìm thấy thông tin phim trên OMDb."
+          : "Không tìm thấy phim trên OMDb. Bạn có thể nhập rating thủ công.",
       });
       return true;
     }
     const rating = Number(result.imdbRating);
-    if (!Number.isFinite(rating) || rating < 0 || rating > 10) {
+    const hasRating =
+      Number.isFinite(rating) && rating >= 0 && rating <= 10;
+    if (!hasRating && !isMovieDetailsLookup) {
       sendJson(response, 422, {
         error: "IMDb chưa có rating cho phim này. Bạn có thể nhập rating thủ công.",
       });
+      return true;
+    }
+
+    if (isMovieDetailsLookup) {
+      const textOrNull = (value) =>
+        typeof value === "string" && value.trim() && value !== "N/A"
+          ? value.trim()
+          : "";
+      const details = {
+        title: textOrNull(result.Title),
+        year: textOrNull(result.Year),
+        releaseDate: textOrNull(result.Released),
+        rating: hasRating ? rating : null,
+        imdbId: textOrNull(result.imdbID),
+        country: textOrNull(result.Country),
+        runtime: textOrNull(result.Runtime),
+        language: textOrNull(result.Language),
+        ageRating: textOrNull(result.Rated),
+        genre: textOrNull(result.Genre),
+        description: textOrNull(result.Plot),
+        poster: textOrNull(result.Poster),
+        director: textOrNull(result.Director),
+        cast: textOrNull(result.Actors),
+        writers: textOrNull(result.Writer),
+        studio: textOrNull(result.Production),
+        producers: "",
+        cinematographers: "",
+        composers: "",
+        backdrop: "",
+        trailer: "",
+        awards: textOrNull(result.Awards),
+        boxOffice: textOrNull(result.BoxOffice),
+        website: textOrNull(result.Website),
+        source: "OMDb",
+      };
+      if (tmdbApiKey) {
+        try {
+          const tmdbDetails = await fetchTmdbMovieDetails(title);
+          for (const [field, value] of Object.entries(tmdbDetails)) {
+            if (typeof value === "string" ? value.trim() : value != null) {
+              details[field] = value;
+            }
+          }
+          details.source = "OMDb + TMDb";
+        } catch (error) {
+          console.error("Unable to enrich movie details from TMDb:", error);
+          details.notice =
+            "Không lấy thêm được dữ liệu TMDb; các thông tin OMDb vẫn đã được điền.";
+        }
+      } else {
+        details.notice =
+          "Cấu hình TMDB_API_KEY để tự điền thêm ảnh nền, ekip sản xuất và trailer.";
+      }
+      sendJson(response, 200, details);
       return true;
     }
 
@@ -439,12 +504,126 @@ async function handleMovieRatingApi(request, response, url) {
       source: "IMDb qua OMDb",
     });
   } catch (error) {
-    console.error("Unable to look up a movie rating:", error);
+    console.error("Unable to look up movie information:", error);
     sendJson(response, 502, {
-      error: "Không thể kết nối nguồn rating phim. Vui lòng thử lại sau.",
+      error: "Không thể kết nối nguồn thông tin phim. Vui lòng thử lại sau.",
     });
   }
   return true;
+}
+
+async function fetchTmdbMovieDetails(title) {
+  const apiBase = new URL(tmdbApiUrl);
+  if (!apiBase.pathname.endsWith("/")) apiBase.pathname += "/";
+
+  const tmdbFetch = async (endpoint) => {
+    const requestUrl = new URL(endpoint, apiBase);
+    requestUrl.searchParams.set("api_key", tmdbApiKey);
+    requestUrl.searchParams.set("language", "en-US");
+    const upstream = await fetch(requestUrl, {
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!upstream.ok) {
+      throw new Error(`TMDb returned HTTP ${upstream.status}.`);
+    }
+    return upstream.json();
+  };
+  const search = await tmdbFetch(
+    `search/movie?query=${encodeURIComponent(title)}&include_adult=false`,
+  );
+  const match = Array.isArray(search.results)
+    ? search.results.find((movie) => movie.title && movie.id)
+    : null;
+  if (!match) return {};
+
+  const movie = await tmdbFetch(
+    `movie/${match.id}?append_to_response=credits,videos,release_dates`,
+  );
+  const credits = movie.credits || {};
+  const crew = Array.isArray(credits.crew) ? credits.crew : [];
+  const joinCrew = (jobs) =>
+    [...new Set(
+      crew
+        .filter((person) => jobs.includes(person.job) && person.name)
+        .map((person) => person.name),
+    )].join(", ");
+  const date = movie.release_date || match.release_date || "";
+  const videos = Array.isArray(movie.videos?.results)
+    ? movie.videos.results
+    : [];
+  const trailer = videos.find(
+    (video) =>
+      video.site === "YouTube" &&
+      video.type === "Trailer" &&
+      video.official &&
+      video.key,
+  ) || videos.find(
+    (video) =>
+      video.site === "YouTube" &&
+      video.type === "Trailer" &&
+      video.key,
+  );
+  const certifications = Array.isArray(movie.release_dates?.results)
+    ? movie.release_dates.results
+    : [];
+  const certification =
+    certifications.find((item) => item.iso_3166_1 === "US")
+      ?.release_dates?.find((item) => item.certification)
+      ?.certification ||
+    certifications
+      .flatMap((item) => item.release_dates || [])
+      .find((item) => item.certification)?.certification ||
+    "";
+  const imageUrl = (path) =>
+    typeof path === "string" && path.startsWith("/")
+      ? `https://image.tmdb.org/t/p/original${path}`
+      : "";
+  const text = (value) => (typeof value === "string" ? value.trim() : "");
+  const languages = Array.isArray(movie.spoken_languages)
+    ? movie.spoken_languages
+        .map((language) => language.english_name || language.name)
+        .filter(Boolean)
+        .join(", ")
+    : "";
+  const crewDirector = joinCrew(["Director"]);
+  const cast = Array.isArray(credits.cast)
+    ? credits.cast
+        .slice(0, 8)
+        .map((person) => person.name)
+        .filter(Boolean)
+        .join(", ")
+    : "";
+
+  return {
+    title: text(movie.title),
+    year: date.slice(0, 4),
+    releaseDate: date,
+    country: Array.isArray(movie.production_countries)
+      ? movie.production_countries.map((country) => country.name).filter(Boolean).join(", ")
+      : "",
+    runtime: Number.isFinite(movie.runtime) && movie.runtime > 0
+      ? `${movie.runtime} min`
+      : "",
+    language: languages,
+    ageRating: certification,
+    genre: Array.isArray(movie.genres)
+      ? movie.genres.map((genre) => genre.name).filter(Boolean).join(", ")
+      : "",
+    description: text(movie.overview),
+    poster: imageUrl(movie.poster_path),
+    backdrop: imageUrl(movie.backdrop_path),
+    director: crewDirector,
+    cast,
+    writers: joinCrew(["Writer", "Screenplay", "Story"]),
+    producers: joinCrew(["Producer", "Executive Producer"]),
+    studio: Array.isArray(movie.production_companies)
+      ? movie.production_companies.map((company) => company.name).filter(Boolean).join(", ")
+      : "",
+    cinematographers: joinCrew(["Director of Photography"]),
+    composers: joinCrew(["Original Music Composer", "Composer"]),
+    website: text(movie.homepage),
+    trailer: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : "",
+  };
 }
 
 const server = createServer(async (request, response) => {
