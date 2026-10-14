@@ -200,18 +200,22 @@ function renderDetailPage(current) {
             <h3 id="infoHeading">Thông tin phim</h3>
             <dl class="info-list">
               <div><dt>Đạo diễn</dt><dd>${escapeHtml(credits.director)}</dd></div>
-              <div><dt>Diễn viên</dt><dd>${escapeHtml(credits.cast.join(", "))}</dd></div>
+              <div><dt>Diễn viên</dt><dd>${credits.cast.length ? escapeHtml(credits.cast.join(", ")) : "Chưa cập nhật"}</dd></div>
               ${credits.writers.length ? `<div><dt>Biên kịch / tác giả</dt><dd>${escapeHtml(credits.writers.join(", "))}</dd></div>` : ""}
               ${credits.producers.length ? `<div><dt>Nhà sản xuất</dt><dd>${escapeHtml(credits.producers.join(", "))}</dd></div>` : ""}
               ${credits.cinematographers.length ? `<div><dt>Quay phim</dt><dd>${escapeHtml(credits.cinematographers.join(", "))}</dd></div>` : ""}
               ${credits.composers.length ? `<div><dt>Âm nhạc</dt><dd>${escapeHtml(credits.composers.join(", "))}</dd></div>` : ""}
-              <div><dt>Ngày phát hành</dt><dd>${credits.releaseDate}</dd></div>
-              <div><dt>Thời lượng</dt><dd>${credits.runtime}</dd></div>
-              <div><dt>Quốc gia</dt><dd>${credits.country}</dd></div>
-              <div><dt>Ngôn ngữ</dt><dd>${credits.language}</dd></div>
-              <div><dt>Đối tượng</dt><dd>${credits.ageRating}</dd></div>
+              <div><dt>Ngày phát hành</dt><dd>${escapeHtml(credits.releaseDate)}</dd></div>
+              <div><dt>Thời lượng</dt><dd>${escapeHtml(credits.runtime)}</dd></div>
+              <div><dt>Quốc gia</dt><dd>${escapeHtml(credits.country)}</dd></div>
+              <div><dt>Ngôn ngữ</dt><dd>${escapeHtml(credits.language)}</dd></div>
+              <div><dt>Đối tượng</dt><dd>${escapeHtml(credits.ageRating)}</dd></div>
               <div><dt>Hãng phim</dt><dd>${escapeHtml(credits.studio)}</dd></div>
+              <div><dt>Giải thưởng</dt><dd>${escapeHtml(credits.awards)}</dd></div>
+              <div><dt>Doanh thu</dt><dd>${escapeHtml(credits.boxOffice)}</dd></div>
+              <div><dt>Website chính thức</dt><dd>${credits.website ? `<a href="${escapeHtml(credits.website)}" target="_blank" rel="noopener noreferrer">Truy cập website</a>` : "Chưa cập nhật"}</dd></div>
             </dl>
+            <p class="metadata-attribution">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
           </section>
 
           <section class="aside-card" id="sharePanel" aria-labelledby="shareHeading">
@@ -266,8 +270,8 @@ function renderDetailPage(current) {
     document.querySelector("#detailMetrics").innerHTML = [
       `<span class="detail-score">★ ${average.toFixed(1)}</span>`,
       `<span>IMDb ${current.rating}</span>`,
-      `<span>${credits.runtime}</span>`,
-      `<span>${credits.ageRating}</span>`,
+      `<span>${escapeHtml(credits.runtime)}</span>`,
+      `<span>${escapeHtml(credits.ageRating)}</span>`,
       `<span>${current.genre}</span>`,
     ].join("");
   }

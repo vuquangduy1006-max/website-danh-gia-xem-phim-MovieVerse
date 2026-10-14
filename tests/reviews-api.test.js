@@ -39,6 +39,7 @@ test("review API shares replies, persists moderation and protects admin actions"
   const directory = await mkdtemp(path.join(os.tmpdir(), "movieverse-reviews-"));
   const port = await getAvailablePort();
   const omdbPort = await getAvailablePort();
+  const tmdbPort = await getAvailablePort();
   const omdbServer = createHttpServer((request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
     if (url.searchParams.get("t") === "Invalid Key Test") {
@@ -54,8 +55,23 @@ test("review API shares replies, persists moderation and protects admin actions"
           Response: "True",
           Title: "Lookup Film",
           Year: "2024",
+          Released: "15 Mar 2024",
+          Runtime: "120 min",
           imdbID: "tt1234567",
           imdbRating: "7.8",
+          Country: "United States, Canada",
+          Language: "English, French",
+          Rated: "PG-13",
+          Genre: "Action, Drama",
+          Plot: "A film synopsis.",
+          Poster: "https://images.example.com/poster.jpg",
+          Director: "Film Director",
+          Actors: "Actor One, Actor Two",
+          Writer: "Screenwriter",
+          Production: "Film Studio",
+          Awards: "Won 2 Oscars",
+          BoxOffice: "$711,844,358",
+          Website: "https://example.com/film",
         }),
       );
     } else {
@@ -64,6 +80,61 @@ test("review API shares replies, persists moderation and protects admin actions"
     }
   });
   await new Promise((resolve) => omdbServer.listen(omdbPort, "127.0.0.1", resolve));
+  const tmdbServer = createHttpServer((request, response) => {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    response.writeHead(200, { "Content-Type": "application/json" });
+    if (url.searchParams.get("api_key") !== "test-tmdb-key") {
+      response.end(JSON.stringify({ error: "Invalid API key" }));
+    } else if (url.pathname.endsWith("/search/movie")) {
+      response.end(
+        JSON.stringify({
+          results: [{ id: 42, title: "Lookup Film", release_date: "2024-03-15" }],
+        }),
+      );
+    } else if (url.pathname.endsWith("/movie/42")) {
+      response.end(
+        JSON.stringify({
+          title: "Lookup Film",
+          release_date: "2024-03-15",
+          runtime: 124,
+          production_countries: [{ name: "United States" }],
+          spoken_languages: [{ english_name: "English" }],
+          production_companies: [{ name: "TMDb Studio" }],
+          homepage: "https://tmdb.example.com/film",
+          genres: [{ name: "Action" }, { name: "Science Fiction" }],
+          overview: "TMDb film synopsis.",
+          poster_path: "/lookup-poster.jpg",
+          backdrop_path: "/lookup-backdrop.jpg",
+          credits: {
+            cast: [{ name: "TMDb Actor" }],
+            crew: [
+              { name: "TMDb Director", job: "Director" },
+              { name: "TMDb Writer", job: "Screenplay" },
+              { name: "TMDb Producer", job: "Producer" },
+              { name: "TMDb Cinematographer", job: "Director of Photography" },
+              { name: "TMDb Composer", job: "Original Music Composer" },
+            ],
+          },
+          videos: {
+            results: [
+              { site: "YouTube", type: "Trailer", official: true, key: "abcdefghijk" },
+            ],
+          },
+          release_dates: {
+            results: [
+              {
+                iso_3166_1: "US",
+                release_dates: [{ certification: "PG-13" }],
+              },
+            ],
+          },
+        }),
+      );
+    } else {
+      response.end(JSON.stringify({ results: [] }));
+    }
+  });
+  await new Promise((resolve) => tmdbServer.listen(tmdbPort, "127.0.0.1", resolve));
   const baseUrl = `http://127.0.0.1:${port}/api`;
   const child = spawn(process.execPath, ["server.js"], {
     cwd: process.cwd(),
@@ -74,6 +145,8 @@ test("review API shares replies, persists moderation and protects admin actions"
       ADMIN_PASSWORD: "test-password",
       OMDB_API_KEY: "test-omdb-key",
       OMDB_API_URL: `http://127.0.0.1:${omdbPort}/`,
+      TMDB_API_KEY: "test-tmdb-key",
+      TMDB_API_URL: `http://127.0.0.1:${tmdbPort}/3/`,
       REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
     },
     stdio: ["ignore", "ignore", "pipe"],
@@ -93,6 +166,9 @@ test("review API shares replies, persists moderation and protects admin actions"
     }
     await new Promise((resolve, reject) =>
       omdbServer.close((error) => (error ? reject(error) : resolve())),
+    );
+    await new Promise((resolve, reject) =>
+      tmdbServer.close((error) => (error ? reject(error) : resolve())),
     );
     await rm(directory, { recursive: true, force: true });
   });
@@ -196,6 +272,38 @@ test("review API shares replies, persists moderation and protects admin actions"
     year: "2024",
     imdbId: "tt1234567",
     source: "IMDb qua OMDb",
+  });
+  const movieDetails = await fetch(
+    `${baseUrl}/admin/movie-details?title=Lookup%20Film`,
+    { headers: adminHeaders },
+  );
+  assert.equal(movieDetails.status, 200);
+  assert.deepEqual(await movieDetails.json(), {
+    title: "Lookup Film",
+    year: "2024",
+    releaseDate: "2024-03-15",
+    rating: 7.8,
+    imdbId: "tt1234567",
+    country: "United States",
+    runtime: "124 min",
+    language: "English",
+    ageRating: "PG-13",
+    genre: "Action, Science Fiction",
+    description: "TMDb film synopsis.",
+    poster: "https://image.tmdb.org/t/p/original/lookup-poster.jpg",
+    director: "TMDb Director",
+    cast: "TMDb Actor",
+    writers: "TMDb Writer",
+    studio: "TMDb Studio",
+    producers: "TMDb Producer",
+    cinematographers: "TMDb Cinematographer",
+    composers: "TMDb Composer",
+    backdrop: "https://image.tmdb.org/t/p/original/lookup-backdrop.jpg",
+    trailer: "https://www.youtube.com/watch?v=abcdefghijk",
+    awards: "Won 2 Oscars",
+    boxOffice: "$711,844,358",
+    website: "https://tmdb.example.com/film",
+    source: "OMDb + TMDb",
   });
   const missingRating = await fetch(
     `${baseUrl}/admin/movie-rating?title=Unknown%20Film`,

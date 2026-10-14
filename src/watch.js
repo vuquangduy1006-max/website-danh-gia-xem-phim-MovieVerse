@@ -3,6 +3,7 @@ import "./movie-detail.css";
 import "./watch.css";
 import { getMovieDB } from "./data/data.js";
 import {
+  getEpisodeSource,
   getWatchSources,
   getMovieCredits,
   getSimilarMovies,
@@ -70,16 +71,19 @@ function renderWatchPage(current) {
   const sources = getWatchSources(current);
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
+  const episodeUrls = Array.isArray(current.episodes) ? current.episodes : [];
   const rawEpisodeCount = Number(current.episodeCount ?? 0);
   const isKamenRiderBuild =
     current.id === "n19" ||
     current.title.trim().toLocaleLowerCase("vi") === "kamen rider build";
   const episodeCount =
-    Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
-      ? rawEpisodeCount
-      : isKamenRiderBuild
-        ? 49
-        : 1;
+    episodeUrls.length > 0
+      ? episodeUrls.length
+      : Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
+        ? rawEpisodeCount
+        : isKamenRiderBuild
+          ? 49
+          : 1;
   const requestedEpisode = Number(params.get("episode"));
   let activeEpisode = Number.isInteger(requestedEpisode)
     ? Math.min(Math.max(requestedEpisode, 1), episodeCount)
@@ -213,9 +217,9 @@ function renderWatchPage(current) {
                   <div class="detail-metrics">
                     <span class="detail-score">★ ${average.toFixed(1)}</span>
                     <span>IMDb ${current.rating}</span>
-                    <span>${credits.runtime}</span>
-                    <span>${credits.ageRating}</span>
-                    <span>${credits.language}</span>
+                    <span>${escapeHtml(credits.runtime)}</span>
+                    <span>${escapeHtml(credits.ageRating)}</span>
+                    <span>${escapeHtml(credits.language)}</span>
                   </div>
                   <p class="detail-summary">${current.description}</p>
                   <div class="detail-toolbar" role="toolbar" aria-label="Công cụ phim ${current.title}">
@@ -239,16 +243,20 @@ function renderWatchPage(current) {
 
               <dl class="info-list watch-credits">
                 <div><dt>Đạo diễn</dt><dd>${escapeHtml(credits.director)}</dd></div>
-                <div><dt>Diễn viên</dt><dd>${escapeHtml(credits.cast.join(", "))}</dd></div>
+                <div><dt>Diễn viên</dt><dd>${credits.cast.length ? escapeHtml(credits.cast.join(", ")) : "Chưa cập nhật"}</dd></div>
                 ${credits.writers.length ? `<div><dt>Biên kịch / tác giả</dt><dd>${escapeHtml(credits.writers.join(", "))}</dd></div>` : ""}
                 ${credits.producers.length ? `<div><dt>Nhà sản xuất</dt><dd>${escapeHtml(credits.producers.join(", "))}</dd></div>` : ""}
                 ${credits.cinematographers.length ? `<div><dt>Quay phim</dt><dd>${escapeHtml(credits.cinematographers.join(", "))}</dd></div>` : ""}
                 ${credits.composers.length ? `<div><dt>Âm nhạc</dt><dd>${escapeHtml(credits.composers.join(", "))}</dd></div>` : ""}
-                <div><dt>Ngày phát hành</dt><dd>${credits.releaseDate}</dd></div>
-                <div><dt>Quốc gia</dt><dd>${credits.country}</dd></div>
+                <div><dt>Ngày phát hành</dt><dd>${escapeHtml(credits.releaseDate)}</dd></div>
+                <div><dt>Quốc gia</dt><dd>${escapeHtml(credits.country)}</dd></div>
                 <div><dt>Hãng phim</dt><dd>${escapeHtml(credits.studio)}</dd></div>
+                <div><dt>Giải thưởng</dt><dd>${escapeHtml(credits.awards)}</dd></div>
+                <div><dt>Doanh thu</dt><dd>${escapeHtml(credits.boxOffice)}</dd></div>
+                <div><dt>Website chính thức</dt><dd>${credits.website ? `<a href="${escapeHtml(credits.website)}" target="_blank" rel="noopener noreferrer">Truy cập website</a>` : "Chưa cập nhật"}</dd></div>
                 <div><dt>Nguồn phát</dt><dd>${sources.length ? `${sources.length} nguồn phát` : "Chưa cập nhật"}</dd></div>
               </dl>
+              <p class="metadata-attribution">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
             </section>
           </div>
 
@@ -258,7 +266,7 @@ function renderWatchPage(current) {
                 <div><p class="eyebrow">${episodeCount > 1 ? "Series" : "Phim lẻ"}</p><h3 id="episodesHeading">Tập phim</h3></div>
                 <span class="watch-aside-count" id="episodeCount" aria-label="${episodeCount} tập">${String(episodeCount).padStart(2, "0")}</span>
               </div>
-              <p class="aside-desc episode-note">${episodeCount > 1 ? "Chọn tập muốn xem." : "Phim này có một nội dung độc lập."} Video từng tập chưa có trong kho; player hiện phát trailer hoặc clip có sẵn.</p>
+              <p class="aside-desc episode-note">${episodeCount > 1 ? "Chọn tập muốn xem." : "Phim này có một nội dung độc lập."}${episodeUrls.length ? " Video từng tập được phát từ liên kết đã cập nhật." : " Video từng tập chưa có trong kho; player hiện phát trailer hoặc clip có sẵn."}</p>
               <div class="episode-list" id="episodeList" role="group" aria-label="Danh sách tập phim"></div>
             </section>
 
@@ -327,6 +335,7 @@ function renderWatchPage(current) {
   let video = null;
   let ytPlayer = null;
   let activeSource = 0;
+  let isEpisodeSourcePlaying = false;
   let resumeAt = 0;
   let autoplayMuted = false;
   const errorTried = new Set();
@@ -470,7 +479,7 @@ function renderWatchPage(current) {
   bindKeyboard();
 
   // load last, so every listener is already attached
-  loadSource(activeSource);
+  loadSource(activeSource, getEpisodeSource(current, activeEpisode));
 
   function renderServers() {
     const list = document.querySelector("#serverList");
@@ -518,12 +527,16 @@ function renderWatchPage(current) {
     const nextUrl = new URL(window.location.href);
     nextUrl.searchParams.set("episode", String(activeEpisode));
     window.history.replaceState({}, "", nextUrl);
+    const episodeSource = getEpisodeSource(current, activeEpisode);
+    if (episodeSource) loadSource(activeSource, episodeSource);
 
     if (episodeCount > 1) {
       showToast(
         options.autoNext
           ? `Đã tự chuyển sang tập ${activeEpisode}.`
-          : `Đã chọn ${episodeCount === 1 ? "phim lẻ" : `tập ${activeEpisode}`}. Video tập chưa được cập nhật.`,
+          : episodeSource
+            ? `Đang phát tập ${activeEpisode}.`
+            : `Đã chọn tập ${activeEpisode}. Video tập chưa được cập nhật.`,
       );
     }
   }
@@ -613,9 +626,10 @@ function renderWatchPage(current) {
       .join("");
   }
 
-  function loadSource(index) {
-    const source = sources[index];
+  function loadSource(index, sourceOverride = null) {
+    const source = sourceOverride || sources[index];
     activeSource = index;
+    isEpisodeSourcePlaying = Boolean(sourceOverride);
     errorBox.hidden = true;
     emptyBox.hidden = true;
 
@@ -769,8 +783,10 @@ function renderWatchPage(current) {
           if (!shouldContinue) return;
           const nextEpisode = activeEpisode + 1;
           goToEpisode(nextEpisode, { autoNext: true });
-          backend.seekTo(0);
-          backend.play();
+          if (!getEpisodeSource(current, nextEpisode)) {
+            backend.seekTo(0);
+            backend.play();
+          }
         });
       }
     }
@@ -779,7 +795,7 @@ function renderWatchPage(current) {
   function onYouTubeError(player) {
     if (player.destroyed) return;
     spinner.hidden = true;
-    if (!sources.length || errorTried.has(activeSource)) {
+    if (isEpisodeSourcePlaying || !sources.length || errorTried.has(activeSource)) {
       errorBox.hidden = false;
       return;
     }
@@ -904,8 +920,10 @@ function renderWatchPage(current) {
           if (!shouldContinue) return;
           const nextEpisode = activeEpisode + 1;
           goToEpisode(nextEpisode, { autoNext: true });
-          backend.seekTo(0);
-          backend.play();
+          if (!getEpisodeSource(current, nextEpisode)) {
+            backend.seekTo(0);
+            backend.play();
+          }
         });
       }
     });
