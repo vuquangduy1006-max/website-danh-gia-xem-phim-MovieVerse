@@ -36,6 +36,7 @@ const PASSWORD_HASH_BYTES = 64;
 const scrypt = promisify(scryptCallback);
 const requestsByIp = new Map();
 const authRequestsByIp = new Map();
+const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
 const userTokens = new Map();
@@ -47,10 +48,16 @@ const usersFilePath = resolve(
   process.env.AUTH_USERS_STORE_PATH ||
     fileURLToPath(new URL("./.data/users.json", import.meta.url)),
 );
+const newsletterFilePath = resolve(
+  process.env.NEWSLETTER_STORE_PATH ||
+    fileURLToPath(new URL("./.data/newsletter.json", import.meta.url)),
+);
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
 let userWriteQueue = Promise.resolve();
 let userStoreInitialization;
+let newsletterWriteQueue = Promise.resolve();
+let newsletterStoreInitialization;
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -160,6 +167,48 @@ function updateUsers(update) {
   return operation;
 }
 
+async function initializeNewsletterStore() {
+  try {
+    const saved = JSON.parse(await readFile(newsletterFilePath, "utf8"));
+    if (!Array.isArray(saved)) throw new Error("Newsletter storage is invalid");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    await persistNewsletterSubscribers([]);
+  }
+}
+
+async function readNewsletterSubscribers() {
+  if (!newsletterStoreInitialization) {
+    newsletterStoreInitialization = initializeNewsletterStore();
+  }
+  await newsletterStoreInitialization;
+  const saved = JSON.parse(await readFile(newsletterFilePath, "utf8"));
+  if (!Array.isArray(saved)) throw new Error("Newsletter storage is invalid");
+  return saved;
+}
+
+async function persistNewsletterSubscribers(subscribers) {
+  await mkdir(dirname(newsletterFilePath), { recursive: true });
+  const temporaryPath = `${newsletterFilePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify(subscribers, null, 2), "utf8");
+  await rename(temporaryPath, newsletterFilePath);
+}
+
+function updateNewsletterSubscribers(update) {
+  const operation = newsletterWriteQueue.then(async () => {
+    const subscribers = await readNewsletterSubscribers();
+    const result = update(subscribers);
+    if (!result.ok) return result;
+    await persistNewsletterSubscribers(subscribers);
+    return { ...result, subscribers };
+  });
+  newsletterWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 function updateReviews(update) {
   const operation = reviewWriteQueue.then(async () => {
     const reviews = await readReviews();
@@ -213,6 +262,63 @@ function isValidEmail(value) {
     validText(value, 254) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
   );
+}
+
+async function handleNewsletterApi(request, response, pathname) {
+  if (request.method !== "POST" || pathname !== "/api/newsletter/subscribe") {
+    return false;
+  }
+
+  const ip = request.socket.remoteAddress || "unknown";
+  if (isRateLimited(ip, newsletterRequestsByIp)) {
+    sendJson(response, 429, {
+      error: "Bạn đăng ký quá nhanh. Vui lòng thử lại sau một phút.",
+    });
+    return true;
+  }
+
+  try {
+    const body = await readJson(request);
+    if (
+      !isRecord(body) ||
+      !isValidEmail(body.email) ||
+      body.consent !== true
+    ) {
+      sendJson(response, 400, {
+        error: "Hãy nhập email hợp lệ và đồng ý lưu email để đăng ký.",
+      });
+      return true;
+    }
+
+    const email = body.email.trim().toLowerCase();
+    await updateNewsletterSubscribers((subscribers) => {
+      const exists = subscribers.some(
+        (subscriber) =>
+          typeof subscriber.email === "string" &&
+          subscriber.email.toLowerCase() === email,
+      );
+      if (exists) return { ok: true, duplicate: true };
+      subscribers.push({ email, subscribedAt: new Date().toISOString() });
+      return { ok: true, duplicate: false };
+    });
+
+    sendJson(response, 202, {
+      ok: true,
+      message:
+        "Đã ghi nhận đăng ký của bạn. Hiện MovieVerse chưa gửi email bản tin tự động.",
+    });
+  } catch (error) {
+    const badInput =
+      error instanceof SyntaxError ||
+      error.message === "Request body is too large";
+    if (!badInput) console.error("Unable to save newsletter signup:", error);
+    sendJson(response, badInput ? 400 : 500, {
+      error: badInput
+        ? "Dữ liệu đăng ký không hợp lệ hoặc quá lớn."
+        : "Không thể lưu đăng ký lúc này. Vui lòng thử lại sau.",
+    });
+  }
+  return true;
 }
 
 function getBearerToken(request) {
@@ -858,6 +964,10 @@ const server = createServer(async (request, response) => {
   if (request.method === "GET" && pathname === "/api/health") {
     sendJson(response, 200, { ok: true, configured: Boolean(apiKey) });
     return;
+  }
+
+  if (pathname.startsWith("/api/newsletter/")) {
+    if (await handleNewsletterApi(request, response, pathname)) return;
   }
 
   if (pathname.startsWith("/api/auth/")) {

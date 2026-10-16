@@ -1015,15 +1015,27 @@ button {
   margin: 8px 0 0;
 }
 .subscribe-form {
-  display: flex;
-  gap: 9px;
+  display: grid;
+  width: min(460px, 48%);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+.subscribe-form > input[type="email"] {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+.subscribe-form > button {
+  grid-column: 2;
+  grid-row: 1;
 }
 .subscribe-form input {
   background: var(--bg);
   border: 1px solid var(--line);
   color: var(--text);
   padding: 12px 15px;
-  width: 225px;
+  width: 100%;
   border-radius: 4px;
   outline: none;
 }
@@ -1031,11 +1043,50 @@ button {
   border-color: var(--accent);
 }
 .subscribe-form button {
+  min-height: 44px;
   background: var(--text);
   color: var(--bg);
   padding: 0 17px;
   border-radius: 4px;
   font-weight: 700;
+}
+.subscribe-form button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.subscribe-form .subscribe-consent {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.subscribe-consent input[type="checkbox"] {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin: 3px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+.subscribe-consent a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.subscribe-form .subscribe-status {
+  grid-column: 1 / -1;
+  min-height: 18px;
+  margin: 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+.subscribe-status.is-error {
+  color: #ff8a7d;
 }
 .site-footer {
   border-top: 1px solid var(--line);
@@ -1084,6 +1135,21 @@ button {
   color: #e95539;
   margin-left: 5px;
 }
+
+@media (max-width: 1000px) {
+  .newsletter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .subscribe-form {
+    width: 100%;
+  }
+  .subscribe-form button {
+    min-width: 112px;
+  }
+}
+
 .modal {
   position: fixed;
   inset: 0;
@@ -1350,6 +1416,7 @@ button {
   }
   .subscribe-form {
     margin-top: 24px;
+    width: 100%;
   }
   .subscribe-form input {
     width: 100%;

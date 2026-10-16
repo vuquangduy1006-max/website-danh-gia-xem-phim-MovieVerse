@@ -24,6 +24,10 @@ lưu khác. Tài khoản người dùng cũ trên trình duyệt được chuy�
 khi đăng nhập thành công lần đầu. Phiên đăng nhập hết hạn sau 12 giờ, hoặc 30
 ngày nếu chọn “Ghi nhớ đăng nhập”. Khôi phục mật khẩu qua email chưa được hỗ trợ.
 
+Email đăng ký nhận tin được lưu tại `.data/newsletter.json`; có thể đặt
+`NEWSLETTER_STORE_PATH` để chọn vị trí khác. Hiện email chỉ được lưu khi người
+dùng chủ động đồng ý, chưa có dịch vụ gửi bản tin hoặc chức năng hủy đăng ký.
+
 Trang `/info.html` cung cấp phần giới thiệu, trợ giúp, điều khoản và mô tả dữ
 liệu được lưu để người dùng biết rõ giới hạn hiện tại của website.
 
@@ -40,4 +44,4 @@ có thể nhập dữ liệu thủ công. Khi dùng dữ liệu TMDb, trang phim
 báo ghi nhận TMDb theo yêu cầu sử dụng API.
 
 Các kho JSON phù hợp với một API instance có ổ đĩa bền vững; nếu chạy nhiều
-instance, hãy chuyển kho bình luận và tài khoản sang cơ sở dữ liệu dùng chung.
+instance, hãy chuyển kho bình luận, tài khoản và email đăng ký sang cơ sở dữ liệu dùng chung.

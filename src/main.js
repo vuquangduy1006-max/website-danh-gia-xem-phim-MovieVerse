@@ -168,12 +168,17 @@ ${renderHeader({
     <div>
       <p class="eyebrow">MovieVerse weekly</p>
       <h2>Đừng bỏ lỡ những thước phim hay.</h2>
-      <p>Nhận thông báo về phim mới và đề xuất được chọn riêng cho bạn.</p>
+      <p>Đăng ký quan tâm nhận tin về phim mới. Hiện chưa gửi email tự động.</p>
     </div>
     <form class="subscribe-form" id="subscribeForm">
       <label class="sr-only" for="email">Email của bạn</label>
-      <input id="email" type="email" placeholder="Email của bạn" required>
-      <button type="submit">Đăng ký <span>→</span></button>
+      <input id="email" name="email" type="email" maxlength="254" autocomplete="email" placeholder="Email của bạn" required>
+      <label class="subscribe-consent">
+        <input type="checkbox" name="consent" required>
+        <span>Tôi đồng ý lưu email để đăng ký nhận tin. <a href="/info.html#privacy">Quyền riêng tư</a></span>
+      </label>
+      <button type="submit">Đăng ký <span aria-hidden="true">→</span></button>
+      <p class="subscribe-status" id="subscribeStatus" role="status" aria-live="polite"></p>
     </form>
   </section>
 </main>
@@ -255,10 +260,41 @@ document
     document.querySelector(".main-nav").classList.toggle("mobile-open"),
   );
 
-document.querySelector("#subscribeForm").addEventListener("submit", (event) => {
+document.querySelector("#subscribeForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  event.target.innerHTML =
-    '<p style="color:var(--accent);margin:0">Cảm ơn bạn đã đăng ký!</p>';
+  const form = event.currentTarget;
+  const status = document.querySelector("#subscribeStatus");
+  const button = form.querySelector('[type="submit"]');
+  const email = new FormData(form).get("email");
+  status.textContent = "Đang ghi nhận đăng ký...";
+  status.classList.remove("is-error");
+  button.disabled = true;
+
+  try {
+    const response = await fetch("/api/newsletter/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        consent: form.elements.consent.checked,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Không thể ghi nhận đăng ký.");
+    }
+    status.textContent = result.message;
+    form.elements.email.value = "";
+    form.elements.consent.checked = false;
+  } catch (error) {
+    status.textContent =
+      error instanceof TypeError
+        ? "Không kết nối được máy chủ. Vui lòng thử lại sau."
+        : error.message;
+    status.classList.add("is-error");
+  } finally {
+    button.disabled = false;
+  }
 });
 
 document.addEventListener("keydown", (event) => {
