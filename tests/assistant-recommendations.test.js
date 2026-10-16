@@ -10,6 +10,10 @@ import {
   getMovieGenres,
   movieSeed,
 } from "../src/data/data.js";
+import {
+  isMoreRecommendationsRequest,
+  rankMovieRecommendations,
+} from "../src/data/recommendations.js";
 
 const catalog = [
   {
@@ -67,6 +71,55 @@ test("recommends Dune for action and a roughly two-hour request with verified ru
   assert.equal(
     answerFromCatalog(question, catalog),
     "Bạn có thể xem Dune: Part Two. Phim dài 2 giờ 46 phút, thuộc thể loại khoa học viễn tưởng, hành động, ra mắt năm 2024, điểm IMDb 8.8/10.",
+  );
+});
+
+test("recommends movies similar to Dune and explains the shared genre", () => {
+  const question =
+    "Tôi thích phim hành động, khoa học viễn tưởng, có nội dung giống Dune.";
+  const realCatalog = movieSeed.map((movie) => ({
+    ...movie,
+    genre: getMovieGenres(movie).join(", "),
+  }));
+  const answer = answerFromCatalog(question, realCatalog);
+  const recommendations = rankMovieRecommendations({
+    movies: movieSeed,
+    query: question,
+  });
+
+  assert.equal(hasMovieRecommendationIntent(question, realCatalog), true);
+  assert.match(answer, /Bạn có thể xem Attack on Titan: Season 1/);
+  assert.match(
+    answer,
+    /có điểm chung với Dune: Part Two ở thể loại hành động, khoa học viễn tưởng/i,
+  );
+  assert.doesNotMatch(answer, /Bạn có thể xem Dune: Part Two/);
+  assert.equal(recommendations.length, 6);
+  assert.ok(recommendations.every(({ movie }) => movie.id !== "m1"));
+  assert.match(recommendations[0].reasons.join(" "), /Có điểm chung với Dune: Part Two/);
+});
+
+test("returns more different movies with the same genres when requested", () => {
+  const query =
+    "Tôi thích phim hành động, khoa học viễn tưởng, có nội dung giống Dune.";
+  const firstBatch = rankMovieRecommendations({ movies: movieSeed, query });
+  const nextBatch = rankMovieRecommendations({
+    movies: movieSeed,
+    query,
+    excludeMovieIds: firstBatch.map(({ movie }) => movie.id),
+  });
+
+  assert.equal(
+    isMoreRecommendationsRequest("Gợi ý thêm 1 số bộ phim khác"),
+    true,
+  );
+  assert.ok(nextBatch.length > 0);
+  assert.ok(
+    nextBatch.every(
+      ({ movie }) =>
+        !firstBatch.some((first) => first.movie.id === movie.id) &&
+        getMovieGenres(movie).includes("Khoa học viễn tưởng"),
+    ),
   );
 });
 
