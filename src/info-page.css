@@ -1,0 +1,146 @@
+.info-page {
+  min-height: 70vh;
+  padding-top: 76px;
+}
+
+.info-intro {
+  padding: 76px 0 42px;
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(ellipse at 15% 0, rgba(240, 91, 60, 0.12), transparent 42%),
+    #101214;
+}
+
+.info-intro h1 {
+  margin: 0;
+  font: 600 clamp(34px, 5vw, 54px) / 1.1 var(--display);
+  letter-spacing: -1.5px;
+}
+
+.info-intro > .container > p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 16px 0 28px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.info-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.info-nav a {
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.info-nav a:hover,
+.info-nav a:focus-visible {
+  border-color: var(--accent);
+  background: rgba(240, 91, 60, 0.08);
+  color: var(--text);
+}
+
+.info-content {
+  max-width: 900px;
+  padding-top: 20px;
+  padding-bottom: 76px;
+}
+
+.info-section {
+  padding: 44px 0;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 100px;
+}
+
+.info-section h2 {
+  margin: 0 0 18px;
+  font: 600 clamp(25px, 3vw, 32px) / 1.2 var(--display);
+}
+
+.info-section h3 {
+  margin: 0 0 8px;
+  font: 600 17px / 1.35 var(--display);
+}
+
+.info-section p,
+.info-section li {
+  color: #b5b7bb;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.info-section > p:not(.eyebrow) {
+  max-width: 790px;
+}
+
+.info-section ul {
+  display: grid;
+  gap: 12px;
+  padding-left: 22px;
+}
+
+.info-section li::marker {
+  color: var(--accent);
+}
+
+.info-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.info-help-grid article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.info-help-grid p {
+  margin: 0;
+}
+
+.info-help-grid code {
+  color: #ffd2c8;
+}
+
+.info-note {
+  margin-top: 22px;
+  padding: 12px 16px;
+  border-left: 2px solid var(--accent);
+  background: rgba(240, 91, 60, 0.06);
+}
+
+.info-updated {
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .info-intro {
+    padding: 54px 0 30px;
+  }
+
+  .info-content {
+    padding-bottom: 52px;
+  }
+
+  .info-section {
+    padding: 32px 0;
+  }
+
+  .info-help-grid {
+    grid-template-columns: 1fr;
+  }
+}
