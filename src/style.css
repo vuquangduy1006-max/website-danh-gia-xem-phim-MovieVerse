@@ -1066,18 +1066,11 @@ button {
 .footer-main a:hover {
   color: var(--accent);
 }
-.socials {
-  display: flex;
-  gap: 9px;
-}
-.socials a {
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  width: 31px;
-  height: 31px;
-  border-radius: 50%;
-  font-size: 12px;
+.social-coming-soon {
+  max-width: 190px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 .footer-bottom {
   border-top: 1px solid var(--line);

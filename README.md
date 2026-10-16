@@ -24,6 +24,9 @@ lưu khác. Tài khoản người dùng cũ trên trình duyệt được chuy�
 khi đăng nhập thành công lần đầu. Phiên đăng nhập hết hạn sau 12 giờ, hoặc 30
 ngày nếu chọn “Ghi nhớ đăng nhập”. Khôi phục mật khẩu qua email chưa được hỗ trợ.
 
+Trang `/info.html` cung cấp phần giới thiệu, trợ giúp, điều khoản và mô tả dữ
+liệu được lưu để người dùng biết rõ giới hạn hiện tại của website.
+
 Khi nhập tên phim trong form quản trị, máy chủ tra cứu OMDb để tự điền các thông
 tin phim có sẵn (năm, ngày phát hành, rating IMDb, quốc gia, thời lượng, ngôn ngữ,
 phân loại độ tuổi, thể loại, poster, mô tả, đạo diễn, diễn viên, biên kịch,
