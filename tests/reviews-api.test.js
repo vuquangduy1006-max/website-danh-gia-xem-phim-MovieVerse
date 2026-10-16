@@ -148,6 +148,7 @@ test("review API shares replies, persists moderation and protects admin actions"
       TMDB_API_KEY: "test-tmdb-key",
       TMDB_API_URL: `http://127.0.0.1:${tmdbPort}/3/`,
       REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
+      AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
     },
     stdio: ["ignore", "ignore", "pipe"],
   });
@@ -185,6 +186,98 @@ test("review API shares replies, persists moderation and protects admin actions"
     body: JSON.stringify(null),
   });
   assert.equal(invalid.status, 400);
+
+  const registrationResponse = await fetch(`${baseUrl}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Viewer Account",
+      email: "Viewer@Example.com",
+      password: "test-user-password",
+    }),
+  });
+  assert.equal(registrationResponse.status, 201);
+  const registration = await registrationResponse.json();
+  assert.equal(registration.user.email, "viewer@example.com");
+  assert.equal("password" in registration.user, false);
+
+  const duplicateRegistration = await fetch(`${baseUrl}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Duplicate Account",
+      email: "viewer@example.com",
+      password: "test-user-password",
+    }),
+  });
+  assert.equal(duplicateRegistration.status, 409);
+
+  const reservedEmail = await fetch(`${baseUrl}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Admin Impersonator",
+      email: "admin@test.local",
+      password: "test-user-password",
+    }),
+  });
+  assert.equal(reservedEmail.status, 409);
+
+  const invalidUserLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "wrong-password",
+    }),
+  });
+  assert.equal(invalidUserLogin.status, 401);
+
+  const userLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "test-user-password",
+      remember: true,
+    }),
+  });
+  assert.equal(userLogin.status, 200);
+  const userSession = await userLogin.json();
+  assert.equal(userSession.user.role, "user");
+  assert.ok(userSession.token);
+  assert.ok(userSession.expiresAt > Date.now() + 29 * 24 * 60 * 60 * 1000);
+
+  const savedUsers = JSON.parse(
+    await readFile(path.join(directory, "users.json"), "utf8"),
+  );
+  assert.equal(savedUsers.length, 1);
+  assert.equal("password" in savedUsers[0], false);
+  assert.notEqual(savedUsers[0].passwordHash, "test-user-password");
+  assert.equal(savedUsers[0].passwordHash.length, 128);
+
+  const userLogout = await fetch(`${baseUrl}/auth/session`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${userSession.token}` },
+  });
+  assert.equal(userLogout.status, 200);
+
+  const temporaryUserLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "test-user-password",
+    }),
+  });
+  assert.equal(temporaryUserLogin.status, 200);
+  const temporarySession = await temporaryUserLogin.json();
+  assert.ok(temporarySession.expiresAt > Date.now() + 11 * 60 * 60 * 1000);
+  assert.ok(temporarySession.expiresAt < Date.now() + 13 * 60 * 60 * 1000);
+  await fetch(`${baseUrl}/auth/session`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${temporarySession.token}` },
+  });
 
   const createdResponse = await fetch(`${baseUrl}/reviews`, {
     method: "POST",

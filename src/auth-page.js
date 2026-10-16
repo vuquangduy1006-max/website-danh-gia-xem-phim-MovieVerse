@@ -25,16 +25,29 @@ if (form) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const result = isRegister
-      ? registerUser({
-          name: String(data.get("name") || ""),
-          email: String(data.get("email") || ""),
-          password: String(data.get("password") || ""),
-        })
-      : await loginUser(
-          String(data.get("email") || ""),
-          String(data.get("password") || ""),
-        );
+    const submitButton = form.querySelector('[type="submit"]');
+    submitButton.disabled = true;
+    let result;
+    try {
+      result = isRegister
+        ? await registerUser({
+            name: String(data.get("name") || ""),
+            email: String(data.get("email") || ""),
+            password: String(data.get("password") || ""),
+          })
+        : await loginUser(
+            String(data.get("email") || ""),
+            String(data.get("password") || ""),
+            data.get("remember") === "on",
+          );
+    } catch (error) {
+      result = {
+        ok: false,
+        message: error.message || "Không thể xử lý yêu cầu tài khoản.",
+      };
+    } finally {
+      submitButton.disabled = false;
+    }
 
     message.textContent = result.ok
       ? isRegister
