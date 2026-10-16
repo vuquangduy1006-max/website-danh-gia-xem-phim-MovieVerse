@@ -521,6 +521,42 @@ export function normalizeAssistantText(value) {
     .toLocaleLowerCase("vi");
 }
 
+export function findMovieNamedInQuestion(question, catalog = []) {
+  const normalizedQuestion = normalizeAssistantText(question)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  const paddedQuestion = ` ${normalizedQuestion} `;
+  return catalog
+    .flatMap((movie) => {
+      const fullTitle = normalizeAssistantText(movie.title)
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+      const seriesTitle = normalizeAssistantText(
+        String(movie.title).split(/[:\-–—]/, 1)[0],
+      )
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+      const aliases = [fullTitle];
+      if (
+        seriesTitle !== fullTitle &&
+        (seriesTitle.length >= 4 || seriesTitle.includes(" "))
+      ) {
+        aliases.push(seriesTitle);
+      }
+      return aliases.map((title) => ({ movie, title }));
+    })
+    .map(({ movie, title }) => ({
+      movie,
+      index: title ? paddedQuestion.indexOf(` ${title} `) : -1,
+      titleLength: title.length,
+    }))
+    .filter(({ index }) => index >= 0)
+    .sort(
+      (first, second) => first.index - second.index ||
+        second.titleLength - first.titleLength,
+    )[0]?.movie;
+}
+
 function movieFacts(movie) {
   const knownFacts = KNOWN_MOVIE_FACTS.get(
     normalizeAssistantText(movie.title),
@@ -638,6 +674,7 @@ function recommendationFilters(query) {
 export function hasMovieRecommendationIntent(question, catalog = []) {
   const query = normalizeAssistantText(question);
   return (
+    Boolean(findMovieNamedInQuestion(question, catalog)) ||
     requestedGenres(query).length > 0 ||
     requestedMoods(query).length > 0 ||
     findReferencedMovies(query, catalog).length > 0 ||
@@ -675,6 +712,21 @@ export function answerFromCatalog(question, catalog) {
 
   const movies = catalog.map(movieFacts);
   const referencedMovies = findReferencedMovies(query, movies);
+  const directlyRequestedMovie = findMovieNamedInQuestion(question, movies);
+  if (directlyRequestedMovie && !referencedMovies.length) {
+    const details = [];
+    if (directlyRequestedMovie.genres.length) {
+      details.push(`thể loại ${directlyRequestedMovie.genres.join(", ")}`);
+    }
+    if (directlyRequestedMovie.year) {
+      details.push(`ra mắt năm ${directlyRequestedMovie.year}`);
+    }
+    if (Number.isFinite(Number(directlyRequestedMovie.rating))) {
+      details.push(`IMDb ${Number(directlyRequestedMovie.rating).toFixed(1)}/10`);
+    }
+    const description = String(directlyRequestedMovie.description || "").trim();
+    return `Có nhé! ${directlyRequestedMovie.title} có trong kho MovieVerse.${details.length ? ` Phim thuộc ${details.join(", ")}.` : ""}${description ? ` Nội dung: ${description}` : ""}`;
+  }
   const referencedMovieIds = new Set(
     referencedMovies.map((movie) => movie.id),
   );

@@ -960,7 +960,7 @@ const server = createServer(async (request, response) => {
     if (!upstream.ok) {
       const notice =
         upstream.status === 401 || upstream.status === 403
-          ? "Nhà cung cấp AI từ chối khóa API. Hãy cập nhật AI_API_KEY hợp lệ trong file .env rồi khởi động lại máy chủ API."
+          ? "Câu trả lời đang dùng danh mục phim MovieVerse."
           : upstream.status === 429
             ? "Nhà cung cấp AI đang giới hạn yêu cầu hoặc đã hết hạn mức. Câu trả lời dưới đây dùng danh mục phim nội bộ."
             : `Nhà cung cấp AI phản hồi lỗi HTTP ${upstream.status}. Câu trả lời dưới đây dùng danh mục phim nội bộ.`;
