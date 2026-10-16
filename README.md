@@ -18,6 +18,12 @@ chọn vị trí lưu khác. Máy chủ triển khai cần chạy API MovieVerse
 tin quản trị và cấp quyền ghi cho thư mục lưu trữ. Nếu chỉ chạy Vite
 (`npm run dev`), các thao tác bình luận sẽ báo lỗi kết nối API.
 
+Tài khoản người dùng được lưu tại `.data/users.json`; mật khẩu được băm bằng
+scrypt trước khi ghi vào kho. Có thể đặt `AUTH_USERS_STORE_PATH` để chọn vị trí
+lưu khác. Tài khoản người dùng cũ trên trình duyệt được chuyển lên máy chủ sau
+khi đăng nhập thành công lần đầu. Phiên đăng nhập hết hạn sau 12 giờ, hoặc 30
+ngày nếu chọn “Ghi nhớ đăng nhập”. Khôi phục mật khẩu qua email chưa được hỗ trợ.
+
 Khi nhập tên phim trong form quản trị, máy chủ tra cứu OMDb để tự điền các thông
 tin phim có sẵn (năm, ngày phát hành, rating IMDb, quốc gia, thời lượng, ngôn ngữ,
 phân loại độ tuổi, thể loại, poster, mô tả, đạo diễn, diễn viên, biên kịch,
@@ -30,5 +36,5 @@ trình duyệt. Không chia sẻ hoặc commit khóa API. Nếu chưa cấu hìn
 có thể nhập dữ liệu thủ công. Khi dùng dữ liệu TMDb, trang phim hiển thị thông
 báo ghi nhận TMDb theo yêu cầu sử dụng API.
 
-Kho JSON phù hợp với một API instance có ổ đĩa bền vững; nếu chạy nhiều
-instance, hãy chuyển kho bình luận sang cơ sở dữ liệu dùng chung.
+Các kho JSON phù hợp với một API instance có ổ đĩa bền vững; nếu chạy nhiều
+instance, hãy chuyển kho bình luận và tài khoản sang cơ sở dữ liệu dùng chung.

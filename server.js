@@ -1,8 +1,13 @@
 import { createServer } from "node:http";
-import { randomBytes } from "node:crypto";
+import {
+  randomBytes,
+  scrypt as scryptCallback,
+  timingSafeEqual,
+} from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import {
   answerFromCatalog,
   hasMovieRecommendationIntent,
@@ -25,15 +30,27 @@ const adminPassword = process.env.ADMIN_PASSWORD;
 const MAX_BODY_BYTES = 48 * 1024;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 12;
+const USER_SESSION_MS = 12 * 60 * 60 * 1000;
+const REMEMBERED_USER_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
+const PASSWORD_HASH_BYTES = 64;
+const scrypt = promisify(scryptCallback);
 const requestsByIp = new Map();
+const authRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
+const userTokens = new Map();
 const reviewsFilePath = resolve(
   process.env.REVIEWS_STORE_PATH ||
     fileURLToPath(new URL("./.data/reviews.json", import.meta.url)),
 );
+const usersFilePath = resolve(
+  process.env.AUTH_USERS_STORE_PATH ||
+    fileURLToPath(new URL("./.data/users.json", import.meta.url)),
+);
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
+let userWriteQueue = Promise.resolve();
+let userStoreInitialization;
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -101,6 +118,48 @@ async function persistReviews(reviews) {
   await rename(temporaryPath, reviewsFilePath);
 }
 
+async function initializeUserStore() {
+  try {
+    const saved = JSON.parse(await readFile(usersFilePath, "utf8"));
+    if (!Array.isArray(saved)) throw new Error("User storage is invalid");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    await persistUsers([]);
+  }
+}
+
+async function readUsers() {
+  if (!userStoreInitialization) {
+    userStoreInitialization = initializeUserStore();
+  }
+  await userStoreInitialization;
+  const saved = JSON.parse(await readFile(usersFilePath, "utf8"));
+  if (!Array.isArray(saved)) throw new Error("User storage is invalid");
+  return saved;
+}
+
+async function persistUsers(users) {
+  await mkdir(dirname(usersFilePath), { recursive: true });
+  const temporaryPath = `${usersFilePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify(users, null, 2), "utf8");
+  await rename(temporaryPath, usersFilePath);
+}
+
+function updateUsers(update) {
+  const operation = userWriteQueue.then(async () => {
+    const users = await readUsers();
+    const result = await update(users);
+    if (!result.ok) return result;
+    await persistUsers(users);
+    return { ...result, users };
+  });
+  userWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 function updateReviews(update) {
   const operation = reviewWriteQueue.then(async () => {
     const reviews = await readReviews();
@@ -149,7 +208,171 @@ function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function isValidEmail(value) {
+  return (
+    validText(value, 254) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+  );
+}
+
+function getBearerToken(request) {
+  return request.headers.authorization?.match(/^Bearer ([A-Za-z0-9_-]+)$/)?.[1];
+}
+
+async function hashPassword(password, salt = randomBytes(16)) {
+  const hash = await scrypt(password, salt, PASSWORD_HASH_BYTES);
+  return { salt: salt.toString("hex"), hash: Buffer.from(hash).toString("hex") };
+}
+
+async function verifyPassword(password, saltHex, hashHex) {
+  const salt = Buffer.from(saltHex, "hex");
+  const expectedHash = Buffer.from(hashHex, "hex");
+  if (salt.length !== 16 || expectedHash.length !== PASSWORD_HASH_BYTES) {
+    return false;
+  }
+  const actualHash = Buffer.from(
+    await scrypt(password, salt, PASSWORD_HASH_BYTES),
+  );
+  return timingSafeEqual(actualHash, expectedHash);
+}
+
+async function handleAuthApi(request, response, pathname) {
+  if (
+    request.method === "POST" &&
+    (pathname === "/api/auth/register" || pathname === "/api/auth/session")
+  ) {
+    try {
+      const ip = request.socket.remoteAddress || "unknown";
+      if (isRateLimited(ip, authRequestsByIp)) {
+        sendJson(response, 429, {
+          error: "Bạn thử quá nhiều lần. Vui lòng chờ một phút rồi thử lại.",
+        });
+        return true;
+      }
+
+      const body = await readJson(request);
+      if (!isRecord(body)) {
+        sendJson(response, 400, { error: "Thông tin tài khoản không hợp lệ." });
+        return true;
+      }
+
+      if (pathname === "/api/auth/register") {
+        const name = typeof body.name === "string" ? body.name.trim() : "";
+        const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+        if (
+          !validText(name, 40) ||
+          !isValidEmail(email) ||
+          typeof body.password !== "string" ||
+          body.password.length < 8 ||
+          body.password.length > 128
+        ) {
+          sendJson(response, 400, {
+            error: "Tên, email hoặc mật khẩu không hợp lệ. Mật khẩu cần từ 8 đến 128 ký tự.",
+          });
+          return true;
+        }
+        if (email === adminEmail) {
+          sendJson(response, 409, {
+            error: "Email này không thể dùng để tạo tài khoản người dùng.",
+          });
+          return true;
+        }
+
+        const { salt, hash } = await hashPassword(body.password);
+        const user = {
+          id: `user-${randomBytes(16).toString("hex")}`,
+          name,
+          email,
+          passwordSalt: salt,
+          passwordHash: hash,
+          createdAt: new Date().toISOString(),
+        };
+        const result = await updateUsers((users) => {
+          if (users.some((item) => item.email === email)) {
+            return { ok: false };
+          }
+          users.push(user);
+          return { ok: true };
+        });
+        if (!result.ok) {
+          sendJson(response, 409, { error: "Email này đã được đăng ký." });
+          return true;
+        }
+        sendJson(response, 201, {
+          user: { id: user.id, name: user.name, email: user.email },
+        });
+        return true;
+      }
+
+      const email =
+        typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+      if (
+        !isValidEmail(email) ||
+        typeof body.password !== "string" ||
+        body.password.length < 8 ||
+        body.password.length > 128
+      ) {
+        sendJson(response, 400, { error: "Thông tin đăng nhập không hợp lệ." });
+        return true;
+      }
+      const users = await readUsers();
+      const user = users.find((item) => item.email === email);
+      const passwordIsValid =
+        user &&
+        (await verifyPassword(
+          body.password,
+          user.passwordSalt,
+          user.passwordHash,
+        ));
+      if (!passwordIsValid) {
+        sendJson(response, 401, { error: "Email hoặc mật khẩu không đúng." });
+        return true;
+      }
+
+      const token = randomBytes(32).toString("base64url");
+      const expiresAt =
+        Date.now() +
+        (body.remember === true
+          ? REMEMBERED_USER_SESSION_MS
+          : USER_SESSION_MS);
+      userTokens.set(token, { userId: user.id, expiresAt });
+      sendJson(response, 200, {
+        token,
+        expiresAt,
+        user: { id: user.id, name: user.name, email: user.email, role: "user" },
+      });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to process user authentication:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu tài khoản không hợp lệ hoặc quá lớn."
+          : "Không thể xử lý yêu cầu tài khoản.",
+      });
+    }
+    return true;
+  }
+
+  if (request.method === "DELETE" && pathname === "/api/auth/session") {
+    const token = getBearerToken(request);
+    if (token) userTokens.delete(token);
+    sendJson(response, 200, { ok: true });
+    return true;
+  }
+
+  return false;
+}
+
 async function handleReviewsApi(request, response, pathname) {
+  if (request.method === "DELETE" && pathname === "/api/admin/session") {
+    const token = getBearerToken(request);
+    if (token) adminTokens.delete(token);
+    sendJson(response, 200, { ok: true });
+    return true;
+  }
+
   if (request.method === "POST" && pathname === "/api/admin/session") {
     try {
       const ip = request.socket.remoteAddress || "unknown";
@@ -178,9 +401,11 @@ async function handleReviewsApi(request, response, pathname) {
         return true;
       }
       const token = randomBytes(32).toString("base64url");
-      adminTokens.set(token, Date.now() + 12 * 60 * 60 * 1000);
+      const expiresAt = Date.now() + USER_SESSION_MS;
+      adminTokens.set(token, expiresAt);
       sendJson(response, 200, {
         token,
+        expiresAt,
         name: "MovieVerse Admin",
         email: adminEmail,
       });
@@ -633,6 +858,10 @@ const server = createServer(async (request, response) => {
   if (request.method === "GET" && pathname === "/api/health") {
     sendJson(response, 200, { ok: true, configured: Boolean(apiKey) });
     return;
+  }
+
+  if (pathname.startsWith("/api/auth/")) {
+    if (await handleAuthApi(request, response, pathname)) return;
   }
 
   if (

@@ -41,11 +41,11 @@
             </div>
             <div class="auth-field">
               <label for="registerEmail">Email</label>
-              <input id="registerEmail" name="email" type="email" placeholder="ten@email.com" autocomplete="email" required />
+              <input id="registerEmail" name="email" type="email" placeholder="ten@email.com" autocomplete="email" maxlength="254" required />
             </div>
             <div class="auth-field">
               <label for="registerPassword">Mật khẩu</label>
-              <input id="registerPassword" name="password" type="password" placeholder="Ít nhất 8 ký tự" autocomplete="new-password" minlength="8" required />
+              <input id="registerPassword" name="password" type="password" placeholder="8–128 ký tự" autocomplete="new-password" minlength="8" maxlength="128" required />
             </div>
             <label class="auth-checkbox auth-terms">
               <input type="checkbox" name="terms" required />
