@@ -74,6 +74,37 @@ test("recommends Dune for action and a roughly two-hour request with verified ru
   );
 });
 
+test("answers a direct movie availability question with that movie's facts", () => {
+  const question = "Có phim past lives ko bạn?";
+  const answer = answerFromCatalog(question, catalog);
+
+  assert.equal(hasMovieRecommendationIntent(question, catalog), true);
+  assert.match(answer, /Có nhé! Past Lives có trong kho MovieVerse/);
+  assert.match(answer, /thể loại Tâm lý, ra mắt năm 2023, IMDb 8\.1\/10/);
+  assert.match(answer, /Hai người bạn thời thơ ấu gặp lại nhau/);
+  assert.doesNotMatch(answer, /Attack on Titan/);
+});
+
+test("matches a series title when the user omits its subtitle", () => {
+  const question = "Có phim Attack on Titan không?";
+  const attackCatalog = [
+    {
+      id: "attack-1",
+      title: "Attack on Titan: Season 1",
+      year: "2013",
+      genre: "Hành động, Khoa học viễn tưởng",
+      rating: "9.1",
+      description: "Eren và bạn bè chiến đấu với Titan.",
+    },
+    ...catalog,
+  ];
+  const answer = answerFromCatalog(question, attackCatalog);
+
+  assert.equal(hasMovieRecommendationIntent(question, attackCatalog), true);
+  assert.match(answer, /Có nhé! Attack on Titan: Season 1 có trong kho MovieVerse/);
+  assert.doesNotMatch(answer, /Past Lives/);
+});
+
 test("recommends movies similar to Dune and explains the shared genre", () => {
   const question =
     "Tôi thích phim hành động, khoa học viễn tưởng, có nội dung giống Dune.";

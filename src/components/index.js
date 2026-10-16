@@ -2,6 +2,7 @@ import footerTemplate from "./footer.html?raw";
 import headerTemplate from "./header.html?raw";
 import { getSession, logoutUser } from "../data/auth.js";
 import { getMovieDB, getMovieGenres } from "../data/data.js";
+import { mountAssistantChat } from "../assistant-chat.js";
 
 function renderTemplate(template, values) {
   return template.replace(/{{(\w+)}}/g, (_, key) => values[key] ?? "");
@@ -44,6 +45,8 @@ export function renderAccountActions() {
 }
 
 export function bindAccountActions() {
+  mountAssistantChat(getMovieDB());
+
   const genreNav = document.querySelector(".genre-nav");
   if (genreNav) {
     document.addEventListener("click", (event) => {
