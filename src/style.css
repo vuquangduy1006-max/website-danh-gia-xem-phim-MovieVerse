@@ -1030,6 +1030,23 @@ button {
   grid-column: 2;
   grid-row: 1;
 }
+.subscribe-form > .newsletter-unsubscribe {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  justify-self: start;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.subscribe-form > .newsletter-unsubscribe:hover {
+  color: var(--text);
+}
 .subscribe-form input {
   background: var(--bg);
   border: 1px solid var(--line);
@@ -1298,6 +1315,9 @@ button {
   .site-header {
     height: 64px;
   }
+  .site-header .nav-wrap {
+    gap: 0;
+  }
   .nav-wrap {
     gap: 0;
   }
@@ -1446,6 +1466,15 @@ button {
   }
   .modal-info h2 {
     font-size: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-actions {
+    gap: 6px;
+  }
+  .header-search {
+    width: clamp(80px, 28vw, 95px);
   }
 }
 

@@ -2,6 +2,11 @@ import "./style.css";
 import "./favorites-page.css";
 import { getMovieDB, initializeCatalog } from "./data/data.js";
 import {
+  getMovieScoreOutOfTen,
+  loadReviews,
+  syncReviews,
+} from "./data/reviews.js";
+import {
   clearWatchHistory,
   loadWatchHistory,
   removeHistoryItem,
@@ -15,7 +20,14 @@ import {
 
 await initializeCatalog();
 
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
+
 const movies = getMovieDB();
+const reviews = loadReviews();
 const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
 document.querySelector("#app").innerHTML = `
@@ -115,7 +127,7 @@ function renderHistory() {
                   <p class="history-date">Xem lần cuối: ${escapeHtml(formatDate(movie.viewedAt))}</p>
                 </div>
                 <div class="favorite-card-foot">
-                  <span class="favorite-score">★ ${escapeHtml(movie.rating)}</span>
+                  <span class="favorite-score">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span>
                   <button type="button" class="remove-favorite" data-remove-history="${escapeHtml(movie.id)}">Xoá</button>
                 </div>
               </div>

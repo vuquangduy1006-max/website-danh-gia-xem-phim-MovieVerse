@@ -67,11 +67,15 @@ document.querySelector("#app").innerHTML = `
           </article>
           <article>
             <h3>Tài khoản và danh sách cá nhân</h3>
-            <p>Tạo tài khoản để đăng nhập. Phim yêu thích, lịch sử xem và vị trí xem được lưu trên trình duyệt hiện tại, nên chưa đồng bộ giữa các thiết bị.</p>
+            <p>Tạo tài khoản để đăng nhập; người dùng có thể đổi mật khẩu trong menu tài khoản. Phim yêu thích, lịch sử xem và vị trí xem được lưu trên trình duyệt hiện tại, nên chưa đồng bộ giữa các thiết bị.</p>
           </article>
           <article>
             <h3>Danh mục phim</h3>
             <p>Danh mục phim và thể loại được quản trị viên cập nhật trên máy chủ để mọi khách truy cập cùng xem một dữ liệu.</p>
+          </article>
+          <article>
+            <h3>Lịch phát hành</h3>
+            <p>Mở mục Lịch phát hành để xem các phim sắp chiếu và ngày ra tập mới. Lịch do quản trị viên cập nhật, chưa tự đồng bộ với lịch của các nền tảng phát hành.</p>
           </article>
           <article>
             <h3>Đánh giá và bình luận</h3>
@@ -82,7 +86,7 @@ document.querySelector("#app").innerHTML = `
             <p>Một số phim chưa có nguồn phát hoặc phụ thuộc dịch vụ bên ngoài. Thử tải lại trang, kiểm tra kết nối hoặc quay lại trang chi tiết để xem trailer khả dụng.</p>
           </article>
         </div>
-        <p class="info-note">Website chưa có chức năng đặt lại mật khẩu hoặc kênh hỗ trợ trực tiếp. Các liên kết mạng xã hội sẽ được cập nhật khi có địa chỉ chính thức.</p>
+        <p class="info-note">Website chưa hỗ trợ đặt lại mật khẩu qua email hoặc có kênh hỗ trợ trực tiếp. Nếu đã đăng nhập, bạn có thể đổi mật khẩu từ menu tài khoản. Các liên kết mạng xã hội sẽ được cập nhật khi có địa chỉ chính thức.</p>
       </section>
 
       <section class="info-section" id="terms" aria-labelledby="termsHeading">
@@ -101,17 +105,17 @@ document.querySelector("#app").innerHTML = `
         <p class="eyebrow">04 · Dữ liệu</p>
         <h2 id="privacyHeading">Quyền riêng tư</h2>
         <ul>
-          <li>Khi đăng ký, tên hiển thị, email và mật khẩu đã băm được lưu trên máy chủ để cung cấp tài khoản. Mật khẩu gốc không được lưu trong kho tài khoản.</li>
+          <li>Khi đăng ký, tên hiển thị, email và mật khẩu đã băm được lưu trên máy chủ để cung cấp tài khoản. Mật khẩu gốc không được lưu trong kho tài khoản. Khi đổi mật khẩu, các phiên đăng nhập hiện có sẽ bị thu hồi.</li>
           <li>Phiên đăng nhập được lưu trong bộ nhớ phiên của trình duyệt hoặc bộ nhớ cục bộ nếu chọn “Ghi nhớ đăng nhập”. Đăng xuất sẽ yêu cầu máy chủ thu hồi phiên.</li>
           <li>Danh sách yêu thích, lịch sử xem và tiến độ phát được lưu cục bộ trên thiết bị của bạn. Xóa dữ liệu website trong trình duyệt có thể xóa các mục này.</li>
           <li>Đánh giá và bình luận được gửi tới máy chủ để hiển thị trong cộng đồng.</li>
-          <li>Email chỉ được lưu vào danh sách quan tâm nhận tin sau khi bạn đồng ý. Hiện MovieVerse chưa gửi email bản tin tự động và chưa có chức năng hủy đăng ký.</li>
+          <li>Email chỉ được lưu vào danh sách quan tâm nhận tin sau khi bạn đồng ý. Hiện MovieVerse chưa gửi email bản tin tự động; bạn có thể hủy đăng ký bằng cách nhập lại email đã dùng trên trang chủ.</li>
           <li>Nếu sử dụng trợ lý gợi ý, câu hỏi và dữ liệu danh mục cần thiết được gửi tới máy chủ MovieVerse; tùy cấu hình, yêu cầu có thể được chuyển tiếp tới nhà cung cấp AI.</li>
         </ul>
         <p>Để xóa dữ liệu cục bộ, hãy xóa dữ liệu website trong cài đặt trình duyệt. Website hiện chưa có chức năng tự xóa tài khoản hoặc yêu cầu xóa dữ liệu từ giao diện.</p>
       </section>
 
-      <p class="info-updated">Cập nhật lần cuối: 16/10/2026</p>
+      <p class="info-updated">Cập nhật lần cuối: 17/10/2026</p>
     </div>
   </main>
 

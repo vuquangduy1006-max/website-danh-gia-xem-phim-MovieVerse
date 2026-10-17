@@ -251,6 +251,49 @@ test("review API shares replies, persists moderation and protects admin actions"
   assert.equal(savedNewsletter[0].email, "reader@example.com");
   assert.ok(savedNewsletter[0].subscribedAt);
 
+  const invalidNewsletterUnsubscribe = await fetch(
+    `${baseUrl}/newsletter/unsubscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "not-an-email" }),
+    },
+  );
+  assert.equal(invalidNewsletterUnsubscribe.status, 400);
+
+  const newsletterUnsubscribe = await fetch(
+    `${baseUrl}/newsletter/unsubscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: " Reader@Example.com " }),
+    },
+  );
+  assert.equal(newsletterUnsubscribe.status, 200);
+  const unsubscribeResult = await newsletterUnsubscribe.json();
+  assert.equal(unsubscribeResult.ok, true);
+  assert.doesNotMatch(unsubscribeResult.message, /reader@example\.com/i);
+  assert.equal(
+    JSON.parse(
+      await readFile(path.join(directory, "newsletter.json"), "utf8"),
+    ).length,
+    0,
+  );
+
+  const absentNewsletterUnsubscribe = await fetch(
+    `${baseUrl}/newsletter/unsubscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "absent@example.com" }),
+    },
+  );
+  assert.equal(absentNewsletterUnsubscribe.status, 200);
+  assert.equal(
+    (await absentNewsletterUnsubscribe.json()).message,
+    unsubscribeResult.message,
+  );
+
   const registrationResponse = await fetch(`${baseUrl}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -338,6 +381,108 @@ test("review API shares replies, persists moderation and protects admin actions"
   const temporarySession = await temporaryUserLogin.json();
   assert.ok(temporarySession.expiresAt > Date.now() + 11 * 60 * 60 * 1000);
   assert.ok(temporarySession.expiresAt < Date.now() + 13 * 60 * 60 * 1000);
+
+  const missingPasswordSession = await fetch(`${baseUrl}/auth/password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      currentPassword: "test-user-password",
+      newPassword: "replacement-password",
+    }),
+  });
+  assert.equal(missingPasswordSession.status, 401);
+
+  const invalidNewPassword = await fetch(`${baseUrl}/auth/password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Be" + "arer " + temporarySession.token,
+    },
+    body: JSON.stringify({
+      currentPassword: "test-user-password",
+      newPassword: "short",
+    }),
+  });
+  assert.equal(invalidNewPassword.status, 400);
+
+  const incorrectCurrentPassword = await fetch(`${baseUrl}/auth/password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Be" + "arer " + temporarySession.token,
+    },
+    body: JSON.stringify({
+      currentPassword: "incorrect-password",
+      newPassword: "replacement-password",
+    }),
+  });
+  assert.equal(incorrectCurrentPassword.status, 401);
+
+  const secondUserLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "test-user-password",
+    }),
+  });
+  assert.equal(secondUserLogin.status, 200);
+  const secondUserSession = await secondUserLogin.json();
+
+  const passwordChange = await fetch(`${baseUrl}/auth/password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Be" + "arer " + temporarySession.token,
+    },
+    body: JSON.stringify({
+      currentPassword: "test-user-password",
+      newPassword: "replacement-password",
+    }),
+  });
+  assert.equal(passwordChange.status, 200);
+  assert.equal((await passwordChange.json()).ok, true);
+
+  for (const token of [temporarySession.token, secondUserSession.token]) {
+    const revokedSession = await fetch(`${baseUrl}/auth/password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + token,
+      },
+      body: JSON.stringify({
+        currentPassword: "test-user-password",
+        newPassword: "another-password",
+      }),
+    });
+    assert.equal(revokedSession.status, 401);
+  }
+
+  const oldPasswordLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "test-user-password",
+    }),
+  });
+  assert.equal(oldPasswordLogin.status, 401);
+
+  const newPasswordLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "replacement-password",
+    }),
+  });
+  assert.equal(newPasswordLogin.status, 200);
+  const updatedUserSession = await newPasswordLogin.json();
+
+  await fetch(`${baseUrl}/auth/session`, {
+    method: "DELETE",
+    headers: { Authorization: "Be" + "arer " + updatedUserSession.token },
+  });
   await fetch(`${baseUrl}/auth/session`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${temporarySession.token}` },

@@ -31,7 +31,7 @@ try {
 await initializeCatalog();
 
 const movies = getMovieDB();
-let reviews = loadReviews();
+let reviews = loadReviews().filter((review) => !review.hidden);
 let selectedRating = 0;
 const adminUser = isAdmin();
 
@@ -154,33 +154,32 @@ function stars(rating) {
 }
 function renderSelectedMovieRating() {
   const movieReviews = getMovieReviews(movieSelect.value);
-  const movie = movies.find((item) => item.title === movieSelect.value);
   const average = movieReviews.length
-    ? (
+    ? Number(
         movieReviews.reduce((sum, review) => sum + Number(review.rating), 0) /
-        movieReviews.length
-      ).toFixed(1)
-    : Number(movie?.rating || 0).toFixed(1);
+          movieReviews.length,
+      )
+    : null;
   const countLabel = movieReviews.length
-    ? `${movieReviews.length} lượt đánh giá`
+    ? `${movieReviews.length} lượt đánh giá · thang 5`
     : "Chưa có đánh giá từ cộng đồng";
   document.querySelector("#selectedMovieRating").innerHTML =
-    `<span class="selected-rating-stars">${stars(Math.round(Number(average)))}</span><strong>${average}</strong><small>${countLabel}</small>`;
+    `<span class="selected-rating-stars">${stars(average === null ? 0 : Math.round(average))}</span><strong>${average === null ? "—" : average.toFixed(1)}</strong><small>${countLabel}</small>`;
 }
 function renderStats() {
   const average = reviews.length
     ? reviews.reduce((sum, item) => sum + Number(item.rating), 0) /
       reviews.length
-    : 0;
+    : null;
   const fiveStar = reviews.length
     ? Math.round(
         (reviews.filter((item) => Number(item.rating) === 5).length /
           reviews.length) *
           100,
       )
-    : 0;
+    : null;
   document.querySelector("#reviewStats").innerHTML =
-    `<div class="review-stat-highlight"><span>Điểm trung bình</span><strong>${average.toFixed(1)}</strong><small>trên 5 sao</small></div><div><span>Tổng đánh giá</span><strong>${reviews.length}</strong><small>góc nhìn đã chia sẻ</small></div><div><span>Đánh giá 5 sao</span><strong>${fiveStar}%</strong><small>từ cộng đồng</small></div>`;
+    `<div class="review-stat-highlight"><span>Điểm trung bình</span><strong>${average === null ? "—" : average.toFixed(1)}</strong><small>trên 5 sao</small></div><div><span>Tổng đánh giá</span><strong>${reviews.length}</strong><small>góc nhìn đã chia sẻ</small></div><div><span>Đánh giá 5 sao</span><strong>${fiveStar === null ? "—" : `${fiveStar}%`}</strong><small>từ cộng đồng</small></div>`;
 }
 function renderReviews() {
   const query = document
@@ -310,7 +309,7 @@ document
       window.alert(error.message);
       return;
     }
-    reviews = loadReviews();
+    reviews = loadReviews().filter((review) => !review.hidden);
     renderStats();
     renderReviews();
     renderSelectedMovieRating();
@@ -334,7 +333,7 @@ document
       hint.classList.add("is-error");
       return;
     }
-    reviews = loadReviews();
+    reviews = loadReviews().filter((review) => !review.hidden);
     renderReviews();
   });
 document
@@ -371,7 +370,7 @@ document
       hint.classList.add("is-error");
       return;
     }
-    reviews = loadReviews();
+    reviews = loadReviews().filter((review) => !review.hidden);
     event.target.reset();
     selectedRating = 0;
     paintComposeStars(0);

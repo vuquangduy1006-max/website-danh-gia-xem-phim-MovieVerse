@@ -12,6 +12,8 @@ import {
   deleteReview,
   getMovieReviews,
   getReviewReplies,
+  getMovieScoreOutOfTen,
+  loadReviews,
   syncReviews,
 } from "./data/reviews.js";
 import { getSession, isAdmin } from "./data/auth.js";
@@ -31,6 +33,7 @@ try {
 await initializeCatalog();
 
 const movieList = getMovieDB();
+const allReviews = loadReviews();
 const params = new URLSearchParams(window.location.search);
 const movie = resolveMovie();
 
@@ -56,7 +59,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -84,7 +87,7 @@ function renderDetailPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a class="active" href="/genres.html" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a class="active" href="/genres.html" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
@@ -263,15 +266,9 @@ function renderDetailPage(current) {
   bindMenuToggle();
 
   function renderMetrics() {
-    const list = getMovieReviews(current.title);
-    const average = list.length
-      ? list.reduce((sum, review) => sum + Number(review.rating), 0) /
-        list.length
-      : Number(current.rating);
-
     document.querySelector("#detailMetrics").innerHTML = [
-      `<span class="detail-score">★ ${average.toFixed(1)}</span>`,
-      `<span>IMDb ${current.rating}</span>`,
+      `<span class="detail-score">★ ${getMovieScoreOutOfTen(current, allReviews).toFixed(1)}/10</span>`,
+      `<span>IMDb ${current.rating}/10</span>`,
       `<span>${escapeHtml(credits.runtime)}</span>`,
       `<span>${escapeHtml(credits.ageRating)}</span>`,
       `<span>${current.genre}</span>`,
@@ -381,7 +378,7 @@ function renderDetailPage(current) {
                 <strong>${item.title}</strong>
                 <small>${item.year} · ${item.genre}</small>
               </span>
-              <span class="similar-score">★ ${item.rating}</span>
+              <span class="similar-score">★ ${getMovieScoreOutOfTen(item, allReviews).toFixed(1)}/10</span>
             </a>`,
           )
           .join("")

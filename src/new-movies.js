@@ -5,6 +5,11 @@ import {
   initializeCatalog,
 } from "./data/data.js";
 import {
+  getMovieScoreOutOfTen,
+  loadReviews,
+  syncReviews,
+} from "./data/reviews.js";
+import {
   bindAccountActions,
   getPosterStyle,
   renderAccountActions,
@@ -14,7 +19,14 @@ import {
 
 await initializeCatalog();
 
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
+
 const newMovies = getMovieDB().filter((movie) => movie.isNew);
+const reviews = loadReviews();
 
 document.querySelector("#app").innerHTML = `
 ${renderHeader({
@@ -105,7 +117,7 @@ function renderMovies() {
     ? filteredMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/watch.html?id=${movie.id}" aria-label="Xem phim ${movie.title}"><div class="poster" style="${getPosterStyle(movie)}"><span class="new-movie-badge">Mới</span></div></a><h3><a href="/movie-detail.html?id=${movie.id}">${movie.title}</a><span class="card-rating">★ ${Number(movie.rating).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/watch.html?id=${movie.id}" aria-label="Xem phim ${movie.title}"><div class="poster" style="${getPosterStyle(movie)}"><span class="new-movie-badge">Mới</span></div></a><h3><a href="/movie-detail.html?id=${movie.id}">${movie.title}</a><span class="card-rating">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Không tìm thấy phim phù hợp.</p>';

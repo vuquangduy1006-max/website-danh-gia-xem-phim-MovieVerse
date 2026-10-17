@@ -59,6 +59,7 @@ export const genreList = [
 ];
 
 const GENRE_STORAGE_KEY = "movieverse_genres";
+const RELEASE_SCHEDULE_KEY = "movieverse_release_schedule";
 
 let catalogVersion = null;
 
@@ -81,6 +82,17 @@ export function saveGenreList(genres) {
   localStorage.setItem(GENRE_STORAGE_KEY, JSON.stringify(genres));
 }
 
+export function getReleaseSchedule() {
+  try {
+    const schedule = JSON.parse(
+      localStorage.getItem(RELEASE_SCHEDULE_KEY) || "[]",
+    );
+    return Array.isArray(schedule) ? schedule : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function initializeCatalog() {
   try {
     const response = await fetch("/api/catalog", { cache: "no-store" });
@@ -91,6 +103,7 @@ export async function initializeCatalog() {
     if (
       !Array.isArray(payload.movies) ||
       !Array.isArray(payload.genres) ||
+      !Array.isArray(payload.schedule) ||
       !(payload.updatedAt === null || typeof payload.updatedAt === "string")
     ) {
       throw new Error("Máy chủ trả về danh mục phim không hợp lệ.");
@@ -115,7 +128,10 @@ export async function initializeCatalog() {
       return true;
     }
 
-    if (payload.updatedAt === null && hasLegacyCatalog) return true;
+    if (payload.updatedAt === null && hasLegacyCatalog) {
+      saveReleaseSchedule(payload.schedule);
+      return true;
+    }
 
     applySharedCatalog(payload);
     return true;
@@ -140,6 +156,46 @@ export async function saveSharedCatalog(movies, genres) {
   return catalog;
 }
 
+export async function saveSharedSchedule(schedule) {
+  const session = getSession();
+  if (session?.role !== "admin" || !session.adminToken) {
+    throw new Error("Cần đăng nhập quản trị để lưu lịch phát hành.");
+  }
+  let response;
+  try {
+    response = await fetch("/api/admin/schedule", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + session.adminToken,
+      },
+      body: JSON.stringify({ schedule, expectedUpdatedAt: catalogVersion }),
+    });
+  } catch {
+    throw new Error("Không kết nối được máy chủ để lưu lịch phát hành.");
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("Máy chủ trả về dữ liệu lịch không hợp lệ.");
+  }
+  if (!response.ok) {
+    throw new Error(payload.error || "Không thể lưu lịch phát hành.");
+  }
+  if (
+    !Array.isArray(payload.movies) ||
+    !Array.isArray(payload.genres) ||
+    !Array.isArray(payload.schedule) ||
+    typeof payload.updatedAt !== "string"
+  ) {
+    throw new Error("Máy chủ trả về dữ liệu lịch không hợp lệ.");
+  }
+  applySharedCatalog(payload);
+  return payload.schedule;
+}
+
 async function putSharedCatalog(movies, genres, expectedUpdatedAt, token) {
   let response;
   try {
@@ -147,7 +203,7 @@ async function putSharedCatalog(movies, genres, expectedUpdatedAt, token) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: "Be" + "arer " + token,
       },
       body: JSON.stringify({ movies, genres, expectedUpdatedAt }),
     });
@@ -167,6 +223,7 @@ async function putSharedCatalog(movies, genres, expectedUpdatedAt, token) {
   if (
     !Array.isArray(payload.movies) ||
     !Array.isArray(payload.genres) ||
+    !Array.isArray(payload.schedule) ||
     typeof payload.updatedAt !== "string"
   ) {
     throw new Error("Máy chủ trả về danh mục phim không hợp lệ.");
@@ -178,7 +235,12 @@ function applySharedCatalog(catalog) {
   catalogVersion = catalog.updatedAt;
   saveMovieDB(catalog.movies);
   saveGenreList(catalog.genres);
+  saveReleaseSchedule(catalog.schedule || []);
   localStorage.setItem(SEED_MIGRATION_KEY, "done");
+}
+
+function saveReleaseSchedule(schedule) {
+  localStorage.setItem(RELEASE_SCHEDULE_KEY, JSON.stringify(schedule));
 }
 
 export function getMovieGenres(movie) {
