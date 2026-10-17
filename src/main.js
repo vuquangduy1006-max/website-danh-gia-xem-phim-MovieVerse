@@ -5,6 +5,7 @@ import {
   initializeCatalog,
 } from "./data/data.js";
 import { getTrailer } from "./data/media.js";
+import { getMovieRanking } from "./data/rankings.js";
 import {
   getMovieScoreOutOfTen,
   loadReviews,
@@ -135,11 +136,12 @@ ${renderHeader({
     <div class="section-heading">
       <div>
         <p class="eyebrow">Được yêu thích nhất</p>
-        <h2>Top phim tuần này</h2>
+        <h2 id="rankingTitle">Top phim tuần này</h2>
       </div>
       <div class="select-wrap">
         <select id="rankFilter" aria-label="Chọn bảng xếp hạng">
-          <option>Tuần này</option><option>Tháng này</option>
+          <option value="week">Tuần này</option>
+          <option value="month">Tháng này</option>
         </select>
       </div>
     </div>
@@ -220,6 +222,9 @@ if (selectedGenre !== "all") {
   );
 }
 renderRanking();
+document
+  .querySelector("#rankFilter")
+  .addEventListener("change", renderRanking);
 renderNewMovies();
 renderHomeReviews();
 
@@ -474,19 +479,21 @@ function getMovieReviewAverage(title) {
 }
 
 function renderRanking() {
-  const top = [...movies]
-    .sort(
-      (a, b) =>
-        Number(getMovieReviewAverage(b.title)) -
-        Number(getMovieReviewAverage(a.title)),
-    )
-    .slice(0, 6);
-  document.querySelector("#rankingList").innerHTML = top
-    .map(
-      (movie, index) =>
-        `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${watchUrl(movie)}" aria-label="Xem phim ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></article>`,
-    )
-    .join("");
+  const periodFilter = document.querySelector("#rankFilter");
+  const periodName = periodFilter.selectedOptions[0].textContent.toLocaleLowerCase(
+    "vi",
+  );
+  const top = getMovieRanking(movies, reviews, periodFilter.value).slice(0, 6);
+  document.querySelector("#rankingTitle").textContent =
+    `Top phim ${periodName}`;
+  document.querySelector("#rankingList").innerHTML = top.length
+    ? top
+        .map(
+          ({ movie, score }, index) =>
+            `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${watchUrl(movie)}" aria-label="Xem phim ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${score.toFixed(1)}/10</span></article>`,
+        )
+        .join("")
+    : '<p class="empty-note">Chưa có review trong khoảng thời gian này.</p>';
 }
 
 function renderNewMovies() {
