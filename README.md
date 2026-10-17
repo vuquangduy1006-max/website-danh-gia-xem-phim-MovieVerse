@@ -32,7 +32,8 @@ ngày nếu chọn “Ghi nhớ đăng nhập”. Khôi phục mật khẩu qua 
 
 Email đăng ký nhận tin được lưu tại `.data/newsletter.json`; có thể đặt
 `NEWSLETTER_STORE_PATH` để chọn vị trí khác. Hiện email chỉ được lưu khi người
-dùng chủ động đồng ý, chưa có dịch vụ gửi bản tin hoặc chức năng hủy đăng ký.
+dùng chủ động đồng ý; có thể hủy đăng ký bằng cách nhập lại email trên trang
+chủ. Website chưa tích hợp dịch vụ gửi bản tin tự động.
 
 Trang `/info.html` cung cấp phần giới thiệu, trợ giúp, điều khoản và mô tả dữ
 liệu được lưu để người dùng biết rõ giới hạn hiện tại của website.

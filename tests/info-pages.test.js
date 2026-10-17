@@ -51,6 +51,7 @@ test("newsletter consent and privacy text disclose storage and delivery limits",
 
   assert.match(homeScript, /name="consent" required/);
   assert.match(homeScript, /consent: form\.elements\.consent\.checked/);
+  assert.match(homeScript, /\/api\/newsletter\/unsubscribe/);
   assert.match(infoPage, /Email chỉ được lưu vào danh sách quan tâm nhận tin/);
-  assert.match(infoPage, /chưa có chức năng hủy đăng ký/);
+  assert.match(infoPage, /hủy đăng ký bằng cách nhập lại email đã dùng/);
 });

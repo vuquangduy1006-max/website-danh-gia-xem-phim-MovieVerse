@@ -105,13 +105,13 @@ document.querySelector("#app").innerHTML = `
           <li>Phiên đăng nhập được lưu trong bộ nhớ phiên của trình duyệt hoặc bộ nhớ cục bộ nếu chọn “Ghi nhớ đăng nhập”. Đăng xuất sẽ yêu cầu máy chủ thu hồi phiên.</li>
           <li>Danh sách yêu thích, lịch sử xem và tiến độ phát được lưu cục bộ trên thiết bị của bạn. Xóa dữ liệu website trong trình duyệt có thể xóa các mục này.</li>
           <li>Đánh giá và bình luận được gửi tới máy chủ để hiển thị trong cộng đồng.</li>
-          <li>Email chỉ được lưu vào danh sách quan tâm nhận tin sau khi bạn đồng ý. Hiện MovieVerse chưa gửi email bản tin tự động và chưa có chức năng hủy đăng ký.</li>
+          <li>Email chỉ được lưu vào danh sách quan tâm nhận tin sau khi bạn đồng ý. Hiện MovieVerse chưa gửi email bản tin tự động; bạn có thể hủy đăng ký bằng cách nhập lại email đã dùng trên trang chủ.</li>
           <li>Nếu sử dụng trợ lý gợi ý, câu hỏi và dữ liệu danh mục cần thiết được gửi tới máy chủ MovieVerse; tùy cấu hình, yêu cầu có thể được chuyển tiếp tới nhà cung cấp AI.</li>
         </ul>
         <p>Để xóa dữ liệu cục bộ, hãy xóa dữ liệu website trong cài đặt trình duyệt. Website hiện chưa có chức năng tự xóa tài khoản hoặc yêu cầu xóa dữ liệu từ giao diện.</p>
       </section>
 
-      <p class="info-updated">Cập nhật lần cuối: 16/10/2026</p>
+      <p class="info-updated">Cập nhật lần cuối: 17/10/2026</p>
     </div>
   </main>
 

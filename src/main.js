@@ -180,7 +180,7 @@ ${renderHeader({
     <div>
       <p class="eyebrow">MovieVerse weekly</p>
       <h2>Đừng bỏ lỡ những thước phim hay.</h2>
-      <p>Đăng ký quan tâm nhận tin về phim mới. Hiện chưa gửi email tự động.</p>
+      <p>Đăng ký quan tâm nhận tin về phim mới. Bạn có thể hủy đăng ký bằng email đã dùng; hiện chưa gửi email tự động.</p>
     </div>
     <form class="subscribe-form" id="subscribeForm">
       <label class="sr-only" for="email">Email của bạn</label>
@@ -190,6 +190,7 @@ ${renderHeader({
         <span>Tôi đồng ý lưu email để đăng ký nhận tin. <a href="/info.html#privacy">Quyền riêng tư</a></span>
       </label>
       <button type="submit">Đăng ký <span aria-hidden="true">→</span></button>
+      <button type="button" class="newsletter-unsubscribe" id="unsubscribeNewsletter">Hủy đăng ký nhận tin</button>
       <p class="subscribe-status" id="subscribeStatus" role="status" aria-live="polite"></p>
     </form>
   </section>
@@ -294,6 +295,43 @@ document.querySelector("#subscribeForm").addEventListener("submit", async (event
         consent: form.elements.consent.checked,
       }),
     });
+
+    document
+      .querySelector("#unsubscribeNewsletter")
+      .addEventListener("click", async (event) => {
+        const form = document.querySelector("#subscribeForm");
+        const emailField = form.elements.email;
+        if (!emailField.reportValidity()) return;
+
+        const status = document.querySelector("#subscribeStatus");
+        const button = event.currentTarget;
+        status.textContent = "Đang cập nhật danh sách nhận tin...";
+        status.classList.remove("is-error");
+        button.disabled = true;
+
+        try {
+          const response = await fetch("/api/newsletter/unsubscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailField.value }),
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || "Không thể hủy đăng ký.");
+          }
+          status.textContent = result.message;
+          emailField.value = "";
+          form.elements.consent.checked = false;
+        } catch (error) {
+          status.textContent =
+            error instanceof TypeError
+              ? "Không kết nối được máy chủ. Vui lòng thử lại sau."
+              : error.message;
+          status.classList.add("is-error");
+        } finally {
+          button.disabled = false;
+        }
+      });
     const result = await response.json();
     if (!response.ok) {
       throw new Error(result.error || "Không thể ghi nhận đăng ký.");

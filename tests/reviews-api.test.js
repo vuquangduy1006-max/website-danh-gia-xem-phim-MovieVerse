@@ -251,6 +251,49 @@ test("review API shares replies, persists moderation and protects admin actions"
   assert.equal(savedNewsletter[0].email, "reader@example.com");
   assert.ok(savedNewsletter[0].subscribedAt);
 
+  const invalidNewsletterUnsubscribe = await fetch(
+    `${baseUrl}/newsletter/unsubscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "not-an-email" }),
+    },
+  );
+  assert.equal(invalidNewsletterUnsubscribe.status, 400);
+
+  const newsletterUnsubscribe = await fetch(
+    `${baseUrl}/newsletter/unsubscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: " Reader@Example.com " }),
+    },
+  );
+  assert.equal(newsletterUnsubscribe.status, 200);
+  const unsubscribeResult = await newsletterUnsubscribe.json();
+  assert.equal(unsubscribeResult.ok, true);
+  assert.doesNotMatch(unsubscribeResult.message, /reader@example\.com/i);
+  assert.equal(
+    JSON.parse(
+      await readFile(path.join(directory, "newsletter.json"), "utf8"),
+    ).length,
+    0,
+  );
+
+  const absentNewsletterUnsubscribe = await fetch(
+    `${baseUrl}/newsletter/unsubscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "absent@example.com" }),
+    },
+  );
+  assert.equal(absentNewsletterUnsubscribe.status, 200);
+  assert.equal(
+    (await absentNewsletterUnsubscribe.json()).message,
+    unsubscribeResult.message,
+  );
+
   const registrationResponse = await fetch(`${baseUrl}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -441,9 +441,15 @@ function isValidEmail(value) {
 }
 
 async function handleNewsletterApi(request, response, pathname) {
-  if (request.method !== "POST" || pathname !== "/api/newsletter/subscribe") {
+  if (
+    request.method !== "POST" ||
+    !["/api/newsletter/subscribe", "/api/newsletter/unsubscribe"].includes(
+      pathname,
+    )
+  ) {
     return false;
   }
+  const isUnsubscribe = pathname === "/api/newsletter/unsubscribe";
 
   const ip = request.socket.remoteAddress || "unknown";
   if (isRateLimited(ip, newsletterRequestsByIp)) {
@@ -458,19 +464,33 @@ async function handleNewsletterApi(request, response, pathname) {
     if (
       !isRecord(body) ||
       !isValidEmail(body.email) ||
-      body.consent !== true
+      (!isUnsubscribe && body.consent !== true)
     ) {
       sendJson(response, 400, {
-        error: "Hãy nhập email hợp lệ và đồng ý lưu email để đăng ký.",
+        error: isUnsubscribe
+          ? "Hãy nhập email hợp lệ để hủy đăng ký."
+          : "Hãy nhập email hợp lệ và đồng ý lưu email để đăng ký.",
       });
       return true;
     }
 
     const email = body.email.trim().toLowerCase();
     await updateNewsletterSubscribers((subscribers) => {
+      if (isUnsubscribe) {
+        for (let index = subscribers.length - 1; index >= 0; index -= 1) {
+          const savedEmail = subscribers[index]?.email;
+          if (
+            typeof savedEmail === "string" &&
+            savedEmail.toLowerCase() === email
+          ) {
+            subscribers.splice(index, 1);
+          }
+        }
+        return { ok: true };
+      }
       const exists = subscribers.some(
         (subscriber) =>
-          typeof subscriber.email === "string" &&
+          typeof subscriber?.email === "string" &&
           subscriber.email.toLowerCase() === email,
       );
       if (exists) return { ok: true, duplicate: true };
@@ -478,10 +498,11 @@ async function handleNewsletterApi(request, response, pathname) {
       return { ok: true, duplicate: false };
     });
 
-    sendJson(response, 202, {
+    sendJson(response, isUnsubscribe ? 200 : 202, {
       ok: true,
-      message:
-        "Đã ghi nhận đăng ký của bạn. Hiện MovieVerse chưa gửi email bản tin tự động.",
+      message: isUnsubscribe
+        ? "Nếu email này đã đăng ký, địa chỉ đã được gỡ khỏi danh sách nhận tin."
+        : "Đã ghi nhận đăng ký của bạn. Hiện MovieVerse chưa gửi email bản tin tự động.",
     });
   } catch (error) {
     const badInput =
