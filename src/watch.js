@@ -97,10 +97,33 @@ function renderWatchPage(current) {
         : isKamenRiderBuild
           ? 49
           : 1;
+  const availableEpisodes = new Set(
+    Array.from({ length: episodeCount }, (_, index) => index + 1).filter(
+      (episode) => getEpisodeSource(current, episode),
+    ),
+  );
   const requestedEpisode = Number(params.get("episode"));
-  let activeEpisode = Number.isInteger(requestedEpisode)
+  const requestedEpisodeNumber = Number.isInteger(requestedEpisode)
     ? Math.min(Math.max(requestedEpisode, 1), episodeCount)
     : 1;
+  let activeEpisode = availableEpisodes.has(requestedEpisodeNumber)
+    ? requestedEpisodeNumber
+    : (availableEpisodes.values().next().value ?? 1);
+  if (
+    params.has("episode") &&
+    !availableEpisodes.has(requestedEpisodeNumber)
+  ) {
+    if (availableEpisodes.has(activeEpisode)) {
+      params.set("episode", String(activeEpisode));
+    } else {
+      params.delete("episode");
+    }
+    const normalizedUrl = new URL(window.location.href);
+    normalizedUrl.searchParams.delete("episode");
+    const validEpisode = params.get("episode");
+    if (validEpisode) normalizedUrl.searchParams.set("episode", validEpisode);
+    window.history.replaceState({}, "", normalizedUrl);
+  }
   const catalog = getMovieDB().slice(0, 12);
   const position = catalog.findIndex((item) => item.id === current.id);
   const start = position >= 0 ? position : 0;
@@ -275,7 +298,7 @@ function renderWatchPage(current) {
                 <div><p class="eyebrow">${episodeCount > 1 ? "Series" : "Phim lẻ"}</p><h3 id="episodesHeading">Tập phim</h3></div>
                 <span class="watch-aside-count" id="episodeCount" aria-label="${episodeCount} tập">${String(episodeCount).padStart(2, "0")}</span>
               </div>
-              <p class="aside-desc episode-note">${episodeCount > 1 ? "Chọn tập muốn xem." : "Phim này có một nội dung độc lập."}${episodeUrls.length ? " Video từng tập được phát từ liên kết đã cập nhật." : " Video từng tập chưa có trong kho; player hiện phát trailer hoặc clip có sẵn."}</p>
+              <p class="aside-desc episode-note">${availableEpisodes.size ? "Video từng tập được phát từ liên kết đã cập nhật." : episodeCount > 1 ? `Đã ghi nhận ${episodeCount} tập nhưng chưa có liên kết video tập.` : "Chưa có liên kết video nội dung phim."}${sources.length ? " Nguồn phát phía trên chỉ có trailer hoặc clip, không phải nội dung đầy đủ." : " Chưa có trailer hoặc nguồn video nào trong kho."}</p>
               <div class="episode-list" id="episodeList" role="group" aria-label="Danh sách tập phim"></div>
             </section>
 
@@ -514,10 +537,16 @@ function renderWatchPage(current) {
 
   function renderEpisodes() {
     const list = document.querySelector("#episodeList");
+    if (!availableEpisodes.size) {
+      list.innerHTML =
+        '<p class="episode-unavailable">Chưa có video tập nào để phát.</p>';
+      return;
+    }
     list.innerHTML = Array.from({ length: episodeCount }, (_, index) => {
       const episode = index + 1;
       const label = episodeCount === 1 ? "Phim lẻ" : `Tập ${String(episode).padStart(2, "0")}`;
-      return `<button type="button" class="episode-btn ${episode === activeEpisode ? "is-current" : ""}" data-episode="${episode}" aria-pressed="${episode === activeEpisode}">${label}</button>`;
+      const hasSource = availableEpisodes.has(episode);
+      return `<button type="button" class="episode-btn ${episode === activeEpisode ? "is-current" : ""}" data-episode="${episode}" aria-pressed="${episode === activeEpisode}"${hasSource ? "" : " disabled"}>${label}</button>`;
     }).join("");
   }
 
@@ -527,6 +556,11 @@ function renderWatchPage(current) {
       : activeEpisode;
 
     if (target === activeEpisode && !options.force) return;
+    const episodeSource = getEpisodeSource(current, target);
+    if (!episodeSource) {
+      showToast(`Video tập ${target} chưa được cập nhật.`);
+      return;
+    }
     activeEpisode = target;
     document.querySelectorAll(".episode-btn").forEach((episodeButton) => {
       const isActive = Number(episodeButton.dataset.episode) === activeEpisode;
@@ -536,8 +570,7 @@ function renderWatchPage(current) {
     const nextUrl = new URL(window.location.href);
     nextUrl.searchParams.set("episode", String(activeEpisode));
     window.history.replaceState({}, "", nextUrl);
-    const episodeSource = getEpisodeSource(current, activeEpisode);
-    if (episodeSource) loadSource(activeSource, episodeSource);
+    loadSource(activeSource, episodeSource);
 
     if (episodeCount > 1) {
       showToast(
@@ -787,15 +820,15 @@ function renderWatchPage(current) {
     } else if (event.data === states.PAUSED || event.data === states.ENDED) {
       setPlayIcon(false);
       stopYouTubeTicker(player);
-      if (event.data === states.ENDED && episodeCount > 1 && activeEpisode < episodeCount) {
+      if (
+        event.data === states.ENDED &&
+        isEpisodeSourcePlaying &&
+        activeEpisode < episodeCount &&
+        availableEpisodes.has(activeEpisode + 1)
+      ) {
         confirmNextEpisode().then((shouldContinue) => {
           if (!shouldContinue) return;
-          const nextEpisode = activeEpisode + 1;
-          goToEpisode(nextEpisode, { autoNext: true });
-          if (!getEpisodeSource(current, nextEpisode)) {
-            backend.seekTo(0);
-            backend.play();
-          }
+          goToEpisode(activeEpisode + 1, { autoNext: true });
         });
       }
     }
@@ -924,15 +957,14 @@ function renderWatchPage(current) {
     media.addEventListener("play", () => setPlayIcon(true));
     media.addEventListener("pause", () => setPlayIcon(false));
     media.addEventListener("ended", () => {
-      if (episodeCount > 1 && activeEpisode < episodeCount) {
+      if (
+        isEpisodeSourcePlaying &&
+        activeEpisode < episodeCount &&
+        availableEpisodes.has(activeEpisode + 1)
+      ) {
         confirmNextEpisode().then((shouldContinue) => {
           if (!shouldContinue) return;
-          const nextEpisode = activeEpisode + 1;
-          goToEpisode(nextEpisode, { autoNext: true });
-          if (!getEpisodeSource(current, nextEpisode)) {
-            backend.seekTo(0);
-            backend.play();
-          }
+          goToEpisode(activeEpisode + 1, { autoNext: true });
         });
       }
     });
