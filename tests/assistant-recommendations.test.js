@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   answerFromCatalog,
+  findMovieNamedInQuestion,
   hasMovieRecommendationIntent,
+  isUnrecognizedMovieRequest,
 } from "../assistant-recommendations.js";
 import {
   animePosterMap,
@@ -103,6 +105,70 @@ test("matches a series title when the user omits its subtitle", () => {
   assert.equal(hasMovieRecommendationIntent(question, attackCatalog), true);
   assert.match(answer, /Có nhé! Attack on Titan: Season 1 có trong kho MovieVerse/);
   assert.doesNotMatch(answer, /Past Lives/);
+});
+
+test("matches a movie title when the user omits its leading article", () => {
+  assert.equal(
+    findMovieNamedInQuestion("Tìm phim Wild Robot", moodCatalog)?.title,
+    "The Wild Robot",
+  );
+});
+
+test("matches Vietnamese movie titles without matching case or diacritics", () => {
+  const vietnameseCatalog = [{ id: "vn-1", title: "Đảo Của Dân Ngụ Cư" }];
+
+  assert.equal(
+    findMovieNamedInQuestion("DAO CUA DAN NGU CU", vietnameseCatalog)?.id,
+    "vn-1",
+  );
+  assert.equal(
+    findMovieNamedInQuestion("đảo của dân ngụ cư", vietnameseCatalog)?.id,
+    "vn-1",
+  );
+});
+
+test("matches a movie title when the user omits its final s", () => {
+  assert.equal(
+    findMovieNamedInQuestion("Tìm phim past live", catalog)?.title,
+    "Past Lives",
+  );
+});
+
+test("matches Kiki's Delivery when the user omits punctuation and the subtitle", () => {
+  const kikiCatalog = [
+    { id: "kiki", title: "Kiki’s Delivery Service" },
+    ...catalog,
+  ];
+
+  assert.equal(
+    findMovieNamedInQuestion("kiki delivery", kikiCatalog)?.id,
+    "kiki",
+  );
+});
+
+test("matches incomplete and slightly misspelled movie titles", () => {
+  const kikiCatalog = [
+    { id: "kiki", title: "Kiki’s Delivery Service" },
+    ...catalog,
+  ];
+
+  assert.equal(findMovieNamedInQuestion("kiki deliv", kikiCatalog)?.id, "kiki");
+  assert.equal(findMovieNamedInQuestion("kiki delivry", kikiCatalog)?.id, "kiki");
+  assert.equal(findMovieNamedInQuestion("past liv", catalog)?.id, "m2");
+  assert.equal(findMovieNamedInQuestion("xyz qwerty", kikiCatalog), undefined);
+  assert.equal(findMovieNamedInQuestion("pest livers", catalog), undefined);
+});
+
+test("distinguishes unknown movie requests from greetings and recommendations", () => {
+  assert.equal(isUnrecognizedMovieRequest("Tìm phim xyzabc", catalog), true);
+  assert.equal(isUnrecognizedMovieRequest("gia đình là số 1", catalog), true);
+  assert.equal(isUnrecognizedMovieRequest("Mình muốn xem pest livers", catalog), true);
+  assert.equal(isUnrecognizedMovieRequest("Mình muốn xem phim Past Lives", catalog), false);
+  assert.equal(isUnrecognizedMovieRequest("Xin chào", catalog), false);
+  assert.equal(
+    isUnrecognizedMovieRequest("Gợi ý phim hành động", catalog),
+    false,
+  );
 });
 
 test("recommends movies similar to Dune and explains the shared genre", () => {

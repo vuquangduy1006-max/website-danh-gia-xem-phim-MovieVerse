@@ -521,10 +521,19 @@ function closeSearch() {
   document.querySelector(".header-search")?.classList.remove("has-results");
 }
 
+function normalizeMovieSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[đĐ]/g, "d")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("vi")
+    .trim();
+}
+
 function renderSearch(query = "") {
-  const normalizedQuery = query.trim().toLocaleLowerCase("vi");
+  const normalizedQuery = normalizeMovieSearchText(query);
   const results = movies.filter((movie) =>
-    movie.title.toLocaleLowerCase("vi").includes(normalizedQuery),
+    normalizeMovieSearchText(movie.title).includes(normalizedQuery),
   );
   const searchForm = document.querySelector(".header-search");
   const resultsBox = document.querySelector("#searchResults");

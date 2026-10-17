@@ -2,12 +2,14 @@ import "./assistant-chat.css";
 import {
   answerFromCatalog,
   findMovieNamedInQuestion,
+  isUnrecognizedMovieRequest,
 } from "../assistant-recommendations.js";
 import { getMovieGenres } from "./data/data.js";
 import { rankMovieRecommendations } from "./data/recommendations.js";
 
 const WELCOME_MESSAGE =
   "Chào bạn! Tối nay bạn muốn xem phim theo thể loại, tâm trạng hay thời lượng nào?";
+const MOVIE_NOT_FOUND_MESSAGE = "Không thể tìm ra phim này.";
 
 export function mountAssistantChat(movies) {
   const messages = [];
@@ -80,15 +82,15 @@ export function mountAssistantChat(movies) {
 
       if (role === "assistant") {
         const userQuery = messages.at(-2)?.content || "";
-        const firstMentionedMovie =
-          findMovieNamedInQuestion(userQuery, movies) ||
+        const requestedMovie = findMovieNamedInQuestion(userQuery, movies);
+        const firstMentionedMovie = requestedMovie ||
           findMovieNamedInQuestion(content, movies);
 
         if (firstMentionedMovie) {
           message.classList.add("has-recommendations");
           const cards = document.createElement("div");
           cards.className = "assistant-chat-recommendations";
-          const createMovieCard = (movie, { primary = false, reason = "" } = {}) => {
+          const createMovieCard = (movie, { primary = false, reason = "", searched = false } = {}) => {
             const link = document.createElement("a");
             link.className = `assistant-chat-recommendation${primary ? " is-primary" : " is-extra"}`;
             link.href = `/movie-detail.html?id=${encodeURIComponent(movie.id)}`;
@@ -109,9 +111,14 @@ export function mountAssistantChat(movies) {
             const title = document.createElement("strong");
             title.textContent = movie.title;
             const detail = document.createElement("span");
+            const movieDetails = [movie.year, getMovieGenres(movie).join(", ")]
+              .filter(Boolean);
+            if (!reason && Number.isFinite(Number(movie.rating))) {
+              movieDetails.push(`IMDb ${Number(movie.rating).toFixed(1)}/10`);
+            }
             detail.textContent = reason
               ? `${movie.year} · ${reason}`
-              : `${movie.year} · ${getMovieGenres(movie).join(", ")}`;
+              : `${searched ? "Kết quả tìm kiếm · " : ""}${movieDetails.join(" · ")}`;
             const summary = document.createElement("p");
             summary.className = "assistant-chat-recommendation-summary";
             const description = String(movie.description || "").trim();
@@ -123,7 +130,10 @@ export function mountAssistantChat(movies) {
             return link;
           };
 
-          cards.append(createMovieCard(firstMentionedMovie, { primary: true }));
+          cards.append(createMovieCard(firstMentionedMovie, {
+            primary: true,
+            searched: Boolean(requestedMovie),
+          }));
           message.insertBefore(cards, text);
 
           const extraRecommendations = rankMovieRecommendations({
@@ -184,20 +194,24 @@ export function mountAssistantChat(movies) {
     try {
       let answer;
       let notice = "";
-      try {
-        const response = await fetch("/api/assistant", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages, movies: compactCatalog }),
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Không thể gửi câu hỏi.");
-        answer = result.answer;
-        notice = result.notice || "";
-      } catch (error) {
-        answer = answerFromCatalog(content, compactCatalog);
-        notice = "Đang dùng gợi ý từ kho phim nội bộ.";
-        if (!answer) throw error;
+      if (isUnrecognizedMovieRequest(content, movies)) {
+        answer = MOVIE_NOT_FOUND_MESSAGE;
+      } else {
+        try {
+          const response = await fetch("/api/assistant", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages, movies: compactCatalog }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Không thể gửi câu hỏi.");
+          answer = result.answer;
+          notice = result.notice || "";
+        } catch (error) {
+          answer = answerFromCatalog(content, compactCatalog);
+          notice = "Đang dùng gợi ý từ kho phim nội bộ.";
+          if (!answer) throw error;
+        }
       }
 
       pendingMessage.remove();
