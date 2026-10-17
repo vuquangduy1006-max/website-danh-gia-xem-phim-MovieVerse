@@ -28,6 +28,16 @@ environment variables của hosting, không đưa `.env` lên git. Thư mục `.
 cần ổ đĩa bền vững và quyền ghi; nếu nền tảng xóa ổ đĩa khi redeploy, hãy đặt
 các biến `*_STORE_PATH` vào persistent disk hoặc chuyển sang database dùng chung.
 
+## Lưu trữ dữ liệu
+
+Danh mục phim được lưu tại `.data/movies.json`; có thể đặt
+`MOVIES_STORE_PATH` để chọn vị trí khác. Khi kho server chưa được khởi tạo,
+trang quản trị đưa danh mục phim trên trình duyệt đang mở lên máy chủ. Bình luận
+và tài khoản được lưu lần lượt tại `.data/reviews.json` và `.data/users.json`;
+có thể đổi vị trí bằng `REVIEWS_STORE_PATH` và `AUTH_USERS_STORE_PATH`.
+Danh mục thể loại hiện lưu trong localStorage của trình duyệt, chưa được chia sẻ
+giữa các thiết bị.
+
 Tài khoản người dùng được lưu tại `.data/users.json`; mật khẩu được băm bằng
 scrypt trước khi ghi vào kho. Có thể đặt `AUTH_USERS_STORE_PATH` để chọn vị trí
 lưu khác. Tài khoản người dùng cũ trên trình duyệt được chuyển lên máy chủ sau
