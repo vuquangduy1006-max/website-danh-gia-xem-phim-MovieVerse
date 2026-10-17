@@ -22,6 +22,7 @@ if (!isAdmin()) {
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="admin-nav" aria-label="Điều hướng quản trị">
           <a href="/admin/admin.html">Quản lý phim</a>
+          <a href="/admin/schedule.html">Lịch phát hành</a>
           <a class="active" href="/admin/genres.html" aria-current="page">Thể loại</a>
           <a href="/admin/comments.html">Bình luận</a>
           <a href="/" class="back-link">← Trang chủ</a>

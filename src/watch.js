@@ -57,7 +57,7 @@ function renderNotFound() {
       <div class="container nav-wrap">
         <a class="brand" href="/"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
@@ -140,7 +140,7 @@ function renderWatchPage(current) {
       <div class="container nav-wrap">
         <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
         <nav class="main-nav" aria-label="Điều hướng chính">
-          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
+          <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
           <a class="login-link" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">Chi tiết phim <span aria-hidden="true">→</span></a>

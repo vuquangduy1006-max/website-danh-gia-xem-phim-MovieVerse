@@ -118,6 +118,7 @@ async function initializeCatalogStore() {
     await persistCatalog({
       movies: movieSeed,
       genres: genreList,
+      schedule: [],
       updatedAt: null,
     });
   }
@@ -130,7 +131,7 @@ async function readCatalog() {
   await catalogStoreInitialization;
   const saved = JSON.parse(await readFile(catalogFilePath, "utf8"));
   if (!isValidCatalog(saved)) throw new Error("Movie catalog storage is invalid");
-  return saved;
+  return { ...saved, schedule: saved.schedule || [] };
 }
 
 async function persistCatalog(catalog) {
@@ -195,11 +196,76 @@ function isValidCatalog(catalog) {
     }
   }
 
+  if (
+    catalog.schedule !== undefined &&
+    !isValidSchedule(catalog.schedule, movieIds)
+  ) {
+    return false;
+  }
+
   try {
     return Buffer.byteLength(JSON.stringify(catalog), "utf8") <= MAX_CATALOG_BYTES;
   } catch {
     return false;
   }
+}
+
+function isValidSchedule(schedule, movieIds) {
+  if (!Array.isArray(schedule) || schedule.length > 1000) return false;
+  const ids = new Set();
+  for (const event of schedule) {
+    if (
+      !isRecord(event) ||
+      !validText(event.id, 80) ||
+      ids.has(event.id) ||
+      !validText(event.movieId, 80) ||
+      !movieIds.has(event.movieId) ||
+      !["movie", "episode"].includes(event.type) ||
+      typeof event.date !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(event.date)
+    ) {
+      return false;
+    }
+    ids.add(event.id);
+
+    const [year, month, day] = event.date.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      year < 1900 ||
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      return false;
+    }
+    if (
+      event.time !== undefined &&
+      event.time !== null &&
+      (typeof event.time !== "string" ||
+        !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(event.time))
+    ) {
+      return false;
+    }
+    if (
+      event.note !== undefined &&
+      event.note !== "" &&
+      !validText(event.note, 240)
+    ) {
+      return false;
+    }
+    if (event.type === "episode") {
+      if (
+        !Number.isInteger(event.episodeNumber) ||
+        event.episodeNumber < 1 ||
+        event.episodeNumber > 999
+      ) {
+        return false;
+      }
+    } else if (event.episodeNumber !== undefined) {
+      return false;
+    }
+  }
+  return true;
 }
 
 async function initializeReviewStore() {
@@ -364,12 +430,65 @@ function isRecord(value) {
 async function handleCatalogApi(request, response, pathname) {
   if (request.method === "GET" && pathname === "/api/catalog") {
     try {
-      const { movies, genres, updatedAt } = await readCatalog();
-      sendJson(response, 200, { movies, genres, updatedAt });
+      sendJson(response, 200, await readCatalog());
     } catch (error) {
       console.error("Unable to read shared movie catalog:", error);
       sendJson(response, 500, {
         error: "Không thể tải danh mục phim từ máy chủ.",
+      });
+    }
+    return true;
+  }
+
+  if (request.method === "PUT" && pathname === "/api/admin/schedule") {
+    if (!isAdminRequest(request)) {
+      sendJson(response, 403, {
+        error: "Cần đăng nhập quản trị để cập nhật lịch phát hành.",
+      });
+      return true;
+    }
+    try {
+      const body = await readJson(request, MAX_CATALOG_BYTES);
+      if (
+        !isRecord(body) ||
+        !Array.isArray(body.schedule) ||
+        !(body.expectedUpdatedAt === null ||
+          typeof body.expectedUpdatedAt === "string")
+      ) {
+        sendJson(response, 400, { error: "Lịch phát hành không hợp lệ." });
+        return true;
+      }
+      const result = await updateCatalog((catalog) => {
+        if (catalog.updatedAt !== body.expectedUpdatedAt) {
+          return { ok: false, conflict: true };
+        }
+        const movieIds = new Set(catalog.movies.map((movie) => movie.id));
+        if (!isValidSchedule(body.schedule, movieIds)) {
+          return { ok: false, invalid: true };
+        }
+        catalog.schedule = body.schedule;
+        catalog.updatedAt = new Date().toISOString();
+        if (!isValidCatalog(catalog)) return { ok: false, invalid: true };
+        return { ok: true };
+      });
+      if (!result.ok) {
+        sendJson(response, result.conflict ? 409 : 400, {
+          error: result.conflict
+            ? "Danh mục đã được cập nhật ở nơi khác. Tải lại trang quản trị rồi thử lại."
+            : "Lịch phát hành không hợp lệ, vượt giới hạn lưu trữ hoặc có phim không còn trong danh mục.",
+        });
+        return true;
+      }
+      sendJson(response, 200, result.catalog);
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to save release schedule:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Lịch phát hành không hợp lệ hoặc vượt quá giới hạn cho phép."
+          : "Không thể lưu lịch phát hành trên máy chủ.",
       });
     }
     return true;
@@ -409,13 +528,19 @@ async function handleCatalogApi(request, response, pathname) {
       }
       catalog.movies = body.movies;
       catalog.genres = body.genres;
+      const movieIds = new Set(body.movies.map((movie) => movie.id));
+      catalog.schedule = catalog.schedule.filter((event) =>
+        movieIds.has(event.movieId),
+      );
       catalog.updatedAt = new Date().toISOString();
+      if (!isValidCatalog(catalog)) return { ok: false, invalid: true };
       return { ok: true };
     });
     if (!result.ok) {
-      sendJson(response, 409, {
-        error:
-          "Danh mục đã được cập nhật ở nơi khác. Tải lại trang quản trị rồi thử lại.",
+      sendJson(response, result.conflict ? 409 : 400, {
+        error: result.conflict
+          ? "Danh mục đã được cập nhật ở nơi khác. Tải lại trang quản trị rồi thử lại."
+          : "Danh mục phim không hợp lệ hoặc vượt quá giới hạn lưu trữ.",
       });
       return true;
     }
@@ -1259,7 +1384,11 @@ const server = createServer(async (request, response) => {
   ) {
     if (await handleReviewsApi(request, response, pathname)) return;
   }
-  if (pathname === "/api/catalog" || pathname === "/api/admin/catalog") {
+  if (
+    pathname === "/api/catalog" ||
+    pathname === "/api/admin/catalog" ||
+    pathname === "/api/admin/schedule"
+  ) {
     if (await handleCatalogApi(request, response, pathname)) return;
   }
   if (await handleMovieRatingApi(request, response, url)) return;

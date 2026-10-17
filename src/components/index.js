@@ -53,7 +53,7 @@ export function renderAccountActions() {
   const initial = escapeHtml(session.name?.charAt(0).toUpperCase() || "U");
   const adminLink =
     session.role === "admin"
-      ? '<a href="/admin/admin.html">Quản lý phim</a>'
+      ? '<a href="/admin/admin.html">Quản lý phim</a><a href="/admin/schedule.html">Quản lý lịch phát hành</a>'
       : "";
   const passwordLink =
     session.role === "user"

@@ -1,0 +1,195 @@
+.schedule-admin-main {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-top: 54px;
+}
+
+.schedule-admin-main::before {
+  position: absolute;
+  z-index: -1;
+  top: -220px;
+  left: 50%;
+  width: min(1000px, 100vw);
+  height: 460px;
+  content: "";
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(240, 91, 60, 0.1), transparent 68%);
+}
+
+.schedule-admin-main .admin-heading {
+  margin-bottom: 30px;
+}
+
+.schedule-admin-main .admin-heading h1 {
+  font-size: clamp(34px, 5vw, 48px);
+  letter-spacing: -2px;
+}
+
+.schedule-admin-main .admin-heading p:last-child {
+  max-width: 620px;
+  line-height: 1.7;
+}
+
+.schedule-admin-form-panel,
+.schedule-admin-list {
+  margin-bottom: 22px;
+}
+
+.schedule-admin-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.schedule-admin-panel-heading h2 {
+  margin: 0 0 5px;
+  font: 600 21px var(--display);
+}
+
+.schedule-admin-panel-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.schedule-admin-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.schedule-admin-form > label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.schedule-admin-form [hidden] {
+  display: none;
+}
+
+.schedule-admin-form .toolbar-select,
+.schedule-admin-form .toolbar-input {
+  width: 100%;
+  min-height: 42px;
+  color: var(--text);
+}
+
+.schedule-admin-note {
+  grid-column: 1 / -1;
+}
+
+.schedule-admin-submit {
+  display: flex;
+  align-items: flex-end;
+}
+
+.schedule-admin-count,
+.schedule-admin-muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.schedule-admin-status {
+  color: var(--green);
+  font-size: 12px;
+}
+
+.schedule-admin-status.is-past {
+  color: var(--muted);
+}
+
+.schedule-admin-storage-note {
+  margin: 18px 0 42px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.schedule-admin-error {
+  margin: 80px auto;
+  color: var(--danger);
+  text-align: center;
+}
+
+.schedule-admin-table td {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .schedule-admin-main .container {
+    width: min(100% - 36px, 1160px);
+  }
+
+  .schedule-admin-table thead {
+    display: none;
+  }
+
+  .schedule-admin-table,
+  .schedule-admin-table tbody,
+  .schedule-admin-table tr,
+  .schedule-admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .schedule-admin-table tr {
+    position: relative;
+    padding: 14px 16px 52px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .schedule-admin-table tbody td {
+    display: inline-block;
+    width: auto;
+    padding: 0 12px 7px 0;
+    border: 0;
+  }
+
+  .schedule-admin-table tbody td:nth-child(1)::before {
+    content: "Ngày: ";
+  }
+
+  .schedule-admin-table tbody td:nth-child(3)::before {
+    content: "Loại: ";
+  }
+
+  .schedule-admin-table tbody td:nth-child(4) {
+    display: block;
+    width: 100%;
+    padding: 3px 0;
+  }
+
+  .schedule-admin-table tbody td:nth-child(5)::before {
+    content: "Trạng thái: ";
+  }
+
+  .schedule-admin-table tbody td:nth-child(6) {
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .schedule-admin-main {
+    padding-top: 34px;
+  }
+
+  .schedule-admin-form {
+    grid-template-columns: 1fr;
+    padding: 0 16px 18px;
+  }
+
+  .schedule-admin-panel-heading {
+    align-items: flex-start;
+    padding: 17px 16px;
+  }
+}

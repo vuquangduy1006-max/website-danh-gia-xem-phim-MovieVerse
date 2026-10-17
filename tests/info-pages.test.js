@@ -55,3 +55,21 @@ test("newsletter consent and privacy text disclose storage and delivery limits",
   assert.match(infoPage, /Email chỉ được lưu vào danh sách quan tâm nhận tin/);
   assert.match(infoPage, /hủy đăng ký bằng cách nhập lại email đã dùng/);
 });
+
+test("release calendar is linked publicly and managed through the shared catalog", async () => {
+  const [header, calendarPage, adminPage, viteConfig, infoPage] =
+    await Promise.all([
+      readFile(new URL("src/components/header.html", projectRoot), "utf8"),
+      readFile(new URL("src/schedule-page.js", projectRoot), "utf8"),
+      readFile(new URL("src/data/schedule-admin.js", projectRoot), "utf8"),
+      readFile(new URL("vite.config.js", projectRoot), "utf8"),
+      readFile(new URL("src/info-page.js", projectRoot), "utf8"),
+    ]);
+
+  assert.match(header, /href="\/schedule\.html"/);
+  assert.match(calendarPage, /getReleaseSchedule/);
+  assert.match(calendarPage, /event\.type === "episode"/);
+  assert.match(adminPage, /saveSharedSchedule/);
+  assert.match(viteConfig, /adminSchedule: fileURLToPath/);
+  assert.match(infoPage, /Lịch do quản trị viên cập nhật/);
+});

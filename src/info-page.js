@@ -74,6 +74,10 @@ document.querySelector("#app").innerHTML = `
             <p>Danh mục phim và thể loại được quản trị viên cập nhật trên máy chủ để mọi khách truy cập cùng xem một dữ liệu.</p>
           </article>
           <article>
+            <h3>Lịch phát hành</h3>
+            <p>Mở mục Lịch phát hành để xem các phim sắp chiếu và ngày ra tập mới. Lịch do quản trị viên cập nhật, chưa tự đồng bộ với lịch của các nền tảng phát hành.</p>
+          </article>
+          <article>
             <h3>Đánh giá và bình luận</h3>
             <p>Mở trang chi tiết phim để gửi đánh giá. Nếu API không kết nối được, hãy chạy cả giao diện và máy chủ bằng <code>npm run dev:local</code>.</p>
           </article>

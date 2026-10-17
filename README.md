@@ -39,6 +39,10 @@ chủ. Website chưa tích hợp dịch vụ gửi bản tin tự động.
 Trang `/info.html` cung cấp phần giới thiệu, trợ giúp, điều khoản và mô tả dữ
 liệu được lưu để người dùng biết rõ giới hạn hiện tại của website.
 
+Lịch phát hành tại `/schedule.html` hiển thị ngày chiếu phim và ngày phát hành
+tập mới do quản trị viên lên lịch tại `/admin/schedule.html`. Lịch được chia
+sẻ công khai cùng danh mục; hiện chưa tự đồng bộ dữ liệu phát hành từ các nền tảng.
+
 Khi nhập tên phim trong form quản trị, máy chủ tra cứu OMDb để tự điền các thông
 tin phim có sẵn (năm, ngày phát hành, rating IMDb, quốc gia, thời lượng, ngôn ngữ,
 phân loại độ tuổi, thể loại, poster, mô tả, đạo diễn, diễn viên, biên kịch,
