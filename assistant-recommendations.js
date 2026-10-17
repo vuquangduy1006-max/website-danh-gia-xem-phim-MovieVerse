@@ -517,8 +517,93 @@ export function normalizeAssistantText(value) {
   return String(value ?? "")
     .normalize("NFD")
     .replace(/[đĐ]/g, "d")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\p{Diacritic}/gu, "")
     .toLocaleLowerCase("vi");
+}
+
+const MOVIE_QUERY_STOP_WORDS = new Set([
+  "a", "an", "and", "ban", "bo", "can", "cho", "co", "cua", "film",
+  "films", "for", "gi", "goi", "hay", "hi", "hoi", "in", "khong",
+  "la", "me", "minh", "mot", "movie", "movies", "muon", "nao", "of",
+  "on", "phim", "please", "s", "the", "tim", "to", "toi", "tu", "van",
+  "ve", "va", "want", "watch", "xem", "xin", "y",
+]);
+
+function isWithinOneEdit(first, second) {
+  if (Math.abs(first.length - second.length) > 1) return false;
+
+  let firstIndex = 0;
+  let secondIndex = 0;
+  let edits = 0;
+  while (firstIndex < first.length && secondIndex < second.length) {
+    if (first[firstIndex] === second[secondIndex]) {
+      firstIndex += 1;
+      secondIndex += 1;
+      continue;
+    }
+
+    edits += 1;
+    if (edits > 1) return false;
+    if (first.length >= second.length) firstIndex += 1;
+    if (second.length >= first.length) secondIndex += 1;
+  }
+
+  return edits + Number(firstIndex < first.length || secondIndex < second.length) <= 1;
+}
+
+function scoreApproximateTitle(queryWords, titleWords) {
+  const searchableTitleWords = titleWords.filter(
+    (word) => !MOVIE_QUERY_STOP_WORDS.has(word),
+  );
+  let bestScore = null;
+
+  for (
+    let start = 0;
+    start <= searchableTitleWords.length - queryWords.length;
+    start += 1
+  ) {
+    let score = 0;
+    let edits = 0;
+    let strongMatches = 0;
+    let matchedCharacters = 0;
+
+    for (let offset = 0; offset < queryWords.length; offset += 1) {
+      const queryWord = queryWords[offset];
+      const titleWord = searchableTitleWords[start + offset];
+      let quality = 0;
+      if (queryWord === titleWord) quality = 3;
+      else if (
+        queryWord.length >= 3 &&
+        titleWord.startsWith(queryWord) &&
+        queryWord.length / titleWord.length >= 0.6
+      ) quality = 2;
+      else if (
+        queryWord.length >= 4 &&
+        titleWord.length >= 4 &&
+        isWithinOneEdit(queryWord, titleWord)
+      ) quality = 1;
+
+      if (!quality) break;
+      if (quality === 1) edits += 1;
+      else strongMatches += 1;
+      score += quality * 100 + queryWord.length;
+      matchedCharacters += queryWord.length;
+    }
+
+    if (
+      edits > 1 ||
+      strongMatches === 0 ||
+      (queryWords.length === 1 && edits > 0)
+    ) {
+      continue;
+    }
+
+    if (!bestScore || score > bestScore.score) {
+      bestScore = { score, matchedCharacters };
+    }
+  }
+
+  return bestScore;
 }
 
 export function findMovieNamedInQuestion(question, catalog = []) {
@@ -526,33 +611,70 @@ export function findMovieNamedInQuestion(question, catalog = []) {
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
   const paddedQuestion = ` ${normalizedQuestion} `;
-  return catalog
+  const candidates = catalog
     .flatMap((movie) => {
-      const fullTitle = normalizeAssistantText(movie.title)
-        .replace(/[^a-z0-9]+/g, " ")
-        .trim();
-      const seriesTitle = normalizeAssistantText(
-        String(movie.title).split(/[:\-–—]/, 1)[0],
+      const normalizeTitle = (title) => normalizeAssistantText(
+        String(title).replace(/['’]s\b/gi, ""),
       )
         .replace(/[^a-z0-9]+/g, " ")
         .trim();
-      const aliases = [fullTitle];
+      const fullTitle = normalizeTitle(movie.title);
+      const seriesTitle = normalizeTitle(String(movie.title).split(/[:\-–—]/, 1)[0]);
+      const aliases = [];
+      const addTitleAlias = (title) => {
+        const words = title.split(" ");
+        aliases.push(title);
+        for (let wordCount = 2; wordCount < words.length; wordCount += 1) {
+          aliases.push(words.slice(0, wordCount).join(" "));
+        }
+        const lastWord = words.at(-1);
+        if (
+          lastWord.length > 3 &&
+          lastWord.endsWith("s") &&
+          !/(?:ss|us|is)$/.test(lastWord)
+        ) {
+          addTitleAlias([...words.slice(0, -1), lastWord.slice(0, -1)].join(" "));
+        }
+      };
+      addTitleAlias(fullTitle);
+      const titleWithoutArticle = fullTitle.replace(/^(?:the|a|an)\s+/, "");
+      if (titleWithoutArticle !== fullTitle) addTitleAlias(titleWithoutArticle);
       if (
         seriesTitle !== fullTitle &&
         (seriesTitle.length >= 4 || seriesTitle.includes(" "))
       ) {
-        aliases.push(seriesTitle);
+        addTitleAlias(seriesTitle);
       }
-      return aliases.map((title) => ({ movie, title }));
+      return [...new Set(aliases)].map((title) => ({ movie, title }));
     })
     .map(({ movie, title }) => ({
       movie,
+      title,
       index: title ? paddedQuestion.indexOf(` ${title} `) : -1,
       titleLength: title.length,
-    }))
+    }));
+  const exactMatch = candidates
     .filter(({ index }) => index >= 0)
     .sort(
       (first, second) => first.index - second.index ||
+        second.titleLength - first.titleLength,
+    )[0]?.movie;
+  if (exactMatch) return exactMatch;
+
+  const queryWords = normalizedQuestion
+    .split(" ")
+    .filter((word) => word.length >= 3 && !MOVIE_QUERY_STOP_WORDS.has(word));
+  if (!queryWords.length) return undefined;
+
+  return candidates
+    .map(({ movie, title, titleLength }) => {
+      const match = scoreApproximateTitle(queryWords, title.split(" "));
+      return match ? { movie, titleLength, ...match } : null;
+    })
+    .filter(Boolean)
+    .sort(
+      (first, second) => second.score - first.score ||
+        second.matchedCharacters - first.matchedCharacters ||
         second.titleLength - first.titleLength,
     )[0]?.movie;
 }
@@ -675,14 +797,36 @@ export function hasMovieRecommendationIntent(question, catalog = []) {
   const query = normalizeAssistantText(question);
   return (
     Boolean(findMovieNamedInQuestion(question, catalog)) ||
+    hasRecommendationCriteria(query, catalog) ||
+    /(goi y|tu van|phim nao|muon xem)/.test(query)
+  );
+}
+
+function hasRecommendationCriteria(question, catalog) {
+  const query = normalizeAssistantText(question);
+  const filters = recommendationFilters(query);
+  return (
     requestedGenres(query).length > 0 ||
     requestedMoods(query).length > 0 ||
     findReferencedMovies(query, catalog).length > 0 ||
-    requestedRuntimeMinutes(query) !== null ||
-    recommendationFilters(query).yearFrom !== null ||
-    recommendationFilters(query).minimumRating !== null ||
-    /(goi y|tu van|phim nao|muon xem)/.test(query)
+    filters.runtimeMinutes !== null ||
+    filters.yearFrom !== null ||
+    filters.minimumRating !== null
   );
+}
+
+export function isUnrecognizedMovieRequest(question, catalog = []) {
+  const query = normalizeAssistantText(question);
+  if (/(xin chao|chao ban|hello|\bhi\b)/.test(query)) return false;
+  if (findMovieNamedInQuestion(question, catalog)) return false;
+  if (/\b(?:la\s+)?(?:so|number)\s+(?:\d+|mot|one)\b/.test(query)) return true;
+  if (hasRecommendationCriteria(query, catalog)) return false;
+
+  const remainingWords = query
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 3 && !MOVIE_QUERY_STOP_WORDS.has(word));
+  const genericMovieRequest = /(goi y|tu van|phim nao|muon xem)/.test(query);
+  return !genericMovieRequest || remainingWords.length > 0;
 }
 
 function formatRuntime(minutes) {
