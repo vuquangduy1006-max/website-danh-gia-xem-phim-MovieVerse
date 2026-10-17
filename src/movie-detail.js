@@ -12,6 +12,8 @@ import {
   deleteReview,
   getMovieReviews,
   getReviewReplies,
+  getMovieScoreOutOfTen,
+  loadReviews,
   syncReviews,
 } from "./data/reviews.js";
 import { getSession, isAdmin } from "./data/auth.js";
@@ -31,6 +33,7 @@ try {
 await initializeCatalog();
 
 const movieList = getMovieDB();
+const allReviews = loadReviews();
 const params = new URLSearchParams(window.location.search);
 const movie = resolveMovie();
 
@@ -263,15 +266,9 @@ function renderDetailPage(current) {
   bindMenuToggle();
 
   function renderMetrics() {
-    const list = getMovieReviews(current.title);
-    const average = list.length
-      ? list.reduce((sum, review) => sum + Number(review.rating), 0) /
-        list.length
-      : Number(current.rating);
-
     document.querySelector("#detailMetrics").innerHTML = [
-      `<span class="detail-score">★ ${average.toFixed(1)}</span>`,
-      `<span>IMDb ${current.rating}</span>`,
+      `<span class="detail-score">★ ${getMovieScoreOutOfTen(current, allReviews).toFixed(1)}/10</span>`,
+      `<span>IMDb ${current.rating}/10</span>`,
       `<span>${escapeHtml(credits.runtime)}</span>`,
       `<span>${escapeHtml(credits.ageRating)}</span>`,
       `<span>${current.genre}</span>`,
@@ -381,7 +378,7 @@ function renderDetailPage(current) {
                 <strong>${item.title}</strong>
                 <small>${item.year} · ${item.genre}</small>
               </span>
-              <span class="similar-score">★ ${item.rating}</span>
+              <span class="similar-score">★ ${getMovieScoreOutOfTen(item, allReviews).toFixed(1)}/10</span>
             </a>`,
           )
           .join("")

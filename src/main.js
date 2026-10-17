@@ -5,7 +5,11 @@ import {
   initializeCatalog,
 } from "./data/data.js";
 import { getTrailer } from "./data/media.js";
-import { loadReviews, syncReviews } from "./data/reviews.js";
+import {
+  getMovieScoreOutOfTen,
+  loadReviews,
+  syncReviews,
+} from "./data/reviews.js";
 import { loadFavorites } from "./data/favorites.js";
 import {
   isMoreRecommendationsRequest,
@@ -154,7 +158,7 @@ ${renderHeader({
       <div class="review-stat">
         <span class="stat-label">Điểm trung bình</span>
         <strong id="avgRatingStat">0.0</strong>
-        <small id="reviewCountStat">0 đánh giá</small>
+        <small><span id="reviewCountStat">0 đánh giá</span> · thang 5</small>
       </div>
       <div class="review-stat">
         <span class="stat-label">Phim được yêu thích</span>
@@ -163,8 +167,8 @@ ${renderHeader({
       </div>
       <div class="review-stat">
         <span class="stat-label">Cộng đồng</span>
-        <strong>94%</strong>
-        <small>đánh giá tích cực</small>
+        <strong id="positiveReviewStat">—</strong>
+        <small id="positiveReviewCaption">chưa có đánh giá</small>
       </div>
     </div>
     <div class="home-review-grid" id="homeReviewGrid"></div>
@@ -334,12 +338,13 @@ function renderHero() {
   document.querySelector("#heroSlides").innerHTML = heroMovies
     .map((movie, index) => {
       const trailer = getTrailer(movie);
+      const runtime = String(movie.runtime ?? "").trim();
       const mediaMarkup =
         trailer && trailer.kind === "file"
           ? `<video class="hero-video" autoplay muted loop playsinline preload="metadata" poster="${movie.poster || movie.backdrop || ""}" src="${trailer.url}"></video>`
           : `<div class="hero-bg" style="background-image:url('${movie.backdrop || movie.poster}')"></div>`;
 
-      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span><span>2h 46m</span></div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}">▶ &nbsp;Xem ngay</a></div></article>`;
+      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}</div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}">▶ &nbsp;Xem ngay</a></div></article>`;
     })
     .join("");
   document.querySelector("#sliderDots").innerHTML = heroMovies
@@ -391,7 +396,7 @@ function renderMovies(filter = "all") {
     ? shown
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="${detailUrl(movie)}">${movie.title}</a><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="${detailUrl(movie)}">${movie.title}</a><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
@@ -439,7 +444,7 @@ function renderRecommendations(query = "") {
               <div class="recommendation-card-copy">
                 <p class="recommendation-reasons">${reasons.map(escapeHtml).join(" · ")}</p>
                 <h3><a href="${detailUrl(movie)}">${escapeHtml(movie.title)}</a></h3>
-                <p>${escapeHtml(movie.year)} · ★ ${escapeHtml(movie.rating)}</p>
+                <p>${escapeHtml(movie.year)} · ★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</p>
               </div>
             </article>
           `;
@@ -464,16 +469,8 @@ function bindDetailLinks(selector) {
 }
 
 function getMovieReviewAverage(title) {
-  const movieReviews = reviews.filter((review) => review.movieTitle === title);
-  if (!movieReviews.length) {
-    const movie = movies.find((item) => item.title === title);
-    return Number(movie?.rating ?? 0);
-  }
-
-  const average =
-    movieReviews.reduce((sum, review) => sum + Number(review.rating), 0) /
-    movieReviews.length;
-  return Number(average.toFixed(1));
+  const movie = movies.find((item) => item.title === title);
+  return movie ? getMovieScoreOutOfTen(movie, reviews) : 0;
 }
 
 function renderRanking() {
@@ -487,7 +484,7 @@ function renderRanking() {
   document.querySelector("#rankingList").innerHTML = top
     .map(
       (movie, index) =>
-        `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${watchUrl(movie)}" aria-label="Xem phim ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${getMovieReviewAverage(movie.title).toFixed(1)}</span></article>`,
+        `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${watchUrl(movie)}" aria-label="Xem phim ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></article>`,
     )
     .join("");
 }
@@ -498,7 +495,7 @@ function renderNewMovies() {
     ? newMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="${detailUrl(movie)}">${movie.title}</a><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="${detailUrl(movie)}">${movie.title}</a><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có phim mới.</p>';
@@ -528,9 +525,20 @@ function renderHomeReviews() {
 
   document.querySelector("#avgRatingStat").textContent = average
     ? average.toFixed(1)
-    : "0.0";
+    : "—";
   document.querySelector("#reviewCountStat").textContent =
     `${reviews.length} đánh giá`;
+  const positiveRate = reviews.length
+    ? Math.round(
+        (reviews.filter((review) => Number(review.rating) >= 4).length /
+          reviews.length) *
+          100,
+      )
+    : null;
+  document.querySelector("#positiveReviewStat").textContent =
+    positiveRate === null ? "—" : `${positiveRate}%`;
+  document.querySelector("#positiveReviewCaption").textContent =
+    positiveRate === null ? "chưa có đánh giá" : "đánh giá 4–5 sao";
   document.querySelector("#topReviewMovie").textContent = topMovie
     ? topMovie[0]
     : "-";

@@ -8,7 +8,11 @@ import {
   getMovieCredits,
   getSimilarMovies,
 } from "./data/media.js";
-import { getMovieReviews } from "./data/reviews.js";
+import {
+  getMovieScoreOutOfTen,
+  loadReviews,
+  syncReviews,
+} from "./data/reviews.js";
 import {
   loadFavorites,
   toggleFavorite as toggleFavoriteStorage,
@@ -20,7 +24,14 @@ const PROGRESS_KEY = "movieverse_watch_progress";
 
 await initializeCatalog();
 
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
+
 const movieList = getMovieDB();
+const allReviews = loadReviews();
 const params = new URLSearchParams(window.location.search);
 const movie = resolveMovie();
 
@@ -99,11 +110,7 @@ function renderWatchPage(current) {
   );
   const pageUrl = `${window.location.origin}/watch.html?id=${encodeURIComponent(current.id)}`;
   const shareText = `Đang xem ${current.title} (${current.year}) trên MovieVerse`;
-  const reviews = getMovieReviews(current.title);
-  const average = reviews.length
-    ? reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
-      reviews.length
-    : Number(current.rating);
+  const score = getMovieScoreOutOfTen(current, allReviews);
 
   document.querySelector("#app").innerHTML = `
     <header class="site-header watch-header">
@@ -217,8 +224,8 @@ function renderWatchPage(current) {
                   <p class="eyebrow">${current.genre} · ${current.year}</p>
                   <h1 id="watchInfoHeading">${current.title}</h1>
                   <div class="detail-metrics">
-                    <span class="detail-score">★ ${average.toFixed(1)}</span>
-                    <span>IMDb ${current.rating}</span>
+                    <span class="detail-score">★ ${score.toFixed(1)}/10</span>
+                    <span>IMDb ${current.rating}/10</span>
                     <span>${escapeHtml(credits.runtime)}</span>
                     <span>${escapeHtml(credits.ageRating)}</span>
                     <span>${escapeHtml(credits.language)}</span>
