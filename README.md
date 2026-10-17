@@ -29,6 +29,7 @@ scrypt trước khi ghi vào kho. Có thể đặt `AUTH_USERS_STORE_PATH` để
 lưu khác. Tài khoản người dùng cũ trên trình duyệt được chuyển lên máy chủ sau
 khi đăng nhập thành công lần đầu. Phiên đăng nhập hết hạn sau 12 giờ, hoặc 30
 ngày nếu chọn “Ghi nhớ đăng nhập”. Khôi phục mật khẩu qua email chưa được hỗ trợ.
+Người dùng đã đăng nhập có thể đổi mật khẩu từ menu tài khoản; thao tác này thu hồi các phiên đăng nhập hiện có và yêu cầu đăng nhập lại.
 
 Email đăng ký nhận tin được lưu tại `.data/newsletter.json`; có thể đặt
 `NEWSLETTER_STORE_PATH` để chọn vị trí khác. Hiện email chỉ được lưu khi người

@@ -222,6 +222,41 @@ export function isAdmin() {
   return getSession()?.role === "admin";
 }
 
+export async function changePassword(currentPassword, newPassword) {
+  const session = getSession();
+  if (!session || session.role !== "user" || !session.token) {
+    return {
+      ok: false,
+      message: "Hãy đăng nhập bằng tài khoản người dùng để đổi mật khẩu.",
+    };
+  }
+
+  let result;
+  try {
+    result = await requestJson("/api/auth/password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + session.token,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (!result.response.ok) {
+    return {
+      ok: false,
+      message: result.payload.error || "Không thể đổi mật khẩu.",
+    };
+  }
+
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  return { ok: true, message: result.payload.message };
+}
+
 export async function logoutUser() {
   const session = getSession();
   localStorage.removeItem(SESSION_KEY);

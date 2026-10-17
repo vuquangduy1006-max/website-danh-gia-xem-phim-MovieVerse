@@ -40,6 +40,7 @@ const PASSWORD_HASH_BYTES = 64;
 const scrypt = promisify(scryptCallback);
 const requestsByIp = new Map();
 const authRequestsByIp = new Map();
+const passwordChangeRequestsByIp = new Map();
 const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
@@ -540,6 +541,87 @@ async function verifyPassword(password, saltHex, hashHex) {
 }
 
 async function handleAuthApi(request, response, pathname) {
+  if (request.method === "POST" && pathname === "/api/auth/password") {
+    const ip = request.socket.remoteAddress || "unknown";
+    if (isRateLimited(ip, passwordChangeRequestsByIp)) {
+      sendJson(response, 429, {
+        error: "Bạn thử quá nhiều lần. Vui lòng chờ một phút rồi thử lại.",
+      });
+      return true;
+    }
+
+    const token = getBearerToken(request);
+    const session = token ? userTokens.get(token) : null;
+    if (!session || session.expiresAt <= Date.now()) {
+      if (token) userTokens.delete(token);
+      sendJson(response, 401, {
+        error: "Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại.",
+      });
+      return true;
+    }
+
+    try {
+      const body = await readJson(request);
+      if (
+        !isRecord(body) ||
+        typeof body.currentPassword !== "string" ||
+        body.currentPassword.length < 8 ||
+        body.currentPassword.length > 128 ||
+        typeof body.newPassword !== "string" ||
+        body.newPassword.length < 8 ||
+        body.newPassword.length > 128 ||
+        body.currentPassword === body.newPassword
+      ) {
+        sendJson(response, 400, {
+          error:
+            "Nhập đúng mật khẩu hiện tại và mật khẩu mới khác mật khẩu cũ (8–128 ký tự).",
+        });
+        return true;
+      }
+
+      const { salt, hash } = await hashPassword(body.newPassword);
+      const result = await updateUsers(async (users) => {
+        const user = users.find((item) => item.id === session.userId);
+        if (
+          !user ||
+          !(await verifyPassword(
+            body.currentPassword,
+            user.passwordSalt,
+            user.passwordHash,
+          ))
+        ) {
+          return { ok: false };
+        }
+        user.passwordSalt = salt;
+        user.passwordHash = hash;
+        return { ok: true };
+      });
+      if (!result.ok) {
+        sendJson(response, 401, { error: "Mật khẩu hiện tại không đúng." });
+        return true;
+      }
+
+      for (const [userToken, userSession] of userTokens) {
+        if (userSession.userId === session.userId) userTokens.delete(userToken);
+      }
+      sendJson(response, 200, {
+        ok: true,
+        message: "Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới.",
+      });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to change user password:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu đổi mật khẩu không hợp lệ hoặc quá lớn."
+          : "Không thể đổi mật khẩu lúc này. Vui lòng thử lại sau.",
+      });
+    }
+    return true;
+  }
+
   if (
     request.method === "POST" &&
     (pathname === "/api/auth/register" || pathname === "/api/auth/session")

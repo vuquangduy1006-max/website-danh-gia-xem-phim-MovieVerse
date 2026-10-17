@@ -67,7 +67,7 @@ document.querySelector("#app").innerHTML = `
           </article>
           <article>
             <h3>Tài khoản và danh sách cá nhân</h3>
-            <p>Tạo tài khoản để đăng nhập. Phim yêu thích, lịch sử xem và vị trí xem được lưu trên trình duyệt hiện tại, nên chưa đồng bộ giữa các thiết bị.</p>
+            <p>Tạo tài khoản để đăng nhập; người dùng có thể đổi mật khẩu trong menu tài khoản. Phim yêu thích, lịch sử xem và vị trí xem được lưu trên trình duyệt hiện tại, nên chưa đồng bộ giữa các thiết bị.</p>
           </article>
           <article>
             <h3>Danh mục phim</h3>
@@ -82,7 +82,7 @@ document.querySelector("#app").innerHTML = `
             <p>Một số phim chưa có nguồn phát hoặc phụ thuộc dịch vụ bên ngoài. Thử tải lại trang, kiểm tra kết nối hoặc quay lại trang chi tiết để xem trailer khả dụng.</p>
           </article>
         </div>
-        <p class="info-note">Website chưa có chức năng đặt lại mật khẩu hoặc kênh hỗ trợ trực tiếp. Các liên kết mạng xã hội sẽ được cập nhật khi có địa chỉ chính thức.</p>
+        <p class="info-note">Website chưa hỗ trợ đặt lại mật khẩu qua email hoặc có kênh hỗ trợ trực tiếp. Nếu đã đăng nhập, bạn có thể đổi mật khẩu từ menu tài khoản. Các liên kết mạng xã hội sẽ được cập nhật khi có địa chỉ chính thức.</p>
       </section>
 
       <section class="info-section" id="terms" aria-labelledby="termsHeading">
@@ -101,7 +101,7 @@ document.querySelector("#app").innerHTML = `
         <p class="eyebrow">04 · Dữ liệu</p>
         <h2 id="privacyHeading">Quyền riêng tư</h2>
         <ul>
-          <li>Khi đăng ký, tên hiển thị, email và mật khẩu đã băm được lưu trên máy chủ để cung cấp tài khoản. Mật khẩu gốc không được lưu trong kho tài khoản.</li>
+          <li>Khi đăng ký, tên hiển thị, email và mật khẩu đã băm được lưu trên máy chủ để cung cấp tài khoản. Mật khẩu gốc không được lưu trong kho tài khoản. Khi đổi mật khẩu, các phiên đăng nhập hiện có sẽ bị thu hồi.</li>
           <li>Phiên đăng nhập được lưu trong bộ nhớ phiên của trình duyệt hoặc bộ nhớ cục bộ nếu chọn “Ghi nhớ đăng nhập”. Đăng xuất sẽ yêu cầu máy chủ thu hồi phiên.</li>
           <li>Danh sách yêu thích, lịch sử xem và tiến độ phát được lưu cục bộ trên thiết bị của bạn. Xóa dữ liệu website trong trình duyệt có thể xóa các mục này.</li>
           <li>Đánh giá và bình luận được gửi tới máy chủ để hiển thị trong cộng đồng.</li>

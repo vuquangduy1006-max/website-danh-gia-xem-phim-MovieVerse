@@ -40,7 +40,7 @@ test("registration terms link to the real terms section", async () => {
 
   assert.match(registration, /href="\/info\.html#terms"/);
   assert.match(infoPage, /id="terms"/);
-  assert.match(infoPage, /chưa có chức năng đặt lại mật khẩu/i);
+  assert.match(infoPage, /chưa hỗ trợ đặt lại mật khẩu qua email/i);
 });
 
 test("newsletter consent and privacy text disclose storage and delivery limits", async () => {
