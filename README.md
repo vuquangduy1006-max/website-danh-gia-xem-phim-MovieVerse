@@ -14,9 +14,19 @@
 
 Lệnh này khởi động cả giao diện Vite và API. Bình luận và câu trả lời được chia
 sẻ qua API, lưu tại `.data/reviews.json`. Có thể đặt `REVIEWS_STORE_PATH` để
-chọn vị trí lưu khác. Máy chủ triển khai cần chạy API MovieVerse, cấu hình thông
-tin quản trị và cấp quyền ghi cho thư mục lưu trữ. Nếu chỉ chạy Vite
+chọn vị trí lưu khác. Nếu chỉ chạy Vite
 (`npm run dev`), các thao tác bình luận sẽ báo lỗi kết nối API.
+
+## Triển khai production
+
+Build command: `npm ci && npm run build`.
+Start command: `npm start` với `NODE_ENV=production`.
+Ứng dụng phục vụ frontend build và API cùng một port; hosting cần chuyển tiếp
+biến `PORT` và cho phép tiến trình Node bind cổng công khai. Cấu hình
+`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OMDB_API_KEY`, `TMDB_API_KEY` trong phần
+environment variables của hosting, không đưa `.env` lên git. Thư mục `.data`
+cần ổ đĩa bền vững và quyền ghi; nếu nền tảng xóa ổ đĩa khi redeploy, hãy đặt
+các biến `*_STORE_PATH` vào persistent disk hoặc chuyển sang database dùng chung.
 
 Tài khoản người dùng được lưu tại `.data/users.json`; mật khẩu được băm bằng
 scrypt trước khi ghi vào kho. Có thể đặt `AUTH_USERS_STORE_PATH` để chọn vị trí

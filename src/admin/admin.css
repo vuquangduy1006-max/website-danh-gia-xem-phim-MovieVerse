@@ -438,6 +438,46 @@ button {
 .field-hint.is-error {
   color: #ff786b;
 }
+#movieSearchField[hidden] {
+  display: none;
+}
+.related-movie-list {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.related-movie-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  white-space: normal;
+}
+.related-movie-option img {
+  width: 40px;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 3px;
+  background: var(--bg);
+}
+.movie-search-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.related-movie-option strong {
+  color: var(--text);
+}
+.related-movie-option small,
+.related-movie-overview {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
 .field input,
 .field select,
 .field textarea {
