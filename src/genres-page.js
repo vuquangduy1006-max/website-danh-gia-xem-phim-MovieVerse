@@ -1,6 +1,15 @@
 import "./style.css";
 import "./genres-page.css";
-import { getMovieDB, getMovieGenres } from "./data/data.js";
+import {
+  getMovieDB,
+  getMovieGenres,
+  initializeCatalog,
+} from "./data/data.js";
+import {
+  getMovieScoreOutOfTen,
+  loadReviews,
+  syncReviews,
+} from "./data/reviews.js";
 import {
   bindAccountActions,
   getPosterStyle,
@@ -9,7 +18,16 @@ import {
   renderHeader,
 } from "./components/index.js";
 
+await initializeCatalog();
+
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
+
 const movies = getMovieDB();
+const reviews = loadReviews();
 const availableGenres = [...new Set(movies.flatMap(getMovieGenres))].sort(
   (a, b) => a.localeCompare(b, "vi"),
 );
@@ -101,7 +119,7 @@ document.querySelector("#genreMovieGrid").innerHTML = filteredMovies.length
   ? filteredMovies
       .map(
         (movie, index) =>
-          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="${getPosterStyle(movie)}" aria-label="Xem phim ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a><span class="card-rating">★ ${escapeHtml(movie.rating)}</span></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
+          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="${getPosterStyle(movie)}" aria-label="Xem phim ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a><span class="card-rating">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
       )
       .join("")
   : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';

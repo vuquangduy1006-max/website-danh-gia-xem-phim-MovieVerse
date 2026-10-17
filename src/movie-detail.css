@@ -821,11 +821,13 @@
 .similar-list {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 .similar-item {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   padding: 8px;
   border-radius: 6px;
   transition: background 180ms ease;

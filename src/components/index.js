@@ -54,9 +54,13 @@ export function renderAccountActions() {
   const initial = escapeHtml(session.name?.charAt(0).toUpperCase() || "U");
   const adminLink =
     session.role === "admin"
-      ? '<a href="/admin/admin.html">Quản lý phim</a>'
+      ? '<a href="/admin/admin.html">Quản lý phim</a><a href="/admin/schedule.html">Quản lý lịch phát hành</a>'
       : "";
-  return `<details class="account-menu"><summary class="account-chip"><span class="account-avatar">${initial}</span><span>${safeName}</span></summary><div class="account-dropdown">${adminLink}<a href="/history.html">🕘 Lịch sử xem</a><a href="/favorites.html">♡ Phim yêu thích</a><button class="logout-button" id="logoutButton" type="button">↪ Đăng xuất</button></div></details>`;
+  const passwordLink =
+    session.role === "user"
+      ? '<a href="/account.html">Đổi mật khẩu</a>'
+      : "";
+  return `<details class="account-menu"><summary class="account-chip"><span class="account-avatar">${initial}</span><span>${safeName}</span></summary><div class="account-dropdown">${adminLink}${passwordLink}<a href="/history.html">🕘 Lịch sử xem</a><a href="/favorites.html">♡ Phim yêu thích</a><button class="logout-button" id="logoutButton" type="button">↪ Đăng xuất</button></div></details>`;
 }
 
 export function bindAccountActions() {
