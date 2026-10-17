@@ -17,9 +17,9 @@ const movies = getMovieDB();
 const movieById = new Map(movies.map((movie) => [movie.id, movie]));
 const schedule = getReleaseSchedule();
 const today = localDateKey(new Date());
-let month = new Date();
-month.setDate(1);
-let selectedDate = null;
+const weekStart = parseLocalDate(today);
+weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+let displayedWeek = new Date(weekStart);
 let eventType = "all";
 
 document.querySelector("#app").innerHTML = `
@@ -56,7 +56,7 @@ document.querySelector("#app").innerHTML = `
       <div class="schedule-toolbar">
         <div>
           <p class="eyebrow">Lịch phim</p>
-          <h2 id="scheduleHeading">Lịch tháng</h2>
+          <h2 id="scheduleHeading">Lịch theo tuần</h2>
         </div>
         <div class="schedule-controls">
           <label class="sr-only" for="scheduleType">Lọc lịch phát hành</label>
@@ -65,25 +65,18 @@ document.querySelector("#app").innerHTML = `
             <option value="movie">Phim mới</option>
             <option value="episode">Tập mới</option>
           </select>
-          <div class="schedule-month-controls" aria-label="Chọn tháng">
-            <button type="button" id="previousMonth" aria-label="Tháng trước">←</button>
-            <span id="scheduleMonthLabel"></span>
-            <button type="button" id="nextMonth" aria-label="Tháng sau">→</button>
+          <div class="schedule-week-controls" aria-label="Chọn tuần">
+            <button type="button" id="previousWeek" aria-label="Tuần trước">←</button>
+            <span id="scheduleWeekLabel"></span>
+            <button type="button" id="nextWeek" aria-label="Tuần sau">→</button>
           </div>
+          <span class="schedule-count" id="scheduleCount"></span>
         </div>
       </div>
       <p class="schedule-notice" id="scheduleNotice" role="status" hidden></p>
-      <div class="schedule-calendar" id="scheduleCalendar" aria-label="Lịch phát hành tháng"></div>
-      <section class="schedule-agenda" aria-labelledby="agendaTitle">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Các ngày đã lên lịch</p>
-            <h2 id="agendaTitle">Sắp phát hành</h2>
-          </div>
-          <span id="scheduleCount"></span>
-        </div>
-        <div class="schedule-events" id="scheduleEvents"></div>
-      </section>
+      <div class="schedule-week-scroll" tabindex="0" aria-label="Lịch phát hành theo ngày trong tuần">
+        <div class="schedule-week-grid" id="scheduleWeek"></div>
+      </div>
     </section>
   </main>
   ${renderFooter({
@@ -97,7 +90,7 @@ document.querySelector("#app").innerHTML = `
 `;
 
 bindAccountActions();
-const calendar = document.querySelector("#scheduleCalendar");
+const weekGrid = document.querySelector("#scheduleWeek");
 const typeSelect = document.querySelector("#scheduleType");
 const menuToggle = document.querySelector(".menu-toggle");
 menuToggle.addEventListener("click", () => {
@@ -146,81 +139,59 @@ function visibleEvents() {
 }
 
 function render() {
-  const monthLabel = new Intl.DateTimeFormat("vi-VN", {
-    month: "long",
+  const weekEnd = new Date(displayedWeek);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const dateRange = new Intl.DateTimeFormat("vi-VN", {
+    day: "numeric",
+    month: "short",
     year: "numeric",
-  }).format(month);
-  document.querySelector("#scheduleMonthLabel").textContent = monthLabel;
-  document.querySelector("#scheduleHeading").textContent =
-    `Lịch ${monthLabel}`;
-  const previousMonth = document.querySelector("#previousMonth");
-  previousMonth.disabled =
-    month.getFullYear() === new Date().getFullYear() &&
-    month.getMonth() === new Date().getMonth();
+  });
+  const weekLabel = `${dateRange.format(displayedWeek)} – ${dateRange.format(weekEnd)}`;
+  document.querySelector("#scheduleWeekLabel").textContent = weekLabel;
+  document.querySelector("#scheduleHeading").textContent = `Lịch tuần ${weekLabel}`;
+  document.querySelector("#previousWeek").disabled =
+    displayedWeek.getTime() <= weekStart.getTime();
 
   if (!catalogReady) {
     const notice = document.querySelector("#scheduleNotice");
     notice.hidden = false;
     notice.textContent =
       "Không thể tải lịch phát hành. Hãy tải lại trang hoặc thử lại sau.";
-    calendar.innerHTML = "";
-    document.querySelector("#scheduleEvents").innerHTML = "";
+    weekGrid.innerHTML = "";
     document.querySelector("#scheduleCount").textContent = "";
     return;
   }
 
   const events = visibleEvents();
-  const monthEvents = events.filter((event) => {
-    const date = parseLocalDate(event.date);
-    return (
-      date.getFullYear() === month.getFullYear() &&
-      date.getMonth() === month.getMonth()
-    );
-  });
+  const firstDate = localDateKey(displayedWeek);
+  const lastDate = localDateKey(weekEnd);
+  const weekEvents = events.filter(
+    (event) => event.date >= firstDate && event.date <= lastDate,
+  );
   const eventsByDate = new Map();
-  for (const event of monthEvents) {
+  for (const event of weekEvents) {
     eventsByDate.set(event.date, [...(eventsByDate.get(event.date) || []), event]);
   }
-  const firstWeekday = (month.getDay() + 6) % 7;
-  const daysInMonth = new Date(
-    month.getFullYear(),
-    month.getMonth() + 1,
-    0,
-  ).getDate();
-  const cells = [
-    ...Array.from({ length: firstWeekday }, () => '<div class="schedule-day is-empty" aria-hidden="true"></div>'),
-    ...Array.from({ length: daysInMonth }, (_, index) => {
-      const day = index + 1;
-      const dateKey = localDateKey(
-        new Date(month.getFullYear(), month.getMonth(), day),
-      );
-      const dayEvents = eventsByDate.get(dateKey) || [];
-      const isSelected = selectedDate === dateKey;
-      return `<button class="schedule-day${dayEvents.length ? " has-events" : ""}${isSelected ? " is-selected" : ""}${dateKey === today ? " is-today" : ""}" type="button" data-date="${dateKey}"${dayEvents.length ? ` aria-label="${day} tháng ${month.getMonth() + 1}: ${dayEvents.length} sự kiện"` : ` aria-label="${day} tháng ${month.getMonth() + 1}"`}${dayEvents.length ? "" : " disabled"}><span>${day}</span>${dayEvents.length ? `<small>${dayEvents.length} mục</small>` : ""}</button>`;
-    }),
-  ];
-  calendar.innerHTML = `
-    <div class="schedule-weekdays" aria-hidden="true">
-      ${["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => `<span>${day}</span>`).join("")}
-    </div>
-    <div class="schedule-days">${cells.join("")}</div>
-  `;
-
-  const agendaEvents = selectedDate
-    ? monthEvents.filter((event) => event.date === selectedDate)
-    : monthEvents;
-  document.querySelector("#agendaTitle").textContent = selectedDate
-    ? new Intl.DateTimeFormat("vi-VN", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      }).format(parseLocalDate(selectedDate))
-    : "Sắp phát hành";
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(displayedWeek);
+    date.setDate(date.getDate() + index);
+    const dateKey = localDateKey(date);
+    const dayEvents = eventsByDate.get(dateKey) || [];
+    const weekday = new Intl.DateTimeFormat("vi-VN", {
+      weekday: "long",
+    }).format(date);
+    const dateText = new Intl.DateTimeFormat("vi-VN", {
+      day: "numeric",
+      month: "numeric",
+    }).format(date);
+    return `<section class="schedule-week-day${dateKey === today ? " is-today" : ""}" aria-label="${escapeHtml(`${weekday}, ${dateText}`)}">
+      <header class="schedule-week-day-heading"><h3>${escapeHtml(weekday)}</h3><time datetime="${dateKey}">${dateText}</time></header>
+      <div class="schedule-week-day-events">${dayEvents.length ? dayEvents.map(renderEvent).join("") : '<p class="schedule-day-empty">Chưa có lịch</p>'}</div>
+    </section>`;
+  });
+  weekGrid.innerHTML = weekDays.join("");
   document.querySelector("#scheduleCount").textContent =
-    `${agendaEvents.length} sự kiện`;
-  document.querySelector("#scheduleEvents").innerHTML = agendaEvents.length
-    ? agendaEvents.map(renderEvent).join("")
-    : `<div class="schedule-empty"><span aria-hidden="true">◷</span><h3>${events.length ? "Chưa có lịch trong tháng này" : "Chưa có lịch phát hành"}</h3><p>${events.length ? "Chọn tháng khác để xem các phim và tập sắp tới." : "Lịch phim hoặc tập mới sẽ xuất hiện tại đây khi được cập nhật."}</p></div>`;
+    `${weekEvents.length} sự kiện`;
 }
 
 function renderEvent(event) {
@@ -229,13 +200,6 @@ function renderEvent(event) {
   const label = episode
     ? `Tập ${String(event.episodeNumber).padStart(2, "0")}`
     : "Phim mới";
-  const date = parseLocalDate(event.date);
-  const dateText = new Intl.DateTimeFormat("vi-VN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(date);
   const href = `/movie-detail.html?id=${encodeURIComponent(movie.id)}`;
   const poster = movie.poster
     ? `<img src="${escapeHtml(movie.poster)}" alt="" loading="lazy">`
@@ -243,7 +207,7 @@ function renderEvent(event) {
   return `<article class="schedule-event">
     <a class="schedule-event-poster" href="${href}" aria-label="Xem ${escapeHtml(movie.title)}">${poster}</a>
     <div class="schedule-event-main">
-      <div class="schedule-event-meta"><span class="schedule-event-type${episode ? " is-episode" : ""}">${label}</span><time datetime="${event.date}${event.time ? `T${event.time}:00+07:00` : ""}">${dateText}${event.time ? ` · ${event.time} (GMT+7)` : ""}</time></div>
+      <div class="schedule-event-meta"><span class="schedule-event-type${episode ? " is-episode" : ""}">${label}</span><time datetime="${event.date}${event.time ? `T${event.time}:00+07:00` : ""}">${event.time ? `${event.time} GMT+7` : "Chưa có giờ"}</time></div>
       <h3><a href="${href}">${escapeHtml(movie.title)}${episode ? ` · ${label}` : ""}</a></h3>
       ${event.note ? `<p>${escapeHtml(event.note)}</p>` : ""}
     </div>
@@ -251,25 +215,16 @@ function renderEvent(event) {
   </article>`;
 }
 
-calendar.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-date]");
-  if (!button) return;
-  selectedDate = selectedDate === button.dataset.date ? null : button.dataset.date;
-  render();
-});
 typeSelect.addEventListener("change", () => {
   eventType = typeSelect.value;
-  selectedDate = null;
   render();
 });
-document.querySelector("#previousMonth").addEventListener("click", () => {
-  month = new Date(month.getFullYear(), month.getMonth() - 1, 1);
-  selectedDate = null;
+document.querySelector("#previousWeek").addEventListener("click", () => {
+  displayedWeek.setDate(displayedWeek.getDate() - 7);
   render();
 });
-document.querySelector("#nextMonth").addEventListener("click", () => {
-  month = new Date(month.getFullYear(), month.getMonth() + 1, 1);
-  selectedDate = null;
+document.querySelector("#nextWeek").addEventListener("click", () => {
+  displayedWeek.setDate(displayedWeek.getDate() + 7);
   render();
 });
 
