@@ -1,11 +1,12 @@
 import { createServer } from "node:http";
+import { createReadStream } from "node:fs";
 import {
   randomBytes,
   scrypt as scryptCallback,
   timingSafeEqual,
 } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import {
@@ -15,7 +16,9 @@ import {
 import { genreList, movieSeed } from "./src/data/data.js";
 import { REVIEW_SEED } from "./src/data/review-seed.js";
 
-const port = Number(process.env.API_PORT || 3001);
+const port = Number(process.env.PORT || process.env.API_PORT || 3001);
+const host = process.env.HOST || "0.0.0.0";
+const staticRoot = resolve(fileURLToPath(new URL("./dist/", import.meta.url)));
 const apiKey = process.env.AI_API_KEY;
 const omdbApiKey = process.env.OMDB_API_KEY;
 const omdbApiUrl = process.env.OMDB_API_URL || "https://www.omdbapi.com/";
@@ -53,22 +56,15 @@ const usersFilePath = resolve(
   process.env.AUTH_USERS_STORE_PATH ||
     fileURLToPath(new URL("./.data/users.json", import.meta.url)),
 );
-const newsletterFilePath = resolve(
-  process.env.NEWSLETTER_STORE_PATH ||
-    fileURLToPath(new URL("./.data/newsletter.json", import.meta.url)),
-);
-const catalogFilePath = resolve(
-  process.env.MOVIE_CATALOG_STORE_PATH ||
-    fileURLToPath(new URL("./.data/catalog.json", import.meta.url)),
+const moviesFilePath = resolve(
+  process.env.MOVIES_STORE_PATH ||
+    fileURLToPath(new URL("./.data/movies.json", import.meta.url)),
 );
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
 let userWriteQueue = Promise.resolve();
 let userStoreInitialization;
-let newsletterWriteQueue = Promise.resolve();
-let newsletterStoreInitialization;
-let catalogWriteQueue = Promise.resolve();
-let catalogStoreInitialization;
+let movieWriteQueue = Promise.resolve();
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -77,6 +73,83 @@ function sendJson(response, status, payload) {
     "X-Content-Type-Options": "nosniff",
   });
   response.end(JSON.stringify(payload));
+}
+
+async function serveStatic(request, response, pathname) {
+  if (process.env.NODE_ENV !== "production") return false;
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(pathname);
+  } catch {
+    sendJson(response, 400, { error: "Đường dẫn không hợp lệ." });
+    return true;
+  }
+  const requestedPath = decodedPath === "/" ? "/index.html" : decodedPath;
+  const filePath = resolve(staticRoot, `.${requestedPath}`);
+  if (!filePath.startsWith(`${staticRoot}${sep}`)) return false;
+
+  let fileInfo;
+  try {
+    fileInfo = await stat(filePath);
+  } catch (error) {
+    if (error.code === "ENOENT" || error.code === "EISDIR") return false;
+    throw error;
+  }
+  if (!fileInfo.isFile()) return false;
+
+  let status = 200;
+  let start = 0;
+  let end = fileInfo.size - 1;
+  const range = request.headers.range;
+  if (range) {
+    const match = range.match(/^bytes=(\d*)-(\d*)$/);
+    if (!match || (!match[1] && !match[2])) {
+      response.writeHead(416, { "Content-Range": `bytes */${fileInfo.size}` });
+      response.end();
+      return true;
+    }
+    if (!match[1]) {
+      const suffixLength = Number(match[2]);
+      start = Math.max(0, fileInfo.size - suffixLength);
+    } else {
+      start = Number(match[1]);
+      if (match[2]) end = Math.min(Number(match[2]), end);
+    }
+    if (start >= fileInfo.size || end < start) {
+      response.writeHead(416, { "Content-Range": `bytes */${fileInfo.size}` });
+      response.end();
+      return true;
+    }
+    status = 206;
+  }
+
+  const contentTypes = {
+    ".css": "text/css; charset=utf-8",
+    ".html": "text/html; charset=utf-8",
+    ".ico": "image/x-icon",
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".js": "text/javascript; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".mp4": "video/mp4",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+  };
+  response.writeHead(status, {
+    "Content-Type": contentTypes[extname(filePath).toLowerCase()] || "application/octet-stream",
+    "Content-Length": end - start + 1,
+    "Accept-Ranges": "bytes",
+    ...(status === 206
+      ? { "Content-Range": `bytes ${start}-${end}/${fileInfo.size}` }
+      : {}),
+    "X-Content-Type-Options": "nosniff",
+  });
+  if (request.method === "HEAD") response.end();
+  else createReadStream(filePath, { start, end }).pipe(response);
+  return true;
 }
 
 function sendCatalogFallback(response, question, catalog, notice) {
@@ -320,6 +393,74 @@ async function persistUsers(users) {
   const temporaryPath = `${usersFilePath}.${process.pid}.tmp`;
   await writeFile(temporaryPath, JSON.stringify(users, null, 2), "utf8");
   await rename(temporaryPath, usersFilePath);
+}
+
+async function readMovieCatalog() {
+  try {
+    const movies = JSON.parse(await readFile(moviesFilePath, "utf8"));
+    if (!Array.isArray(movies)) throw new Error("Movie storage is invalid");
+    return { movies, initialized: true };
+  } catch (error) {
+    if (error.code === "ENOENT") return { movies: [], initialized: false };
+    throw error;
+  }
+}
+
+async function persistMovieCatalog(movies) {
+  await mkdir(dirname(moviesFilePath), { recursive: true });
+  const temporaryPath = `${moviesFilePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify(movies, null, 2), "utf8");
+  await rename(temporaryPath, moviesFilePath);
+}
+
+async function handleMovieCatalogApi(request, response, pathname) {
+  if (request.method === "GET" && pathname === "/api/movies") {
+    sendJson(response, 200, await readMovieCatalog());
+    return true;
+  }
+
+  if (request.method !== "PUT" || pathname !== "/api/admin/movies") {
+    return false;
+  }
+  if (!isAdminRequest(request)) {
+    sendJson(response, 401, { error: "Hãy đăng nhập quản trị để lưu kho phim." });
+    return true;
+  }
+
+  let movies;
+  try {
+    movies = (await readJson(request, 4 * 1024 * 1024)).movies;
+  } catch (error) {
+    sendJson(response, 400, {
+      error:
+        error.message === "Request body is too large"
+          ? "Danh mục phim vượt quá dung lượng cho phép."
+          : "Dữ liệu danh mục phim không hợp lệ.",
+    });
+    return true;
+  }
+  if (
+    !Array.isArray(movies) ||
+    movies.length > 5000 ||
+    movies.some(
+      (movie) =>
+        !isRecord(movie) ||
+        !validText(movie.id, 80) ||
+        !validText(movie.title, 200),
+    )
+  ) {
+    sendJson(response, 400, { error: "Danh mục phim không hợp lệ." });
+    return true;
+  }
+
+  const operation = movieWriteQueue.then(() => persistMovieCatalog(movies));
+  movieWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  await operation;
+  sendJson(response, 200, { ok: true });
+  return true;
 }
 
 function updateUsers(update) {
@@ -1095,9 +1236,12 @@ async function handleReviewsApi(request, response, pathname) {
 async function handleMovieRatingApi(request, response, url) {
   const isMovieDetailsLookup =
     url.pathname === "/api/admin/movie-details";
+  const isMovieSearchLookup = url.pathname === "/api/admin/movie-search";
   if (
     request.method !== "GET" ||
-    (!isMovieDetailsLookup && url.pathname !== "/api/admin/movie-rating")
+    (!isMovieDetailsLookup &&
+      !isMovieSearchLookup &&
+      url.pathname !== "/api/admin/movie-rating")
   ) {
     return false;
   }
@@ -1105,6 +1249,35 @@ async function handleMovieRatingApi(request, response, url) {
     sendJson(response, 403, {
       error: "Cần đăng nhập quản trị để tra cứu thông tin phim.",
     });
+    return true;
+  }
+  if (isMovieSearchLookup) {
+    const query = url.searchParams.get("query")?.trim();
+    if (!validText(query, 120)) {
+      sendJson(response, 400, { error: "Tên phim cần tìm phải dài từ 2 đến 120 ký tự." });
+      return true;
+    }
+    if (!tmdbApiKey) {
+      sendJson(response, 503, {
+        error: "Máy chủ chưa cấu hình TMDB_API_KEY để tìm phim.",
+      });
+      return true;
+    }
+    const ip = request.socket.remoteAddress || "unknown";
+    if (isRateLimited(ip, movieRatingRequestsByIp)) {
+      sendJson(response, 429, {
+        error: "Bạn tìm phim quá nhanh. Vui lòng chờ một phút rồi thử lại.",
+      });
+      return true;
+    }
+    try {
+      sendJson(response, 200, { movies: await searchTmdbMovies(query) });
+    } catch (error) {
+      console.error("Unable to search TMDb movies:", error);
+      sendJson(response, 502, {
+        error: "Không thể tìm phim trên TMDb. Kiểm tra kết nối máy chủ rồi thử lại.",
+      });
+    }
     return true;
   }
   if (!omdbApiKey) {
@@ -1253,9 +1426,18 @@ async function fetchTmdbMovieDetails(title) {
 
   const tmdbFetch = async (endpoint) => {
     const requestUrl = new URL(endpoint, apiBase);
-    requestUrl.searchParams.set("api_key", tmdbApiKey);
+    const isReadAccessToken = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(
+      tmdbApiKey,
+    );
+    const headers = {};
+    if (isReadAccessToken) {
+      headers.Authorization = `Bearer ${tmdbApiKey}`;
+    } else {
+      requestUrl.searchParams.set("api_key", tmdbApiKey);
+    }
     requestUrl.searchParams.set("language", "en-US");
     const upstream = await fetch(requestUrl, {
+      headers,
       signal: AbortSignal.timeout(8_000),
     });
     if (!upstream.ok) {
@@ -1274,6 +1456,12 @@ async function fetchTmdbMovieDetails(title) {
   const movie = await tmdbFetch(
     `movie/${match.id}?append_to_response=credits,videos,release_dates`,
   );
+  let similar = { results: [] };
+  try {
+    similar = await tmdbFetch(`movie/${match.id}/similar?page=1`);
+  } catch (error) {
+    console.error("Unable to load similar TMDb movies:", error);
+  }
   const credits = movie.credits || {};
   const crew = Array.isArray(credits.crew) ? credits.crew : [];
   const joinCrew = (jobs) =>
@@ -1314,13 +1502,23 @@ async function fetchTmdbMovieDetails(title) {
       ? `https://image.tmdb.org/t/p/original${path}`
       : "";
   const text = (value) => (typeof value === "string" ? value.trim() : "");
+  const similarMovies = Array.isArray(similar.results)
+    ? similar.results
+        .filter((item) => item?.id && typeof item.title === "string")
+        .slice(0, 5)
+        .map((item) => ({
+          title: item.title,
+          year: String(item.release_date || "").slice(0, 4),
+          overview: text(item.overview),
+          poster: imageUrl(item.poster_path),
+        }))
+    : [];
   const languages = Array.isArray(movie.spoken_languages)
     ? movie.spoken_languages
         .map((language) => language.english_name || language.name)
         .filter(Boolean)
         .join(", ")
     : "";
-  const crewDirector = joinCrew(["Director"]);
   const cast = Array.isArray(credits.cast)
     ? credits.cast
         .slice(0, 8)
@@ -1347,7 +1545,7 @@ async function fetchTmdbMovieDetails(title) {
     description: text(movie.overview),
     poster: imageUrl(movie.poster_path),
     backdrop: imageUrl(movie.backdrop_path),
-    director: crewDirector,
+    director: joinCrew(["Director"]),
     cast,
     writers: joinCrew(["Writer", "Screenplay", "Story"]),
     producers: joinCrew(["Producer", "Executive Producer"]),
@@ -1358,7 +1556,52 @@ async function fetchTmdbMovieDetails(title) {
     composers: joinCrew(["Original Music Composer", "Composer"]),
     website: text(movie.homepage),
     trailer: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : "",
+    similarMovies,
   };
+}
+
+async function fetchTmdbJson(endpoint) {
+  const apiBase = new URL(tmdbApiUrl);
+  if (!apiBase.pathname.endsWith("/")) apiBase.pathname += "/";
+  const requestUrl = new URL(endpoint, apiBase);
+  const isReadAccessToken = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(
+    tmdbApiKey,
+  );
+  const headers = {};
+  if (isReadAccessToken) {
+    headers.Authorization = `Bearer ${tmdbApiKey}`;
+  } else {
+    requestUrl.searchParams.set("api_key", tmdbApiKey);
+  }
+  requestUrl.searchParams.set("language", "en-US");
+  const upstream = await fetch(requestUrl, {
+    headers,
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!upstream.ok) throw new Error(`TMDb returned HTTP ${upstream.status}.`);
+  return upstream.json();
+}
+
+async function searchTmdbMovies(query) {
+  const result = await fetchTmdbJson(
+    `search/movie?query=${encodeURIComponent(query)}&include_adult=false&page=1`,
+  );
+  const imageUrl = (path) =>
+    typeof path === "string" && path.startsWith("/")
+      ? `https://image.tmdb.org/t/p/w342${path}`
+      : "";
+  return Array.isArray(result.results)
+    ? result.results
+        .filter((movie) => movie?.id && typeof movie.title === "string")
+        .slice(0, 8)
+        .map((movie) => ({
+          id: movie.id,
+          title: movie.title,
+          year: String(movie.release_date || "").slice(0, 4),
+          overview: typeof movie.overview === "string" ? movie.overview : "",
+          poster: imageUrl(movie.poster_path),
+        }))
+    : [];
 }
 
 const server = createServer(async (request, response) => {
@@ -1370,9 +1613,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (pathname.startsWith("/api/newsletter/")) {
-    if (await handleNewsletterApi(request, response, pathname)) return;
-  }
+  if (await handleMovieCatalogApi(request, response, pathname)) return;
 
   if (pathname.startsWith("/api/auth/")) {
     if (await handleAuthApi(request, response, pathname)) return;
@@ -1392,6 +1633,7 @@ const server = createServer(async (request, response) => {
     if (await handleCatalogApi(request, response, pathname)) return;
   }
   if (await handleMovieRatingApi(request, response, url)) return;
+  if (await serveStatic(request, response, pathname)) return;
 
   if (request.method !== "POST" || pathname !== "/api/assistant") {
     sendJson(response, 404, { error: "Không tìm thấy endpoint." });
@@ -1534,6 +1776,6 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`MovieVerse assistant API listening on http://127.0.0.1:${port}`);
+server.listen(port, host, () => {
+  console.log(`MovieVerse server listening on http://${host}:${port}`);
 });

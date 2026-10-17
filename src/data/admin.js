@@ -1,6 +1,8 @@
 import "../admin/admin.css";
 import {
   getMovieDB,
+  saveMovieDBToApi,
+  remoteMovieCatalogInitialized,
   getGenreList,
   getMovieGenres,
   initializeCatalog,
@@ -40,7 +42,7 @@ function loadDB() {
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.movies) && parsed.movies.length) {
+      if (Array.isArray(parsed.movies)) {
         return parsed.movies;
       }
     } catch (_) {}
@@ -48,9 +50,8 @@ function loadDB() {
   return getMovieDB();
 }
 
-async function persist(nextMovies = movies) {
-  await saveSharedCatalog(nextMovies, getGenreList());
-  movies = nextMovies;
+async function persist(nextMovies) {
+  await saveMovieDBToApi(nextMovies, getSession()?.adminToken);
 }
 
 function uid() {
@@ -65,6 +66,8 @@ let reviewQuery = "";
 let reviews = loadReviews();
 let ratingLookupTimer;
 let ratingLookupController;
+let movieSearchTimer;
+let movieSearchController;
 let ratingManuallyEdited = false;
 let selectedRatingSource = null;
 
@@ -165,6 +168,11 @@ document.querySelector("#app").innerHTML = `
             <label for="fieldTitle">Tên phim *</label>
             <input id="fieldTitle" type="text" placeholder="VD: Dune: Part Two" required>
           </div>
+          <div class="field full movie-search-field" id="movieSearchField" hidden>
+            <label>Kết quả tìm phim trên TMDb</label>
+            <div class="related-movie-list" id="movieSearchList" role="listbox" aria-label="Kết quả tìm phim"></div>
+            <small class="field-hint" id="movieSearchStatus" aria-live="polite"></small>
+          </div>
           <div class="field">
             <label for="fieldYear">Năm phát hành</label>
             <input id="fieldYear" type="number" min="1900" max="${currentYear}" placeholder="${currentYear}" aria-describedby="fieldYearError">
@@ -173,7 +181,7 @@ document.querySelector("#app").innerHTML = `
           <div class="field">
             <label for="fieldRating">Đánh giá (0 - 10)</label>
             <input id="fieldRating" type="number" min="0" max="10" step="0.1" placeholder="8.5">
-            <small class="field-hint" id="ratingLookupStatus" aria-live="polite">Nhập tên phim để tự điền thông tin tìm được từ OMDb. Trailer và tập phim không bị thay đổi.</small>
+            <small class="field-hint" id="ratingLookupStatus" aria-live="polite">Nhập tên phim để tự điền thông tin từ OMDb. Trailer được bổ sung từ TMDb nếu có API key và ô còn trống; link tập phim giữ nguyên.</small>
           </div>
           <div class="field">
             <label for="fieldReleaseDate">Ngày phát hành</label>
@@ -210,12 +218,17 @@ document.querySelector("#app").innerHTML = `
           <div class="field full">
             <label for="fieldTrailerUrl">URL trailer</label>
             <input id="fieldTrailerUrl" type="url" placeholder="YouTube hoặc video MP4 (https://...)">
-            <small class="field-hint">Dán link YouTube hoặc link video MP4 trực tiếp.</small>
+            <small class="field-hint">Trailer tự điền khi tìm được từ TMDb hoặc thư viện MovieVerse; nếu chưa có, dán link trailer tại đây.</small>
           </div>
           <div class="field full">
-            <label for="fieldEpisodes">URL các tập phim</label>
+            <label for="fieldMovieUrl">URL xem phim / tập đầu tiên</label>
+            <input id="fieldMovieUrl" type="url" placeholder="Link phát hợp pháp trên YouTube hoặc MP4 (https://...)" aria-describedby="movieUrlHint">
+            <small class="field-hint" id="movieUrlHint">Metadata không cung cấp link xem phim. Thêm link bạn có quyền sử dụng để phát phim trên trang Xem phim.</small>
+          </div>
+          <div class="field full">
+            <label for="fieldEpisodes">URL các tập tiếp theo</label>
             <textarea id="fieldEpisodes" rows="4" placeholder="Mỗi dòng là một tập, theo thứ tự phát&#10;https://..."></textarea>
-            <small class="field-hint">Dán link YouTube hoặc video MP4; mỗi dòng tương ứng một tập.</small>
+            <small class="field-hint">Chỉ dùng cho phim bộ; mỗi dòng là một tập sau tập đầu tiên.</small>
           </div>
           <div class="field full">
             <label for="fieldDescription">Mô tả</label>
@@ -266,7 +279,7 @@ document.querySelector("#app").innerHTML = `
             <input id="fieldComposers" type="text" placeholder="VD: Hans Zimmer">
           </div>
         </div>
-        <p class="form-note">* là trường bắt buộc. Dữ liệu được lưu trên máy chủ và chia sẻ với mọi người.</p>
+        <p class="form-note">* là trường bắt buộc. Thông tin, trailer và link phát phim được lưu trên máy chủ. Muốn tự lấy trailer mới, cấu hình TMDB_API_KEY trong .env.</p>
       </div>
       <div class="form-foot">
         <button type="button" class="btn btn-ghost" data-close="formOverlay">Hủy</button>
@@ -290,6 +303,14 @@ document.querySelector("#app").innerHTML = `
 
 <div class="toast" id="toast"></div>
 `;
+
+if (!remoteMovieCatalogInitialized && getSession()?.adminToken) {
+  try {
+    await persist(movies);
+  } catch (error) {
+    console.error("Không thể khởi tạo kho phim trên máy chủ:", error);
+  }
+}
 
 init();
 
@@ -324,6 +345,7 @@ function bindEvents() {
   document.querySelector("#addMovieBtn").addEventListener("click", openAddForm);
   document.querySelector("#movieForm").addEventListener("submit", onSave);
   document.querySelector("#fieldTitle").addEventListener("input", () => {
+    hideMovieSearchResults();
     const title = document.querySelector("#fieldTitle").value.trim();
     const originalTitle = editingId
       ? movies.find((movie) => movie.id === editingId)?.title
@@ -338,7 +360,21 @@ function bindEvents() {
     if (selectedRatingSource && selectedRatingSource.title !== title) {
       selectedRatingSource = null;
     }
+    scheduleMovieSearch();
     scheduleRatingLookup();
+  });
+  document.querySelector("#movieSearchList").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-search-title]");
+    if (!button) return;
+    const titleInput = document.querySelector("#fieldTitle");
+    titleInput.value = button.dataset.searchTitle;
+    titleInput.dispatchEvent(new Event("input", { bubbles: true }));
+    clearTimeout(movieSearchTimer);
+    movieSearchController?.abort();
+    clearTimeout(ratingLookupTimer);
+    hideMovieSearchResults();
+    lookupMovieDetails(titleInput.value);
+    titleInput.focus();
   });
   document.querySelector("#fieldRating").addEventListener("input", () => {
     ratingManuallyEdited = true;
@@ -543,6 +579,7 @@ function openAddForm() {
   selectedRatingSource = null;
   document.querySelector("#formTitle").textContent = "Thêm phim mới";
   document.querySelector("#movieForm").reset();
+  hideMovieSearchResults();
   setRatingLookupStatus("Nhập tên phim để tự điền thông tin tìm được từ OMDb. Trailer và tập phim không bị thay đổi.");
   document.querySelector("#fieldId").value = "";
   document.querySelector("#fieldYear").value = String(currentYear);
@@ -562,6 +599,7 @@ function openEditForm(id) {
   ratingLookupController?.abort();
   editingId = id;
   ratingManuallyEdited = false;
+  hideMovieSearchResults();
   selectedRatingSource = movie.ratingSource || null;
   document.querySelector("#formTitle").textContent = "Chỉnh sửa phim";
   document.querySelector("#fieldId").value = movie.id;
@@ -586,9 +624,11 @@ function openEditForm(id) {
   document.querySelector("#fieldPoster").value = movie.poster || "";
   document.querySelector("#fieldBackdrop").value = movie.backdrop || "";
   document.querySelector("#fieldTrailerUrl").value = movie.trailerUrl || "";
-  document.querySelector("#fieldEpisodes").value = Array.isArray(movie.episodes)
-    ? movie.episodes.join("\n")
-    : "";
+  const episodeUrls = Array.isArray(movie.episodes) ? movie.episodes : [];
+  document.querySelector("#fieldMovieUrl").value = episodeUrls[0] || "";
+  document.querySelector("#fieldEpisodes").value = episodeUrls
+    .slice(1)
+    .join("\n");
   document.querySelector("#fieldDescription").value = movie.description || "";
   document.querySelector("#fieldCountry").value = movie.country || "";
   document.querySelector("#fieldDirector").value = movie.director || "";
@@ -631,24 +671,32 @@ async function onSave(event) {
   showYearError("");
 
   const trailerUrl = document.querySelector("#fieldTrailerUrl").value.trim();
+  const movieUrl = document.querySelector("#fieldMovieUrl").value.trim();
   const officialWebsite = document
     .querySelector("#fieldOfficialWebsite")
     .value.trim();
-  const episodeUrls = document
+  const episodeUrls = [
+    movieUrl,
+    ...document
     .querySelector("#fieldEpisodes")
     .value.split(/\r?\n/)
     .map((url) => url.trim())
-    .filter(Boolean);
+      .filter(Boolean),
+  ].filter(Boolean);
   const invalidMediaUrl = [trailerUrl, ...episodeUrls].find(
     (url) => url && !isValidMediaUrl(url),
   );
   if (invalidMediaUrl) {
     showToast("Link trailer và tập phim phải là URL bắt đầu bằng http:// hoặc https://.", "error");
-    document.querySelector(
-      trailerUrl && !isValidMediaUrl(trailerUrl)
-        ? "#fieldTrailerUrl"
-        : "#fieldEpisodes",
-    ).focus();
+    document
+      .querySelector(
+        trailerUrl && !isValidMediaUrl(trailerUrl)
+          ? "#fieldTrailerUrl"
+          : movieUrl && !isValidMediaUrl(movieUrl)
+            ? "#fieldMovieUrl"
+            : "#fieldEpisodes",
+      )
+      .focus();
     return;
   }
   if (officialWebsite && !isValidMediaUrl(officialWebsite)) {
@@ -700,8 +748,8 @@ async function onSave(event) {
     ratingSource: selectedRatingSource,
   };
 
-  const index = movies.findIndex((item) => item.id === movie.id);
   const nextMovies = [...movies];
+  const index = nextMovies.findIndex((item) => item.id === movie.id);
   if (index === -1) {
     nextMovies.unshift(movie);
   } else {
@@ -714,16 +762,16 @@ async function onSave(event) {
     showToast(error.message, "error");
     return;
   }
-
+  movies = nextMovies;
+  closeOverlay("formOverlay");
+  renderAll();
+  form.reset();
   showToast(
     index === -1
       ? `Đã thêm "${movie.title}".`
       : `Đã cập nhật "${movie.title}".`,
     "success",
   );
-  closeOverlay("formOverlay");
-  renderAll();
-  form.reset();
 }
 
 function setRatingLookupStatus(message, state = "") {
@@ -737,11 +785,56 @@ function scheduleRatingLookup() {
   ratingLookupController?.abort();
   const title = document.querySelector("#fieldTitle").value.trim();
   if (title.length < 2) {
-    setRatingLookupStatus("Nhập tên phim để tự điền thông tin từ OMDb.");
+    setRatingLookupStatus("Nhập tên phim để tự điền thông tin từ OMDb. Trailer được bổ sung từ TMDb nếu có API key và ô còn trống.");
     return;
   }
   setRatingLookupStatus("Đang chờ nhập tên phim...");
   ratingLookupTimer = setTimeout(() => lookupMovieDetails(title), 650);
+}
+
+function scheduleMovieSearch() {
+  clearTimeout(movieSearchTimer);
+  movieSearchController?.abort();
+  const query = document.querySelector("#fieldTitle").value.trim();
+  if (query.length < 2) {
+    hideMovieSearchResults();
+    return;
+  }
+  movieSearchTimer = setTimeout(() => searchMovies(query), 350);
+}
+
+async function searchMovies(query) {
+  const session = getSession();
+  if (!session?.adminToken) return;
+  const controller = new AbortController();
+  movieSearchController = controller;
+  const field = document.querySelector("#movieSearchField");
+  field.hidden = false;
+  document.querySelector("#movieSearchList").innerHTML = "";
+  setMovieSearchStatus("Đang tìm phim...");
+  try {
+    const response = await fetch(
+      `/api/admin/movie-search?query=${encodeURIComponent(query)}`,
+      {
+        headers: { Authorization: `Bearer ${session.adminToken}` },
+        signal: controller.signal,
+      },
+    );
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Không tìm được phim.");
+    if (
+      controller.signal.aborted ||
+      document.querySelector("#fieldTitle").value.trim() !== query
+    ) {
+      return;
+    }
+    renderMovieSearchResults(result.movies);
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    hideMovieSearchResults();
+  } finally {
+    if (movieSearchController === controller) movieSearchController = null;
+  }
 }
 
 async function lookupMovieDetails(title) {
@@ -882,8 +975,11 @@ async function lookupMovieDetails(title) {
       result.composers,
       result.trailer,
     ].filter(Boolean).length;
+    const trailerStatus = trailerInput.value.trim()
+      ? "Đã có trailer."
+      : "Chưa tìm thấy trailer; nhập link thủ công hoặc cấu hình TMDB_API_KEY.";
     setRatingLookupStatus(
-      `Đã điền thông tin tìm được từ ${result.source}${filledFields ? ` · ${filledFields} mục` : ""}. Link tập phim được giữ nguyên.${result.notice ? ` ${result.notice}` : ""}`,
+      `Đã điền thông tin tìm được từ ${result.source}${filledFields ? ` · ${filledFields} mục` : ""}. ${trailerStatus} Link xem phim cần được thêm riêng.${result.notice ? ` ${result.notice}` : ""}`,
     );
   } catch (error) {
     if (error.name === "AbortError") return;
@@ -891,6 +987,37 @@ async function lookupMovieDetails(title) {
   } finally {
     if (ratingLookupController === controller) ratingLookupController = null;
   }
+}
+
+function renderMovieSearchResults(movies) {
+  const list = document.querySelector("#movieSearchList");
+  const searchResults = Array.isArray(movies) ? movies : [];
+  list.innerHTML = searchResults
+    .map(
+      (movie) => `
+        <button class="btn btn-ghost related-movie-option" type="button" role="option" data-search-title="${escapeHtml(movie.title)}">
+          ${movie.poster ? `<img src="${escapeHtml(movie.poster)}" alt="" loading="lazy">` : ""}
+          <span class="movie-search-copy"><span><strong>${escapeHtml(movie.title)}</strong>${movie.year ? ` <small>${escapeHtml(movie.year)}</small>` : ""}</span>
+          ${movie.overview ? `<span class="related-movie-overview">${escapeHtml(movie.overview)}</span>` : ""}
+          </span>
+        </button>`,
+    )
+    .join("");
+  setMovieSearchStatus(
+    searchResults.length
+      ? `${searchResults.length} kết quả. Chọn phim để điền thông tin.`
+      : "Không tìm thấy phim phù hợp.",
+  );
+}
+
+function setMovieSearchStatus(message) {
+  const status = document.querySelector("#movieSearchStatus");
+  status.textContent = message;
+}
+
+function hideMovieSearchResults() {
+  const field = document.querySelector("#movieSearchField");
+  if (field) field.hidden = true;
 }
 
 function parseNames(value) {
@@ -930,6 +1057,7 @@ async function onDelete() {
     showToast(error.message, "error");
     return;
   }
+  movies = nextMovies;
   closeOverlay("deleteOverlay");
   renderAll();
   showToast(movie ? `Đã xóa "${movie.title}".` : "Đã xóa phim.", "success");

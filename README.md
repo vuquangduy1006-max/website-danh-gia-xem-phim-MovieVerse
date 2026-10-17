@@ -14,15 +14,29 @@
 
 Lệnh này khởi động cả giao diện Vite và API. Bình luận và câu trả lời được chia
 sẻ qua API, lưu tại `.data/reviews.json`. Có thể đặt `REVIEWS_STORE_PATH` để
-chọn vị trí lưu khác. Máy chủ triển khai cần chạy API MovieVerse, cấu hình thông
-tin quản trị và cấp quyền ghi cho thư mục lưu trữ. Nếu chỉ chạy Vite
+chọn vị trí lưu khác. Nếu chỉ chạy Vite
 (`npm run dev`), các thao tác bình luận sẽ báo lỗi kết nối API.
 
-Danh mục phim và thể loại được lưu chung tại `.data/catalog.json`; chỉ quản trị
-viên đã đăng nhập mới có thể thay đổi. Có thể đặt `MOVIE_CATALOG_STORE_PATH` để
-chọn vị trí lưu khác. Khi kho này chưa có chỉnh sửa, lần đăng nhập quản trị đầu
-tiên sẽ chuyển danh mục phim cũ trên trình duyệt đó lên máy chủ. Kho JSON yêu
-cầu một API instance có ổ đĩa bền vững.
+## Triển khai production
+
+Build command: `npm ci && npm run build`.
+Start command: `npm start` với `NODE_ENV=production`.
+Ứng dụng phục vụ frontend build và API cùng một port; hosting cần chuyển tiếp
+biến `PORT` và cho phép tiến trình Node bind cổng công khai. Cấu hình
+`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OMDB_API_KEY`, `TMDB_API_KEY` trong phần
+environment variables của hosting, không đưa `.env` lên git. Thư mục `.data`
+cần ổ đĩa bền vững và quyền ghi; nếu nền tảng xóa ổ đĩa khi redeploy, hãy đặt
+các biến `*_STORE_PATH` vào persistent disk hoặc chuyển sang database dùng chung.
+
+## Lưu trữ dữ liệu
+
+Danh mục phim được lưu tại `.data/movies.json`; có thể đặt
+`MOVIES_STORE_PATH` để chọn vị trí khác. Khi kho server chưa được khởi tạo,
+trang quản trị đưa danh mục phim trên trình duyệt đang mở lên máy chủ. Bình luận
+và tài khoản được lưu lần lượt tại `.data/reviews.json` và `.data/users.json`;
+có thể đổi vị trí bằng `REVIEWS_STORE_PATH` và `AUTH_USERS_STORE_PATH`.
+Danh mục thể loại hiện lưu trong localStorage của trình duyệt, chưa được chia sẻ
+giữa các thiết bị.
 
 Tài khoản người dùng được lưu tại `.data/users.json`; mật khẩu được băm bằng
 scrypt trước khi ghi vào kho. Có thể đặt `AUTH_USERS_STORE_PATH` để chọn vị trí

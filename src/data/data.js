@@ -1099,7 +1099,11 @@ export function getMovieDB() {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.movies) && parsed.movies.length) {
+      if (
+        Array.isArray(parsed.movies) &&
+        (parsed.movies.length || remoteMovieCatalogInitialized)
+      ) {
+        if (remoteMovieCatalogInitialized) return parsed.movies;
         const cleanedMovies = parsed.movies.filter(
           (movie) =>
             !removedSeedMovieIds.has(movie.id) &&
@@ -1335,3 +1339,36 @@ export function getMovieDB() {
 export function saveMovieDB(movies) {
   localStorage.setItem(DB_KEY, JSON.stringify({ movies }));
 }
+
+export async function syncMovieDBFromApi() {
+  if (typeof window === "undefined") return false;
+  try {
+    const response = await fetch("/api/movies");
+    if (!response.ok) return false;
+    const result = await response.json();
+    if (result.initialized && Array.isArray(result.movies)) {
+      saveMovieDB(result.movies);
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
+export async function saveMovieDBToApi(movies, adminToken) {
+  if (!adminToken) throw new Error("Phiên quản trị đã hết hạn. Hãy đăng nhập lại.");
+  const response = await fetch("/api/admin/movies", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ movies }),
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || "Không thể lưu kho phim lên máy chủ.");
+  }
+  saveMovieDB(movies);
+}
+
+export const remoteMovieCatalogInitialized = await syncMovieDBFromApi();

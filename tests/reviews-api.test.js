@@ -83,12 +83,26 @@ test("review API shares replies, persists moderation and protects admin actions"
   const tmdbServer = createHttpServer((request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
     response.writeHead(200, { "Content-Type": "application/json" });
-    if (url.searchParams.get("api_key") !== "test-tmdb-key") {
+    if (request.headers.authorization !== "Bearer test-header.payload.signature") {
       response.end(JSON.stringify({ error: "Invalid API key" }));
     } else if (url.pathname.endsWith("/search/movie")) {
       response.end(
         JSON.stringify({
           results: [{ id: 42, title: "Lookup Film", release_date: "2024-03-15" }],
+        }),
+      );
+    } else if (url.pathname.endsWith("/similar")) {
+      response.end(
+        JSON.stringify({
+          results: [
+            {
+              id: 43,
+              title: "Related Film",
+              release_date: "2023-06-12",
+              overview: "A related film synopsis.",
+              poster_path: "/related-poster.jpg",
+            },
+          ],
         }),
       );
     } else if (url.pathname.endsWith("/movie/42")) {
@@ -145,11 +159,11 @@ test("review API shares replies, persists moderation and protects admin actions"
       ADMIN_PASSWORD: "test-password",
       OMDB_API_KEY: "test-omdb-key",
       OMDB_API_URL: `http://127.0.0.1:${omdbPort}/`,
-      TMDB_API_KEY: "test-tmdb-key",
+      TMDB_API_KEY: "test-header.payload.signature",
       TMDB_API_URL: `http://127.0.0.1:${tmdbPort}/3/`,
       REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
       AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
-      NEWSLETTER_STORE_PATH: path.join(directory, "newsletter.json"),
+      MOVIES_STORE_PATH: path.join(directory, "movies.json"),
     },
     stdio: ["ignore", "ignore", "pipe"],
   });
@@ -559,6 +573,52 @@ test("review API shares replies, persists moderation and protects admin actions"
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
+  const movieSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Lookup%20Film`,
+    { headers: adminHeaders },
+  );
+  assert.equal(movieSearch.status, 200);
+  assert.deepEqual(await movieSearch.json(), {
+    movies: [
+      {
+        id: 42,
+        title: "Lookup Film",
+        year: "2024",
+        overview: "",
+        poster: "",
+      },
+    ],
+  });
+
+  const movieCatalog = [
+    {
+      id: "api-movie-1",
+      title: "Trailer Test Film",
+      year: "2026",
+      trailerUrl: "https://www.youtube.com/watch?v=abcdefghijk",
+    },
+  ];
+  const unauthorizedCatalogSave = await fetch(`${baseUrl}/admin/movies`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ movies: movieCatalog }),
+  });
+  assert.equal(unauthorizedCatalogSave.status, 401);
+
+  const catalogSave = await fetch(`${baseUrl}/admin/movies`, {
+    method: "PUT",
+    headers: adminHeaders,
+    body: JSON.stringify({ movies: movieCatalog }),
+  });
+  assert.equal(catalogSave.status, 200);
+  const catalogResponse = await fetch(`${baseUrl}/movies`);
+  assert.equal(catalogResponse.status, 200);
+  assert.deepEqual((await catalogResponse.json()).movies, movieCatalog);
+  assert.deepEqual(
+    JSON.parse(await readFile(path.join(directory, "movies.json"), "utf8")),
+    movieCatalog,
+  );
+
   const unauthorizedRating = await fetch(
     `${baseUrl}/admin/movie-rating?title=Lookup%20Film`,
   );
@@ -606,6 +666,14 @@ test("review API shares replies, persists moderation and protects admin actions"
     boxOffice: "$711,844,358",
     website: "https://tmdb.example.com/film",
     source: "OMDb + TMDb",
+    similarMovies: [
+      {
+        title: "Related Film",
+        year: "2023",
+        overview: "A related film synopsis.",
+        poster: "https://image.tmdb.org/t/p/original/related-poster.jpg",
+      },
+    ],
   });
   const missingRating = await fetch(
     `${baseUrl}/admin/movie-rating?title=Unknown%20Film`,
