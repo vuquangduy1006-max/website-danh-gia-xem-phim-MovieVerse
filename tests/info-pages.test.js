@@ -42,3 +42,15 @@ test("registration terms link to the real terms section", async () => {
   assert.match(infoPage, /id="terms"/);
   assert.match(infoPage, /chưa có chức năng đặt lại mật khẩu/i);
 });
+
+test("newsletter consent and privacy text disclose storage and delivery limits", async () => {
+  const [homeScript, infoPage] = await Promise.all([
+    readFile(new URL("src/main.js", projectRoot), "utf8"),
+    readFile(new URL("src/info-page.js", projectRoot), "utf8"),
+  ]);
+
+  assert.match(homeScript, /name="consent" required/);
+  assert.match(homeScript, /consent: form\.elements\.consent\.checked/);
+  assert.match(infoPage, /Email chỉ được lưu vào danh sách quan tâm nhận tin/);
+  assert.match(infoPage, /chưa có chức năng hủy đăng ký/);
+});

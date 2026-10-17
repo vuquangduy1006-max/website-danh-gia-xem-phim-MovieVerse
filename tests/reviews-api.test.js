@@ -149,6 +149,7 @@ test("review API shares replies, persists moderation and protects admin actions"
       TMDB_API_URL: `http://127.0.0.1:${tmdbPort}/3/`,
       REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
       AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
+      NEWSLETTER_STORE_PATH: path.join(directory, "newsletter.json"),
     },
     stdio: ["ignore", "ignore", "pipe"],
   });
@@ -186,6 +187,69 @@ test("review API shares replies, persists moderation and protects admin actions"
     body: JSON.stringify(null),
   });
   assert.equal(invalid.status, 400);
+
+  const invalidNewsletterSignup = await fetch(
+    `${baseUrl}/newsletter/subscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "reader@example.com",
+        consent: false,
+      }),
+    },
+  );
+  assert.equal(invalidNewsletterSignup.status, 400);
+
+  const invalidNewsletterEmail = await fetch(
+    `${baseUrl}/newsletter/subscribe`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "not-an-email",
+        consent: true,
+      }),
+    },
+  );
+  assert.equal(invalidNewsletterEmail.status, 400);
+
+  const newsletterSignup = await fetch(`${baseUrl}/newsletter/subscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: " Reader@Example.com ",
+      consent: true,
+    }),
+  });
+  assert.equal(newsletterSignup.status, 202);
+  const signupResult = await newsletterSignup.json();
+  assert.equal(signupResult.ok, true);
+  assert.match(signupResult.message, /chưa gửi email bản tin tự động/);
+  assert.equal(signupResult.message.includes("reader@example.com"), false);
+
+  const duplicateNewsletterSignups = await Promise.all(
+    Array.from({ length: 2 }, () =>
+      fetch(`${baseUrl}/newsletter/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "reader@example.com",
+          consent: true,
+        }),
+      }),
+    ),
+  );
+  assert.deepEqual(
+    duplicateNewsletterSignups.map((response) => response.status),
+    [202, 202],
+  );
+  const savedNewsletter = JSON.parse(
+    await readFile(path.join(directory, "newsletter.json"), "utf8"),
+  );
+  assert.equal(savedNewsletter.length, 1);
+  assert.equal(savedNewsletter[0].email, "reader@example.com");
+  assert.ok(savedNewsletter[0].subscribedAt);
 
   const registrationResponse = await fetch(`${baseUrl}/auth/register`, {
     method: "POST",

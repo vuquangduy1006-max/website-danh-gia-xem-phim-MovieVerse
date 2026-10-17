@@ -1,6 +1,10 @@
 import "./style.css";
 import "./genres-page.css";
-import { getMovieDB, getMovieGenres } from "./data/data.js";
+import {
+  getMovieDB,
+  getMovieGenres,
+  initializeCatalog,
+} from "./data/data.js";
 import {
   bindAccountActions,
   getPosterStyle,
@@ -8,6 +12,8 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+await initializeCatalog();
 
 const movies = getMovieDB();
 const availableGenres = [...new Set(movies.flatMap(getMovieGenres))].sort(

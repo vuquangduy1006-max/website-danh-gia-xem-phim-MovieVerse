@@ -1,5 +1,9 @@
 import "./style.css";
-import { getMovieDB, getMovieGenres } from "./data/data.js";
+import {
+  getMovieDB,
+  getMovieGenres,
+  initializeCatalog,
+} from "./data/data.js";
 import {
   bindAccountActions,
   getPosterStyle,
@@ -7,6 +11,8 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+await initializeCatalog();
 
 const newMovies = getMovieDB().filter((movie) => movie.isNew);
 

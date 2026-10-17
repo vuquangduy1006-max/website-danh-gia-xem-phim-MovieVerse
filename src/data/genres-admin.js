@@ -5,13 +5,14 @@ import {
   getGenreList,
   getMovieDB,
   getMovieGenres,
-  saveGenreList,
-  saveMovieDB,
+  initializeCatalog,
+  saveSharedCatalog,
 } from "./data.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/genres.html");
 } else {
+  await initializeCatalog();
   let genres = getGenreList();
   let query = "";
 
@@ -60,7 +61,7 @@ if (!isAdmin()) {
             </table>
           </div>
         </section>
-        <p class="genre-storage-note">Danh mục được lưu trên trình duyệt này và dùng trong trang quản lý phim.</p>
+        <p class="genre-storage-note">Danh mục được lưu trên máy chủ và chia sẻ với mọi người.</p>
       </div>
     </main>
     <footer class="admin-footer"><div class="container"><span>© 2024 MovieVerse Admin.</span><span>Quản lý danh mục</span></div></footer>
@@ -128,7 +129,7 @@ if (!isAdmin()) {
     showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2600);
   }
 
-  document.querySelector("#genreForm").addEventListener("submit", (event) => {
+  document.querySelector("#genreForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const input = document.querySelector("#genreName");
     const name = input.value.trim();
@@ -138,8 +139,14 @@ if (!isAdmin()) {
       input.focus();
       return;
     }
-    genres = [...genres, name].sort((a, b) => a.localeCompare(b, "vi"));
-    saveGenreList(genres);
+    const nextGenres = [...genres, name].sort((a, b) => a.localeCompare(b, "vi"));
+    try {
+      await saveSharedCatalog(getMovieDB(), nextGenres);
+    } catch (error) {
+      showToast(error.message, "error");
+      return;
+    }
+    genres = nextGenres;
     input.value = "";
     render();
     showToast(`Đã thêm thể loại "${name}".`);
@@ -150,7 +157,7 @@ if (!isAdmin()) {
     render();
   });
 
-  document.querySelector("#genreTableBody").addEventListener("click", (event) => {
+  document.querySelector("#genreTableBody").addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-edit-genre]");
     if (editButton) {
       const oldName = editButton.dataset.editGenre;
@@ -160,20 +167,28 @@ if (!isAdmin()) {
         showToast("Tên thể loại này đã được sử dụng.", "error");
         return;
       }
-      const movies = getMovieDB();
-      let moviesChanged = false;
-      movies.forEach((movie) => {
+      const movies = getMovieDB().map((movie) => {
         const movieGenres = getMovieGenres(movie);
         if (movieGenres.includes(oldName)) {
-          movie.genre = movieGenres
-            .map((genre) => (genre === oldName ? newName : genre))
-            .join(", ");
-          moviesChanged = true;
+          return {
+            ...movie,
+            genre: movieGenres
+              .map((genre) => (genre === oldName ? newName : genre))
+              .join(", "),
+          };
         }
+        return movie;
       });
-      genres = genres.map((genre) => (genre === oldName ? newName : genre));
-      saveGenreList(genres);
-      if (moviesChanged) saveMovieDB(movies);
+      const nextGenres = genres.map((genre) =>
+        genre === oldName ? newName : genre,
+      );
+      try {
+        await saveSharedCatalog(movies, nextGenres);
+      } catch (error) {
+        showToast(error.message, "error");
+        return;
+      }
+      genres = nextGenres;
       render();
       showToast(`Đã đổi tên thành "${newName}".`);
       return;
@@ -188,8 +203,14 @@ if (!isAdmin()) {
       return;
     }
     if (!window.confirm(`Xóa thể loại "${name}"?`)) return;
-    genres = genres.filter((genre) => genre !== name);
-    saveGenreList(genres);
+    const nextGenres = genres.filter((genre) => genre !== name);
+    try {
+      await saveSharedCatalog(getMovieDB(), nextGenres);
+    } catch (error) {
+      showToast(error.message, "error");
+      return;
+    }
+    genres = nextGenres;
     render();
     showToast(`Đã xóa thể loại "${name}".`);
   });

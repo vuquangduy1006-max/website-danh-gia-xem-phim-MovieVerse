@@ -1,6 +1,6 @@
 import "./style.css";
 import "./favorites-page.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, initializeCatalog } from "./data/data.js";
 import {
   clearWatchHistory,
   loadWatchHistory,
@@ -12,6 +12,8 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+await initializeCatalog();
 
 const movies = getMovieDB();
 const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;

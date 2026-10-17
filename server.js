@@ -12,6 +12,7 @@ import {
   answerFromCatalog,
   hasMovieRecommendationIntent,
 } from "./assistant-recommendations.js";
+import { genreList, movieSeed } from "./src/data/data.js";
 import { REVIEW_SEED } from "./src/data/review-seed.js";
 
 const port = Number(process.env.API_PORT || 3001);
@@ -28,6 +29,9 @@ const adminEmail = (process.env.ADMIN_EMAIL || "admin@movieverse.local")
   .toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD;
 const MAX_BODY_BYTES = 48 * 1024;
+const MAX_CATALOG_BYTES = 4 * 1024 * 1024;
+const MAX_CATALOG_MOVIES = 500;
+const MAX_CATALOG_GENRES = 100;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 12;
 const USER_SESSION_MS = 12 * 60 * 60 * 1000;
@@ -36,6 +40,7 @@ const PASSWORD_HASH_BYTES = 64;
 const scrypt = promisify(scryptCallback);
 const requestsByIp = new Map();
 const authRequestsByIp = new Map();
+const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
 const userTokens = new Map();
@@ -47,10 +52,22 @@ const usersFilePath = resolve(
   process.env.AUTH_USERS_STORE_PATH ||
     fileURLToPath(new URL("./.data/users.json", import.meta.url)),
 );
+const newsletterFilePath = resolve(
+  process.env.NEWSLETTER_STORE_PATH ||
+    fileURLToPath(new URL("./.data/newsletter.json", import.meta.url)),
+);
+const catalogFilePath = resolve(
+  process.env.MOVIE_CATALOG_STORE_PATH ||
+    fileURLToPath(new URL("./.data/catalog.json", import.meta.url)),
+);
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
 let userWriteQueue = Promise.resolve();
 let userStoreInitialization;
+let newsletterWriteQueue = Promise.resolve();
+let newsletterStoreInitialization;
+let catalogWriteQueue = Promise.resolve();
+let catalogStoreInitialization;
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -80,15 +97,108 @@ function isRateLimited(ip, requests = requestsByIp) {
   return current.count > RATE_LIMIT;
 }
 
-async function readJson(request) {
+async function readJson(request, maxBytes = MAX_BODY_BYTES) {
   const chunks = [];
   let size = 0;
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > MAX_BODY_BYTES) throw new Error("Request body is too large");
+    if (size > maxBytes) throw new Error("Request body is too large");
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+async function initializeCatalogStore() {
+  try {
+    const saved = JSON.parse(await readFile(catalogFilePath, "utf8"));
+    if (!isValidCatalog(saved)) throw new Error("Movie catalog storage is invalid");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    await persistCatalog({
+      movies: movieSeed,
+      genres: genreList,
+      updatedAt: null,
+    });
+  }
+}
+
+async function readCatalog() {
+  if (!catalogStoreInitialization) {
+    catalogStoreInitialization = initializeCatalogStore();
+  }
+  await catalogStoreInitialization;
+  const saved = JSON.parse(await readFile(catalogFilePath, "utf8"));
+  if (!isValidCatalog(saved)) throw new Error("Movie catalog storage is invalid");
+  return saved;
+}
+
+async function persistCatalog(catalog) {
+  await mkdir(dirname(catalogFilePath), { recursive: true });
+  const temporaryPath = `${catalogFilePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify(catalog, null, 2), "utf8");
+  await rename(temporaryPath, catalogFilePath);
+}
+
+function updateCatalog(update) {
+  const operation = catalogWriteQueue.then(async () => {
+    const catalog = await readCatalog();
+    const result = update(catalog);
+    if (!result.ok) return result;
+    await persistCatalog(catalog);
+    return { ...result, catalog };
+  });
+  catalogWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
+function isValidCatalog(catalog) {
+  if (
+    !isRecord(catalog) ||
+    !Array.isArray(catalog.movies) ||
+    catalog.movies.length > MAX_CATALOG_MOVIES ||
+    !Array.isArray(catalog.genres) ||
+    catalog.genres.length > MAX_CATALOG_GENRES ||
+    !(catalog.updatedAt === null || typeof catalog.updatedAt === "string")
+  ) {
+    return false;
+  }
+
+  const genreNames = new Set();
+  for (const genre of catalog.genres) {
+    if (!validText(genre, 40)) return false;
+    const normalized = genre.trim().toLocaleLowerCase("vi");
+    if (genreNames.has(normalized)) return false;
+    genreNames.add(normalized);
+  }
+
+  const movieIds = new Set();
+  for (const movie of catalog.movies) {
+    if (!isRecord(movie) || !validText(movie.id, 80) || !validText(movie.title, 150)) {
+      return false;
+    }
+    if (movieIds.has(movie.id)) return false;
+    movieIds.add(movie.id);
+    if (
+      movie.genre !== undefined &&
+      !(
+        (typeof movie.genre === "string" && movie.genre.length <= 400) ||
+        (Array.isArray(movie.genre) &&
+          movie.genre.length <= 20 &&
+          movie.genre.every((genre) => validText(genre, 40)))
+      )
+    ) {
+      return false;
+    }
+  }
+
+  try {
+    return Buffer.byteLength(JSON.stringify(catalog), "utf8") <= MAX_CATALOG_BYTES;
+  } catch {
+    return false;
+  }
 }
 
 async function initializeReviewStore() {
@@ -160,6 +270,48 @@ function updateUsers(update) {
   return operation;
 }
 
+async function initializeNewsletterStore() {
+  try {
+    const saved = JSON.parse(await readFile(newsletterFilePath, "utf8"));
+    if (!Array.isArray(saved)) throw new Error("Newsletter storage is invalid");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    await persistNewsletterSubscribers([]);
+  }
+}
+
+async function readNewsletterSubscribers() {
+  if (!newsletterStoreInitialization) {
+    newsletterStoreInitialization = initializeNewsletterStore();
+  }
+  await newsletterStoreInitialization;
+  const saved = JSON.parse(await readFile(newsletterFilePath, "utf8"));
+  if (!Array.isArray(saved)) throw new Error("Newsletter storage is invalid");
+  return saved;
+}
+
+async function persistNewsletterSubscribers(subscribers) {
+  await mkdir(dirname(newsletterFilePath), { recursive: true });
+  const temporaryPath = `${newsletterFilePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify(subscribers, null, 2), "utf8");
+  await rename(temporaryPath, newsletterFilePath);
+}
+
+function updateNewsletterSubscribers(update) {
+  const operation = newsletterWriteQueue.then(async () => {
+    const subscribers = await readNewsletterSubscribers();
+    const result = update(subscribers);
+    if (!result.ok) return result;
+    await persistNewsletterSubscribers(subscribers);
+    return { ...result, subscribers };
+  });
+  newsletterWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 function updateReviews(update) {
   const operation = reviewWriteQueue.then(async () => {
     const reviews = await readReviews();
@@ -208,11 +360,141 @@ function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+async function handleCatalogApi(request, response, pathname) {
+  if (request.method === "GET" && pathname === "/api/catalog") {
+    try {
+      const { movies, genres, updatedAt } = await readCatalog();
+      sendJson(response, 200, { movies, genres, updatedAt });
+    } catch (error) {
+      console.error("Unable to read shared movie catalog:", error);
+      sendJson(response, 500, {
+        error: "Không thể tải danh mục phim từ máy chủ.",
+      });
+    }
+    return true;
+  }
+
+  if (request.method !== "PUT" || pathname !== "/api/admin/catalog") {
+    return false;
+  }
+  if (!isAdminRequest(request)) {
+    sendJson(response, 403, {
+      error: "Cần đăng nhập quản trị để cập nhật danh mục phim.",
+    });
+    return true;
+  }
+
+  try {
+    const body = await readJson(request, MAX_CATALOG_BYTES);
+    if (
+      !isRecord(body) ||
+      !isValidCatalog({
+        movies: body.movies,
+        genres: body.genres,
+        updatedAt:
+          body.expectedUpdatedAt === null ||
+          typeof body.expectedUpdatedAt === "string"
+            ? body.expectedUpdatedAt
+            : undefined,
+      })
+    ) {
+      sendJson(response, 400, { error: "Danh mục phim không hợp lệ." });
+      return true;
+    }
+
+    const result = await updateCatalog((catalog) => {
+      if (catalog.updatedAt !== body.expectedUpdatedAt) {
+        return { ok: false, conflict: true };
+      }
+      catalog.movies = body.movies;
+      catalog.genres = body.genres;
+      catalog.updatedAt = new Date().toISOString();
+      return { ok: true };
+    });
+    if (!result.ok) {
+      sendJson(response, 409, {
+        error:
+          "Danh mục đã được cập nhật ở nơi khác. Tải lại trang quản trị rồi thử lại.",
+      });
+      return true;
+    }
+    sendJson(response, 200, result.catalog);
+  } catch (error) {
+    const badInput =
+      error instanceof SyntaxError ||
+      error.message === "Request body is too large";
+    if (!badInput) console.error("Unable to save shared movie catalog:", error);
+    sendJson(response, badInput ? 400 : 500, {
+      error: badInput
+        ? "Danh mục phim không hợp lệ hoặc vượt quá giới hạn cho phép."
+        : "Không thể lưu danh mục phim trên máy chủ.",
+    });
+  }
+  return true;
+}
+
 function isValidEmail(value) {
   return (
     validText(value, 254) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
   );
+}
+
+async function handleNewsletterApi(request, response, pathname) {
+  if (request.method !== "POST" || pathname !== "/api/newsletter/subscribe") {
+    return false;
+  }
+
+  const ip = request.socket.remoteAddress || "unknown";
+  if (isRateLimited(ip, newsletterRequestsByIp)) {
+    sendJson(response, 429, {
+      error: "Bạn đăng ký quá nhanh. Vui lòng thử lại sau một phút.",
+    });
+    return true;
+  }
+
+  try {
+    const body = await readJson(request);
+    if (
+      !isRecord(body) ||
+      !isValidEmail(body.email) ||
+      body.consent !== true
+    ) {
+      sendJson(response, 400, {
+        error: "Hãy nhập email hợp lệ và đồng ý lưu email để đăng ký.",
+      });
+      return true;
+    }
+
+    const email = body.email.trim().toLowerCase();
+    await updateNewsletterSubscribers((subscribers) => {
+      const exists = subscribers.some(
+        (subscriber) =>
+          typeof subscriber.email === "string" &&
+          subscriber.email.toLowerCase() === email,
+      );
+      if (exists) return { ok: true, duplicate: true };
+      subscribers.push({ email, subscribedAt: new Date().toISOString() });
+      return { ok: true, duplicate: false };
+    });
+
+    sendJson(response, 202, {
+      ok: true,
+      message:
+        "Đã ghi nhận đăng ký của bạn. Hiện MovieVerse chưa gửi email bản tin tự động.",
+    });
+  } catch (error) {
+    const badInput =
+      error instanceof SyntaxError ||
+      error.message === "Request body is too large";
+    if (!badInput) console.error("Unable to save newsletter signup:", error);
+    sendJson(response, badInput ? 400 : 500, {
+      error: badInput
+        ? "Dữ liệu đăng ký không hợp lệ hoặc quá lớn."
+        : "Không thể lưu đăng ký lúc này. Vui lòng thử lại sau.",
+    });
+  }
+  return true;
 }
 
 function getBearerToken(request) {
@@ -860,6 +1142,10 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  if (pathname.startsWith("/api/newsletter/")) {
+    if (await handleNewsletterApi(request, response, pathname)) return;
+  }
+
   if (pathname.startsWith("/api/auth/")) {
     if (await handleAuthApi(request, response, pathname)) return;
   }
@@ -869,6 +1155,9 @@ const server = createServer(async (request, response) => {
     pathname === "/api/admin/session"
   ) {
     if (await handleReviewsApi(request, response, pathname)) return;
+  }
+  if (pathname === "/api/catalog" || pathname === "/api/admin/catalog") {
+    if (await handleCatalogApi(request, response, pathname)) return;
   }
   if (await handleMovieRatingApi(request, response, url)) return;
 
