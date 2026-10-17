@@ -1,9 +1,10 @@
 import "../admin/admin.css";
 import {
   getMovieDB,
-  saveMovieDB,
   getGenreList,
   getMovieGenres,
+  initializeCatalog,
+  saveSharedCatalog,
 } from "./data.js";
 import { getSession, isAdmin } from "./auth.js";
 import { getTrailer } from "./media.js";
@@ -21,6 +22,8 @@ import {
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
 }
+
+await initializeCatalog();
 
 const currentYear = new Date().getFullYear();
 try {
@@ -45,8 +48,9 @@ function loadDB() {
   return getMovieDB();
 }
 
-function persist() {
-  saveMovieDB(movies);
+async function persist(nextMovies = movies) {
+  await saveSharedCatalog(nextMovies, getGenreList());
+  movies = nextMovies;
 }
 
 function uid() {
@@ -261,7 +265,7 @@ document.querySelector("#app").innerHTML = `
             <input id="fieldComposers" type="text" placeholder="VD: Hans Zimmer">
           </div>
         </div>
-        <p class="form-note">* là trường bắt buộc. Dữ liệu được lưu trên trình duyệt (localStorage).</p>
+        <p class="form-note">* là trường bắt buộc. Dữ liệu được lưu trên máy chủ và chia sẻ với mọi người.</p>
       </div>
       <div class="form-foot">
         <button type="button" class="btn btn-ghost" data-close="formOverlay">Hủy</button>
@@ -607,7 +611,7 @@ function openEditForm(id) {
   document.querySelector("#fieldTitle").focus();
 }
 
-function onSave(event) {
+async function onSave(event) {
   event.preventDefault();
   const form = document.querySelector("#movieForm");
   const title = document.querySelector("#fieldTitle").value.trim();
@@ -696,15 +700,26 @@ function onSave(event) {
   };
 
   const index = movies.findIndex((item) => item.id === movie.id);
+  const nextMovies = [...movies];
   if (index === -1) {
-    movies.unshift(movie);
-    showToast(`Đã thêm "${movie.title}".`, "success");
+    nextMovies.unshift(movie);
   } else {
-    movies[index] = movie;
-    showToast(`Đã cập nhật "${movie.title}".`, "success");
+    nextMovies[index] = movie;
   }
 
-  persist();
+  try {
+    await persist(nextMovies);
+  } catch (error) {
+    showToast(error.message, "error");
+    return;
+  }
+
+  showToast(
+    index === -1
+      ? `Đã thêm "${movie.title}".`
+      : `Đã cập nhật "${movie.title}".`,
+    "success",
+  );
   closeOverlay("formOverlay");
   renderAll();
   form.reset();
@@ -904,11 +919,16 @@ function openDeleteConfirm(id) {
   openOverlay("deleteOverlay");
 }
 
-function onDelete() {
+async function onDelete() {
   if (!deleteId) return;
   const movie = movies.find((item) => item.id === deleteId);
-  movies = movies.filter((item) => item.id !== deleteId);
-  persist();
+  const nextMovies = movies.filter((item) => item.id !== deleteId);
+  try {
+    await persist(nextMovies);
+  } catch (error) {
+    showToast(error.message, "error");
+    return;
+  }
   closeOverlay("deleteOverlay");
   renderAll();
   showToast(movie ? `Đã xóa "${movie.title}".` : "Đã xóa phim.", "success");

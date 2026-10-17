@@ -18,6 +18,12 @@ chọn vị trí lưu khác. Máy chủ triển khai cần chạy API MovieVerse
 tin quản trị và cấp quyền ghi cho thư mục lưu trữ. Nếu chỉ chạy Vite
 (`npm run dev`), các thao tác bình luận sẽ báo lỗi kết nối API.
 
+Danh mục phim và thể loại được lưu chung tại `.data/catalog.json`; chỉ quản trị
+viên đã đăng nhập mới có thể thay đổi. Có thể đặt `MOVIE_CATALOG_STORE_PATH` để
+chọn vị trí lưu khác. Khi kho này chưa có chỉnh sửa, lần đăng nhập quản trị đầu
+tiên sẽ chuyển danh mục phim cũ trên trình duyệt đó lên máy chủ. Kho JSON yêu
+cầu một API instance có ổ đĩa bền vững.
+
 Tài khoản người dùng được lưu tại `.data/users.json`; mật khẩu được băm bằng
 scrypt trước khi ghi vào kho. Có thể đặt `AUTH_USERS_STORE_PATH` để chọn vị trí
 lưu khác. Tài khoản người dùng cũ trên trình duyệt được chuyển lên máy chủ sau
@@ -44,4 +50,5 @@ có thể nhập dữ liệu thủ công. Khi dùng dữ liệu TMDb, trang phim
 báo ghi nhận TMDb theo yêu cầu sử dụng API.
 
 Các kho JSON phù hợp với một API instance có ổ đĩa bền vững; nếu chạy nhiều
-instance, hãy chuyển kho bình luận, tài khoản và email đăng ký sang cơ sở dữ liệu dùng chung.
+instance, hãy chuyển kho danh mục phim, bình luận, tài khoản và email đăng ký
+sang cơ sở dữ liệu dùng chung.

@@ -1,11 +1,14 @@
 import "./style.css";
 import "./info-page.css";
+import { initializeCatalog } from "./data/data.js";
 import {
   bindAccountActions,
   renderAccountActions,
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+await initializeCatalog();
 
 const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>`;
 
@@ -65,6 +68,10 @@ document.querySelector("#app").innerHTML = `
           <article>
             <h3>Tài khoản và danh sách cá nhân</h3>
             <p>Tạo tài khoản để đăng nhập. Phim yêu thích, lịch sử xem và vị trí xem được lưu trên trình duyệt hiện tại, nên chưa đồng bộ giữa các thiết bị.</p>
+          </article>
+          <article>
+            <h3>Danh mục phim</h3>
+            <p>Danh mục phim và thể loại được quản trị viên cập nhật trên máy chủ để mọi khách truy cập cùng xem một dữ liệu.</p>
           </article>
           <article>
             <h3>Đánh giá và bình luận</h3>

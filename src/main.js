@@ -1,5 +1,9 @@
 import "./style.css";
-import { getMovieDB, getMovieGenres } from "./data/data.js";
+import {
+  getMovieDB,
+  getMovieGenres,
+  initializeCatalog,
+} from "./data/data.js";
 import { getTrailer } from "./data/media.js";
 import { loadReviews, syncReviews } from "./data/reviews.js";
 import { loadFavorites } from "./data/favorites.js";
@@ -20,6 +24,8 @@ try {
 } catch (error) {
   console.error("Không thể đồng bộ bình luận:", error);
 }
+
+await initializeCatalog();
 
 const movies = getMovieDB();
 const availableGenres = [...new Set(movies.flatMap(getMovieGenres))].sort(

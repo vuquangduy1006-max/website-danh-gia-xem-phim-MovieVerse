@@ -1,6 +1,6 @@
 import "./style.css";
 import "./favorites-page.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, initializeCatalog } from "./data/data.js";
 import { loadFavorites, removeFavorite } from "./data/favorites.js";
 import {
   bindAccountActions,
@@ -8,6 +8,8 @@ import {
   renderFooter,
   renderHeader,
 } from "./components/index.js";
+
+await initializeCatalog();
 
 const movies = getMovieDB();
 

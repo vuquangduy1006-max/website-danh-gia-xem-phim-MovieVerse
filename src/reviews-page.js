@@ -1,6 +1,10 @@
 import "./style.css";
 import "./reviews-page.css";
-import { getMovieDB, getGenreList } from "./data/data.js";
+import {
+  getMovieDB,
+  getGenreList,
+  initializeCatalog,
+} from "./data/data.js";
 import { getSession, isAdmin } from "./data/auth.js";
 import {
   addReview,
@@ -23,6 +27,8 @@ try {
 } catch (error) {
   console.error("Không thể đồng bộ bình luận:", error);
 }
+
+await initializeCatalog();
 
 const movies = getMovieDB();
 let reviews = loadReviews();

@@ -1,6 +1,6 @@
 import "./style.css";
 import "./movie-detail.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, initializeCatalog } from "./data/data.js";
 import {
   getMovieMedia,
   getMovieCredits,
@@ -27,6 +27,8 @@ try {
 } catch (error) {
   console.error("Không thể đồng bộ bình luận:", error);
 }
+
+await initializeCatalog();
 
 const movieList = getMovieDB();
 const params = new URLSearchParams(window.location.search);

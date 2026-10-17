@@ -1,7 +1,7 @@
 import "./style.css";
 import "./movie-detail.css";
 import "./watch.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, initializeCatalog } from "./data/data.js";
 import {
   getEpisodeSource,
   getWatchSources,
@@ -17,6 +17,8 @@ import { addToWatchHistory } from "./data/history.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 const PROGRESS_KEY = "movieverse_watch_progress";
+
+await initializeCatalog();
 
 const movieList = getMovieDB();
 const params = new URLSearchParams(window.location.search);
