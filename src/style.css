@@ -1298,6 +1298,9 @@ button {
   .site-header {
     height: 64px;
   }
+  .site-header .nav-wrap {
+    gap: 0;
+  }
   .nav-wrap {
     gap: 0;
   }
@@ -1446,6 +1449,15 @@ button {
   }
   .modal-info h2 {
     font-size: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-actions {
+    gap: 6px;
+  }
+  .header-search {
+    width: clamp(80px, 28vw, 95px);
   }
 }
 
