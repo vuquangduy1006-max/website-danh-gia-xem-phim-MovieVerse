@@ -1,0 +1,281 @@
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import net from "node:net";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+async function getAvailablePort() {
+  const server = net.createServer();
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const { port } = server.address();
+  await new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+  return port;
+}
+
+async function waitForServer(child, url, readErrors) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (child.exitCode !== null) {
+      throw new Error(`Movie catalog API exited during startup: ${readErrors()}`);
+    }
+    try {
+      const response = await fetch(`${url}/api/health`);
+      if (response.ok) return;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Movie catalog API did not start: ${readErrors()}`);
+}
+
+test("movie catalog is shared, persisted, admin-only to update, and rejects stale edits", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "movieverse-catalog-"));
+  const port = await getAvailablePort();
+  const child = spawn(process.execPath, ["server.js"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      API_PORT: String(port),
+      ADMIN_EMAIL: "admin@test.local",
+      ADMIN_PASSWORD: "test-password",
+      MOVIE_CATALOG_STORE_PATH: path.join(directory, "catalog.json"),
+      REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
+      AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
+      NEWSLETTER_STORE_PATH: path.join(directory, "newsletter.json"),
+    },
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  let serverErrors = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    serverErrors += chunk;
+  });
+  t.after(async () => {
+    if (child.exitCode === null) {
+      child.kill();
+      await Promise.race([
+        once(child, "exit"),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    }
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const baseUrl = `http://127.0.0.1:${port}`;
+  await waitForServer(child, baseUrl, () => serverErrors);
+
+  const initialResponse = await fetch(`${baseUrl}/api/catalog`);
+  assert.equal(initialResponse.status, 200);
+  const initialCatalog = await initialResponse.json();
+  assert.ok(initialCatalog.movies.length > 0);
+  assert.ok(initialCatalog.genres.includes("Hành động"));
+  assert.deepEqual(initialCatalog.schedule, []);
+  assert.equal(initialCatalog.updatedAt, null);
+
+  const unauthorizedResponse = await fetch(`${baseUrl}/api/admin/catalog`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      movies: initialCatalog.movies,
+      genres: initialCatalog.genres,
+      expectedUpdatedAt: initialCatalog.updatedAt,
+    }),
+  });
+  assert.equal(unauthorizedResponse.status, 403);
+
+  const unauthorizedScheduleResponse = await fetch(
+    `${baseUrl}/api/admin/schedule`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        schedule: [],
+        expectedUpdatedAt: initialCatalog.updatedAt,
+      }),
+    },
+  );
+  assert.equal(unauthorizedScheduleResponse.status, 403);
+
+  const loginResponse = await fetch(`${baseUrl}/api/admin/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "admin@test.local",
+      password: "test-password",
+    }),
+  });
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const updatedMovies = [
+    ...initialCatalog.movies,
+    {
+      id: "shared-catalog-test",
+      title: "Shared catalog test",
+      year: "2026",
+      genre: "Thử nghiệm",
+      rating: "8.0",
+    },
+  ];
+  const updatedGenres = [...initialCatalog.genres, "Thử nghiệm"];
+  const updateResponse = await fetch(`${baseUrl}/api/admin/catalog`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      movies: updatedMovies,
+      genres: updatedGenres,
+      expectedUpdatedAt: initialCatalog.updatedAt,
+    }),
+  });
+  assert.equal(updateResponse.status, 200);
+  const updatedCatalog = await updateResponse.json();
+  assert.equal(typeof updatedCatalog.updatedAt, "string");
+
+  const sharedCatalog = await fetch(`${baseUrl}/api/catalog`).then((response) =>
+    response.json(),
+  );
+  assert.ok(
+    sharedCatalog.movies.some((movie) => movie.id === "shared-catalog-test"),
+  );
+  assert.ok(sharedCatalog.genres.includes("Thử nghiệm"));
+
+  const scheduleEvents = [
+    {
+      id: "schedule-film-test",
+      movieId: "shared-catalog-test",
+      type: "movie",
+      date: "2026-12-01",
+      time: "20:30",
+      note: "Chiếu tại rạp",
+    },
+    {
+      id: "schedule-episode-test",
+      movieId: "shared-catalog-test",
+      type: "episode",
+      date: "2026-12-08",
+      episodeNumber: 3,
+    },
+  ];
+  const scheduleResponse = await fetch(`${baseUrl}/api/admin/schedule`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Be" + "arer " + token,
+    },
+    body: JSON.stringify({
+      schedule: scheduleEvents,
+      expectedUpdatedAt: updatedCatalog.updatedAt,
+    }),
+  });
+  assert.equal(scheduleResponse.status, 200);
+  const catalogWithSchedule = await scheduleResponse.json();
+  assert.deepEqual(catalogWithSchedule.schedule, scheduleEvents);
+
+  const publicSchedule = await fetch(`${baseUrl}/api/catalog`).then((response) =>
+    response.json(),
+  );
+  assert.deepEqual(publicSchedule.schedule, scheduleEvents);
+
+  const invalidScheduleResponse = await fetch(
+    `${baseUrl}/api/admin/schedule`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + token,
+      },
+      body: JSON.stringify({
+        schedule: [
+          {
+            id: "invalid-schedule-test",
+            movieId: "shared-catalog-test",
+            type: "movie",
+            date: "2026-02-30",
+          },
+        ],
+        expectedUpdatedAt: catalogWithSchedule.updatedAt,
+      }),
+    },
+  );
+  assert.equal(invalidScheduleResponse.status, 400);
+
+  const staleScheduleResponse = await fetch(
+    `${baseUrl}/api/admin/schedule`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + token,
+      },
+      body: JSON.stringify({
+        schedule: [],
+        expectedUpdatedAt: updatedCatalog.updatedAt,
+      }),
+    },
+  );
+  assert.equal(staleScheduleResponse.status, 409);
+
+  const savedCatalog = JSON.parse(
+    await readFile(path.join(directory, "catalog.json"), "utf8"),
+  );
+  assert.equal(savedCatalog.updatedAt, catalogWithSchedule.updatedAt);
+  assert.deepEqual(savedCatalog.schedule, scheduleEvents);
+
+  const staleResponse = await fetch(`${baseUrl}/api/admin/catalog`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      movies: updatedMovies,
+      genres: updatedGenres,
+      expectedUpdatedAt: initialCatalog.updatedAt,
+    }),
+  });
+  assert.equal(staleResponse.status, 409);
+
+  const invalidResponse = await fetch(`${baseUrl}/api/admin/catalog`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      movies: [{ id: "duplicate", title: "One" }, { id: "duplicate", title: "Two" }],
+      genres: ["Test"],
+      expectedUpdatedAt: updatedCatalog.updatedAt,
+    }),
+  });
+  assert.equal(invalidResponse.status, 400);
+
+  const removeScheduledMovieResponse = await fetch(
+    `${baseUrl}/api/admin/catalog`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + token,
+      },
+      body: JSON.stringify({
+        movies: initialCatalog.movies,
+        genres: initialCatalog.genres,
+        expectedUpdatedAt: catalogWithSchedule.updatedAt,
+      }),
+    },
+  );
+  assert.equal(removeScheduledMovieResponse.status, 200);
+  assert.deepEqual(
+    (await removeScheduledMovieResponse.json()).schedule,
+    [],
+  );
+});

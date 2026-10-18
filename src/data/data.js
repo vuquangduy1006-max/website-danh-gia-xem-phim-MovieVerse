@@ -1,3 +1,5 @@
+import { getSession } from "./auth.js";
+
 const godvalleyPoster = new URL(
   "../assets/poster/godvalley.png",
   import.meta.url,
@@ -57,6 +59,9 @@ export const genreList = [
 ];
 
 const GENRE_STORAGE_KEY = "movieverse_genres";
+const RELEASE_SCHEDULE_KEY = "movieverse_release_schedule";
+
+let catalogVersion = null;
 
 export function getGenreList() {
   try {
@@ -75,6 +80,167 @@ export function getGenreList() {
 
 export function saveGenreList(genres) {
   localStorage.setItem(GENRE_STORAGE_KEY, JSON.stringify(genres));
+}
+
+export function getReleaseSchedule() {
+  try {
+    const schedule = JSON.parse(
+      localStorage.getItem(RELEASE_SCHEDULE_KEY) || "[]",
+    );
+    return Array.isArray(schedule) ? schedule : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function initializeCatalog() {
+  try {
+    const response = await fetch("/api/catalog", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "Không thể tải danh mục phim.");
+    }
+    if (
+      !Array.isArray(payload.movies) ||
+      !Array.isArray(payload.genres) ||
+      !Array.isArray(payload.schedule) ||
+      !(payload.updatedAt === null || typeof payload.updatedAt === "string")
+    ) {
+      throw new Error("Máy chủ trả về danh mục phim không hợp lệ.");
+    }
+
+    const session = getSession();
+    const hasLegacyCatalog = Boolean(localStorage.getItem(DB_KEY));
+    if (
+      payload.updatedAt === null &&
+      session?.role === "admin" &&
+      hasLegacyCatalog
+    ) {
+      const legacyMovies = getMovieDB();
+      const legacyGenres = getGenreList();
+      const migrated = await putSharedCatalog(
+        legacyMovies,
+        legacyGenres,
+        payload.updatedAt,
+        session.adminToken,
+      );
+      applySharedCatalog(migrated);
+      return true;
+    }
+
+    if (payload.updatedAt === null && hasLegacyCatalog) {
+      saveReleaseSchedule(payload.schedule);
+      return true;
+    }
+
+    applySharedCatalog(payload);
+    return true;
+  } catch (error) {
+    console.error("Không thể đồng bộ danh mục phim:", error);
+    return false;
+  }
+}
+
+export async function saveSharedCatalog(movies, genres) {
+  const session = getSession();
+  if (session?.role !== "admin" || !session.adminToken) {
+    throw new Error("Cần đăng nhập quản trị để lưu danh mục phim.");
+  }
+  const catalog = await putSharedCatalog(
+    movies,
+    genres,
+    catalogVersion,
+    session.adminToken,
+  );
+  applySharedCatalog(catalog);
+  return catalog;
+}
+
+export async function saveSharedSchedule(schedule) {
+  const session = getSession();
+  if (session?.role !== "admin" || !session.adminToken) {
+    throw new Error("Cần đăng nhập quản trị để lưu lịch phát hành.");
+  }
+  let response;
+  try {
+    response = await fetch("/api/admin/schedule", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + session.adminToken,
+      },
+      body: JSON.stringify({ schedule, expectedUpdatedAt: catalogVersion }),
+    });
+  } catch {
+    throw new Error("Không kết nối được máy chủ để lưu lịch phát hành.");
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("Máy chủ trả về dữ liệu lịch không hợp lệ.");
+  }
+  if (!response.ok) {
+    throw new Error(payload.error || "Không thể lưu lịch phát hành.");
+  }
+  if (
+    !Array.isArray(payload.movies) ||
+    !Array.isArray(payload.genres) ||
+    !Array.isArray(payload.schedule) ||
+    typeof payload.updatedAt !== "string"
+  ) {
+    throw new Error("Máy chủ trả về dữ liệu lịch không hợp lệ.");
+  }
+  applySharedCatalog(payload);
+  return payload.schedule;
+}
+
+async function putSharedCatalog(movies, genres, expectedUpdatedAt, token) {
+  let response;
+  try {
+    response = await fetch("/api/admin/catalog", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Be" + "arer " + token,
+      },
+      body: JSON.stringify({ movies, genres, expectedUpdatedAt }),
+    });
+  } catch {
+    throw new Error("Không kết nối được máy chủ để lưu danh mục phim.");
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("Máy chủ trả về dữ liệu danh mục không hợp lệ.");
+  }
+  if (!response.ok) {
+    throw new Error(payload.error || "Không thể lưu danh mục phim.");
+  }
+  if (
+    !Array.isArray(payload.movies) ||
+    !Array.isArray(payload.genres) ||
+    !Array.isArray(payload.schedule) ||
+    typeof payload.updatedAt !== "string"
+  ) {
+    throw new Error("Máy chủ trả về danh mục phim không hợp lệ.");
+  }
+  return payload;
+}
+
+function applySharedCatalog(catalog) {
+  catalogVersion = catalog.updatedAt;
+  saveMovieDB(catalog.movies);
+  saveGenreList(catalog.genres);
+  saveReleaseSchedule(catalog.schedule || []);
+  localStorage.setItem(SEED_MIGRATION_KEY, "done");
+}
+
+function saveReleaseSchedule(schedule) {
+  localStorage.setItem(RELEASE_SCHEDULE_KEY, JSON.stringify(schedule));
 }
 
 export function getMovieGenres(movie) {

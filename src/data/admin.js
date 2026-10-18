@@ -5,6 +5,8 @@ import {
   remoteMovieCatalogInitialized,
   getGenreList,
   getMovieGenres,
+  initializeCatalog,
+  saveSharedCatalog,
 } from "./data.js";
 import { getSession, isAdmin } from "./auth.js";
 import { getTrailer } from "./media.js";
@@ -22,6 +24,8 @@ import {
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
 }
+
+await initializeCatalog();
 
 const currentYear = new Date().getFullYear();
 try {
@@ -74,6 +78,7 @@ document.querySelector("#app").innerHTML = `
     <nav class="admin-nav" aria-label="Điều hướng quản trị">
       <a href="/" class="back-link">← Trang chủ</a>
       <a class="active" href="/admin/admin.html">Quản lý phim</a>
+      <a href="/admin/schedule.html">Lịch phát hành</a>
       <a href="/admin/genres.html">Thể loại</a>
       <a href="/admin/comments.html">Bình luận</a>
     </nav>

@@ -49,7 +49,34 @@ export async function syncReviews() {
 }
 
 export function getMovieReviews(title) {
-  return loadReviews().filter((review) => review.movieTitle === title);
+  return loadReviews().filter(
+    (review) => review.movieTitle === title && !review.hidden,
+  );
+}
+
+export function getMovieScoreOutOfTen(movie, reviews) {
+  const movieReviews = Array.isArray(reviews)
+    ? reviews.filter(
+        (review) =>
+        review &&
+        review.movieTitle === movie?.title &&
+          !review.hidden &&
+          Number.isInteger(Number(review.rating)) &&
+          Number(review.rating) >= 1 &&
+          Number(review.rating) <= 5,
+      )
+    : [];
+  if (movieReviews.length) {
+    const average =
+      movieReviews.reduce((sum, review) => sum + Number(review.rating), 0) /
+      movieReviews.length;
+    return Number((average * 2).toFixed(1));
+  }
+
+  const imdbRating = Number(movie?.rating);
+  return Number.isFinite(imdbRating)
+    ? Math.min(10, Math.max(0, imdbRating))
+    : 0;
 }
 
 export function getRatingSummary(title) {
@@ -155,5 +182,5 @@ function saveReviews(reviews) {
 }
 
 export function getVisibleMovieReviews(title) {
-  return getMovieReviews(title).filter((review) => !review.hidden);
+  return getMovieReviews(title);
 }

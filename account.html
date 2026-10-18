@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Đổi mật khẩu tài khoản MovieVerse." />
+    <title>Đổi mật khẩu | MovieVerse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/auth.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-layout">
+      <section class="auth-scene" aria-label="MovieVerse">
+        <a class="auth-brand" href="/" aria-label="MovieVerse trang chủ">
+          <span class="auth-brand-mark">M</span>
+          <span>movie<span>verse</span></span>
+        </a>
+        <div class="auth-scene-copy">
+          <p class="auth-eyebrow">MovieVerse · Bảo mật tài khoản</p>
+          <h1>Giữ an toàn<br />thế giới của bạn.</h1>
+        </div>
+        <span class="auth-scene-index" aria-hidden="true">MV / 02</span>
+      </section>
+
+      <section class="auth-panel" aria-labelledby="authTitle">
+        <a class="auth-home-link" href="/">← Trang chủ</a>
+        <div class="auth-content">
+          <p class="auth-eyebrow">Cài đặt tài khoản</p>
+          <h2 id="authTitle">Đổi mật khẩu</h2>
+          <p class="auth-subtitle">Xác nhận mật khẩu hiện tại để đặt mật khẩu mới.</p>
+
+          <form class="auth-form" id="passwordForm" method="post">
+            <div class="auth-field">
+              <label for="currentPassword">Mật khẩu hiện tại</label>
+              <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" required />
+            </div>
+            <div class="auth-field">
+              <label for="newPassword">Mật khẩu mới</label>
+              <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required />
+            </div>
+            <div class="auth-field">
+              <label for="confirmPassword">Nhập lại mật khẩu mới</label>
+              <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required />
+            </div>
+            <button class="auth-submit" type="submit">Cập nhật mật khẩu <span aria-hidden="true">→</span></button>
+          </form>
+          <p class="auth-switch"><a href="/">Hủy và quay lại MovieVerse</a></p>
+        </div>
+        <p class="auth-legal">Sau khi đổi, bạn cần đăng nhập lại trên các thiết bị.</p>
+      </section>
+    </main>
+    <script type="module" src="/src/account-page.js"></script>
+  </body>
+</html>

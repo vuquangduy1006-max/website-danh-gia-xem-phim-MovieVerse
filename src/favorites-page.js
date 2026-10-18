@@ -1,6 +1,11 @@
 import "./style.css";
 import "./favorites-page.css";
-import { getMovieDB } from "./data/data.js";
+import { getMovieDB, initializeCatalog } from "./data/data.js";
+import {
+  getMovieScoreOutOfTen,
+  loadReviews,
+  syncReviews,
+} from "./data/reviews.js";
 import { loadFavorites, removeFavorite } from "./data/favorites.js";
 import {
   bindAccountActions,
@@ -9,7 +14,16 @@ import {
   renderHeader,
 } from "./components/index.js";
 
+await initializeCatalog();
+
+try {
+  await syncReviews();
+} catch (error) {
+  console.error("Không thể đồng bộ bình luận:", error);
+}
+
 const movies = getMovieDB();
+const reviews = loadReviews();
 
 const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
@@ -75,7 +89,7 @@ function renderFavorites() {
     ? favoriteMovies
         .map(
           (movie) =>
-            `<article class="favorite-card"><a class="favorite-poster" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')"><span class="favorite-play" aria-hidden="true">▶</span></a><div class="favorite-card-body"><div><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p></div><div class="favorite-card-foot"><span class="favorite-score">★ ${escapeHtml(movie.rating)}</span><button type="button" class="remove-favorite" data-remove-favorite="${escapeHtml(movie.id)}">Bỏ yêu thích</button></div></div></article>`,
+            `<article class="favorite-card"><a class="favorite-poster" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')"><span class="favorite-play" aria-hidden="true">▶</span></a><div class="favorite-card-body"><div><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p></div><div class="favorite-card-foot"><span class="favorite-score">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span><button type="button" class="remove-favorite" data-remove-favorite="${escapeHtml(movie.id)}">Bỏ yêu thích</button></div></div></article>`,
         )
         .join("")
     : '<div class="favorites-empty"><span class="favorites-empty-mark">♡</span><h3>Chưa có phim yêu thích</h3><p>Bấm “Yêu thích” trên trang chi tiết phim để lưu những bộ phim bạn muốn xem lại.</p><a class="watch-button" href="/">Khám phá phim <span aria-hidden="true">→</span></a></div>';
