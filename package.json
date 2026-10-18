@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.js",
     "dev:local": "node scripts/dev.js",
     "dev:api": "node --env-file-if-exists=.env server.js",
     "start": "node --env-file-if-exists=.env server.js",

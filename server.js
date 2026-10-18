@@ -48,6 +48,10 @@ const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
 const userTokens = new Map();
+const catalogFilePath = resolve(
+  process.env.MOVIE_CATALOG_STORE_PATH ||
+    fileURLToPath(new URL("./.data/catalog.json", import.meta.url)),
+);
 const reviewsFilePath = resolve(
   process.env.REVIEWS_STORE_PATH ||
     fileURLToPath(new URL("./.data/reviews.json", import.meta.url)),
@@ -62,6 +66,8 @@ const moviesFilePath = resolve(
 );
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
+let catalogWriteQueue = Promise.resolve();
+let catalogStoreInitialization;
 let userWriteQueue = Promise.resolve();
 let userStoreInitialization;
 let movieWriteQueue = Promise.resolve();
