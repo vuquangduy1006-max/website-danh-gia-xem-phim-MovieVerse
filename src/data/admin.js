@@ -78,6 +78,7 @@ document.querySelector("#app").innerHTML = `
       <a href="/admin/schedule.html">Lịch phát hành</a>
       <a href="/admin/genres.html">Thể loại</a>
       <a href="/admin/comments.html">Bình luận</a>
+      <a href="/admin/users.html">Người dùng</a>
     </nav>
     <div class="header-actions">
       <button class="btn btn-primary" id="addMovieBtn">+ Thêm phim</button>

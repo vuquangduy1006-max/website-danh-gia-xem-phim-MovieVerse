@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 – Trang không tìm thấy | MovieVerse</title>
+    <meta name="description" content="Trang bạn tìm không tồn tại hoặc đã bị xóa. Quay lại MovieVerse để khám phá phim." />
+    <meta name="robots" content="noindex" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #0f1114;
+        --text: #e8eaf0;
+        --muted: #6b7280;
+        --accent: #ff907a;
+        --accent2: #6491ff;
+      }
+
+      body {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(ellipse at 75% 20%, rgba(100,145,255,0.12), transparent 40%),
+          radial-gradient(ellipse at 15% 80%, rgba(255,100,60,0.10), transparent 40%),
+          var(--bg);
+        color: var(--text);
+        font-family: 'Inter', system-ui, sans-serif;
+        padding: 40px 24px;
+        text-align: center;
+      }
+
+      .brand {
+        position: fixed;
+        top: 24px;
+        left: 32px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ff6b4a, #ff907a);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .error-code {
+        font-size: clamp(96px, 18vw, 180px);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        line-height: 1;
+        background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 16px;
+        animation: fadeUp 0.6s ease both;
+      }
+
+      h1 {
+        font-size: clamp(22px, 4vw, 32px);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        margin-bottom: 14px;
+        animation: fadeUp 0.6s 0.1s ease both;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+        max-width: 440px;
+        margin: 0 auto 32px;
+        animation: fadeUp 0.6s 0.2s ease both;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        animation: fadeUp 0.6s 0.3s ease both;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #6491ff, #9b5fff);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 180ms, transform 180ms;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.88;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 24px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: transparent;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: border-color 180ms, background 180ms, transform 180ms;
+      }
+
+      .btn-secondary:hover {
+        border-color: rgba(255,255,255,0.28);
+        background: rgba(255,255,255,0.05);
+        transform: translateY(-2px);
+      }
+
+      .film-reel {
+        font-size: 56px;
+        margin-bottom: 24px;
+        animation: spin 8s linear infinite;
+        display: block;
+        opacity: 0.6;
+      }
+
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .film-reel { animation: none; }
+        .error-code, h1, p, .actions { animation: none; }
+        .btn-primary:hover, .btn-secondary:hover { transform: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="brand" href="/">
+      <span class="brand-mark">M</span>
+      <span>movie<span style="opacity:.6">verse</span></span>
+    </a>
+
+    <span class="film-reel" aria-hidden="true">🎬</span>
+    <div class="error-code" aria-label="Lỗi 404">404</div>
+    <h1>Trang không tìm thấy</h1>
+    <p>
+      Trang bạn đang tìm không tồn tại, đã bị xóa hoặc địa chỉ URL không chính xác.
+      Hãy quay lại trang chủ để tiếp tục khám phá phim.
+    </p>
+    <div class="actions">
+      <a class="btn-primary" href="/">🏠 Về trang chủ</a>
+      <a class="btn-secondary" href="/search.html">🔍 Tìm kiếm phim</a>
+      <a class="btn-secondary" href="/genres.html">🎭 Khám phá thể loại</a>
+    </div>
+  </body>
+</html>

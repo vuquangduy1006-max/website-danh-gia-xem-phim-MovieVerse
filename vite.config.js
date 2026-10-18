@@ -26,6 +26,9 @@ export default defineConfig({
         adminComments: fileURLToPath(
           new URL("./admin/comments.html", import.meta.url),
         ),
+        adminUsers: fileURLToPath(
+          new URL("./admin/users.html", import.meta.url),
+        ),
         adminGenres: fileURLToPath(
           new URL("./admin/genres.html", import.meta.url),
         ),
