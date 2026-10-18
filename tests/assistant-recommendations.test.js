@@ -75,6 +75,18 @@ test("detects requested movie genres without matching case or diacritics", () =>
   );
 });
 
+test("matches meaningful genre fragments and ignores fragments that are too short", () => {
+  assert.deepEqual(getRequestedGenres("Tìm phim khoa học", catalog), [
+    "Khoa học viễn tưởng",
+  ]);
+  assert.deepEqual(getRequestedGenres("Tìm phim tuong", catalog), [
+    "Khoa học viễn tưởng",
+  ]);
+  assert.deepEqual(getRequestedGenres("Tìm phim hoc", catalog), []);
+  assert.deepEqual(getRequestedGenres("Tìm phim hoa", catalog), []);
+  assert.match(answerFromCatalog("Gợi ý phim khoa học", catalog), /Dune: Part Two/);
+});
+
 test("recommends Dune for action and a roughly two-hour request with verified runtime", () => {
   const question =
     "Tối nay tôi muốn xem phim khoảng 2 tiếng, thể loại hành động.";

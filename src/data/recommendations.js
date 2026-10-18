@@ -50,10 +50,44 @@ function normalize(value) {
     .toLocaleLowerCase("vi");
 }
 
-export function getRequestedGenres(query, movies) {
+export function matchesGenreFragment(query, genre) {
   const normalizedQuery = normalize(query);
+  const normalizedGenre = normalize(genre);
+  if (normalizedQuery.includes(normalizedGenre)) return true;
+
+  return matchesPartialGenreFragment(normalizedQuery, normalizedGenre);
+}
+
+export function matchesPartialGenreFragment(query, genre) {
+  const normalizedQuery = normalize(query);
+  const normalizedGenre = normalize(genre);
+  const queryWords = [...normalizedQuery.matchAll(/\b[a-z0-9]+\b/g)]
+    .filter(
+      ([word]) => word.length >= 4 && !IGNORED_WORDS.has(word),
+    )
+    .map(([word, index]) => ({ word, index }));
+  if (!queryWords.length || queryWords.length > 2) return false;
+
+  const genreWords = normalizedGenre.split(/[^a-z0-9]+/);
+  return queryWords.every(({ word, index }) => {
+    const clause = normalizedQuery
+      .slice(0, index)
+      .split(/[,;.!?]|\b(?:nhung|but|however)\b/)
+      .at(-1);
+    if (
+      /(?:^|\s)(?:khong|dung|tranh|not|dont|never)(?:\s+\w+){0,5}\s*$/.test(
+        clause,
+      )
+    ) {
+      return false;
+    }
+    return genreWords.some((genreWord) => genreWord.startsWith(word));
+  });
+}
+
+export function getRequestedGenres(query, movies) {
   return [...new Set(movies.flatMap(getMovieGenres))].filter((genre) =>
-    normalizedQuery.includes(normalize(genre)),
+    matchesGenreFragment(query, genre),
   );
 }
 
@@ -115,7 +149,7 @@ export function rankMovieRecommendations({
     .filter((word) => word.length > 2 && !IGNORED_WORDS.has(word));
   const requestedGenres = new Set(
     [...new Set(movies.flatMap(getMovieGenres))].filter((genre) =>
-      normalizedQuery.includes(normalize(genre)),
+      matchesGenreFragment(normalizedQuery, genre),
     ),
   );
   const moodGenres = new Set(
