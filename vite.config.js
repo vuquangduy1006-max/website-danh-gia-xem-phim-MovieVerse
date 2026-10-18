@@ -39,6 +39,7 @@ export default defineConfig({
           new URL("./movie-detail.html", import.meta.url),
         ),
         watch: fileURLToPath(new URL("./watch.html", import.meta.url)),
+        search: fileURLToPath(new URL("./search.html", import.meta.url)),
       },
     },
   },
