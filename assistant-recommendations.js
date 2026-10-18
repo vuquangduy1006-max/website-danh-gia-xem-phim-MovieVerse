@@ -1,4 +1,8 @@
-import { findReferencedMovies } from "./src/data/recommendations.js";
+import {
+  findReferencedMovies,
+  matchesGenreFragment,
+  matchesPartialGenreFragment,
+} from "./src/data/recommendations.js";
 
 const KNOWN_MOVIE_FACTS = new Map([
   [
@@ -740,7 +744,11 @@ function movieFacts(movie) {
 
 function requestedGenres(query) {
   return GENRE_TERMS.filter((item) =>
-    item.terms.some((term) => matchesRequestedTerm(query, term)),
+    item.terms.some(
+      (term) =>
+        matchesRequestedTerm(query, term) ||
+        matchesPartialGenreFragment(query, term),
+    ),
   ).map((item) => item.genre);
 }
 
