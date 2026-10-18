@@ -221,9 +221,9 @@ document.querySelector("#app").innerHTML = `
             <small class="field-hint">Trailer tự điền khi tìm được từ TMDb hoặc thư viện MovieVerse; nếu chưa có, dán link trailer tại đây.</small>
           </div>
           <div class="field full">
-            <label for="fieldMovieUrl">URL xem phim / tập đầu tiên</label>
+            <label for="fieldMovieUrl">URL phim / tập 1</label>
             <input id="fieldMovieUrl" type="url" placeholder="Link phát hợp pháp trên YouTube hoặc MP4 (https://...)" aria-describedby="movieUrlHint">
-            <small class="field-hint" id="movieUrlHint">Metadata không cung cấp link xem phim. Thêm link bạn có quyền sử dụng để phát phim trên trang Xem phim.</small>
+            <small class="field-hint" id="movieUrlHint">Nhập link phim lẻ hoặc tập 1 của phim bộ. Trailer được nhập riêng ở ô phía trên.</small>
           </div>
           <div class="field full">
             <label for="fieldEpisodes">URL các tập tiếp theo</label>
@@ -321,7 +321,9 @@ function init() {
 }
 
 function fillGenreSelects() {
-  const genres = getGenreList();
+  const genres = [
+    ...new Set([...getGenreList(), ...movies.flatMap(getMovieGenres)]),
+  ];
   const filter = document.querySelector("#genreFilter");
   filter.innerHTML =
     `<option value="all">Tất cả thể loại</option>` +
@@ -625,10 +627,13 @@ function openEditForm(id) {
   document.querySelector("#fieldBackdrop").value = movie.backdrop || "";
   document.querySelector("#fieldTrailerUrl").value = movie.trailerUrl || "";
   const episodeUrls = Array.isArray(movie.episodes) ? movie.episodes : [];
-  document.querySelector("#fieldMovieUrl").value = episodeUrls[0] || "";
-  document.querySelector("#fieldEpisodes").value = episodeUrls
-    .slice(1)
-    .join("\n");
+  const hasSeparateMovieUrl = Boolean(movie.movieUrl);
+  document.querySelector("#fieldMovieUrl").value =
+    movie.movieUrl || episodeUrls[0] || "";
+  document.querySelector("#fieldEpisodes").value = (hasSeparateMovieUrl
+    ? episodeUrls
+    : episodeUrls.slice(1)
+  ).join("\n");
   document.querySelector("#fieldDescription").value = movie.description || "";
   document.querySelector("#fieldCountry").value = movie.country || "";
   document.querySelector("#fieldDirector").value = movie.director || "";
@@ -672,18 +677,19 @@ async function onSave(event) {
 
   const trailerUrl = document.querySelector("#fieldTrailerUrl").value.trim();
   const movieUrl = document.querySelector("#fieldMovieUrl").value.trim();
-  const officialWebsite = document
-    .querySelector("#fieldOfficialWebsite")
-    .value.trim();
-  const episodeUrls = [
-    movieUrl,
-    ...document
+  const additionalEpisodeUrls = document
     .querySelector("#fieldEpisodes")
     .value.split(/\r?\n/)
     .map((url) => url.trim())
-      .filter(Boolean),
-  ].filter(Boolean);
-  const invalidMediaUrl = [trailerUrl, ...episodeUrls].find(
+    .filter(Boolean);
+  const officialWebsite = document
+    .querySelector("#fieldOfficialWebsite")
+    .value.trim();
+  const invalidMediaUrl = [
+    trailerUrl,
+    movieUrl,
+    ...additionalEpisodeUrls,
+  ].find(
     (url) => url && !isValidMediaUrl(url),
   );
   if (invalidMediaUrl) {
@@ -726,7 +732,8 @@ async function onSave(event) {
       document.querySelector("#fieldBackdrop").value.trim() ||
       "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1800&q=85",
     trailerUrl,
-    episodes: episodeUrls,
+    movieUrl,
+    episodes: additionalEpisodeUrls,
     description:
       document.querySelector("#fieldDescription").value.trim() ||
       "Chưa có mô tả cho phim này.",
@@ -937,16 +944,24 @@ async function lookupMovieDetails(title) {
         Sport: "Thể thao",
         Thriller: "Tâm lý",
         War: "Chiến tranh",
+        "TV Movie": "Phim truyền hình",
+        Western: "Miền Tây",
       };
       const selectedGenres = result.genre
         .split(",")
-        .map((genre) => genreMap[genre.trim()])
-        .filter((genre) =>
-          [...document.querySelector("#fieldGenre").options].some(
-            (option) => option.value === genre,
-          ),
-        );
-      [...document.querySelector("#fieldGenre").options].forEach((option) => {
+        .map((genre) => genreMap[genre.trim()] || genre.trim())
+        .filter(Boolean);
+      const genreField = document.querySelector("#fieldGenre");
+      const genreFilter = document.querySelector("#genreFilter");
+      selectedGenres.forEach((genre) => {
+        if (![...genreField.options].some((option) => option.value === genre)) {
+          genreField.add(new Option(genre, genre));
+        }
+        if (![...genreFilter.options].some((option) => option.value === genre)) {
+          genreFilter.add(new Option(genre, genre));
+        }
+      });
+      [...genreField.options].forEach((option) => {
         option.selected = selectedGenres.includes(option.value);
       });
     }

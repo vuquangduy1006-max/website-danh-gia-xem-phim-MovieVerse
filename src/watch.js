@@ -85,13 +85,16 @@ function renderWatchPage(current) {
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
   const episodeUrls = Array.isArray(current.episodes) ? current.episodes : [];
+  const playableEpisodeUrls = current.movieUrl
+    ? [current.movieUrl, ...episodeUrls]
+    : episodeUrls;
   const rawEpisodeCount = Number(current.episodeCount ?? 0);
   const isKamenRiderBuild =
     current.id === "n19" ||
     current.title.trim().toLocaleLowerCase("vi") === "kamen rider build";
   const episodeCount =
-    episodeUrls.length > 0
-      ? episodeUrls.length
+    playableEpisodeUrls.length > 0
+      ? playableEpisodeUrls.length
       : Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
         ? rawEpisodeCount
         : isKamenRiderBuild
@@ -298,7 +301,7 @@ function renderWatchPage(current) {
                 <div><p class="eyebrow">${episodeCount > 1 ? "Series" : "Phim lẻ"}</p><h3 id="episodesHeading">Tập phim</h3></div>
                 <span class="watch-aside-count" id="episodeCount" aria-label="${episodeCount} tập">${String(episodeCount).padStart(2, "0")}</span>
               </div>
-              <p class="aside-desc episode-note">${availableEpisodes.size ? "Video từng tập được phát từ liên kết đã cập nhật." : episodeCount > 1 ? `Đã ghi nhận ${episodeCount} tập nhưng chưa có liên kết video tập.` : "Chưa có liên kết video nội dung phim."}${sources.length ? " Nguồn phát phía trên chỉ có trailer hoặc clip, không phải nội dung đầy đủ." : " Chưa có trailer hoặc nguồn video nào trong kho."}</p>
+              <p class="aside-desc episode-note">${availableEpisodes.size === episodeCount ? "Video từng tập được phát từ liên kết đã cập nhật." : availableEpisodes.size ? `Đã có liên kết video cho ${availableEpisodes.size}/${episodeCount} tập.` : episodeCount > 1 ? `Đã ghi nhận ${episodeCount} tập nhưng chưa có liên kết video tập.` : "Chưa có liên kết video nội dung phim."}${sources.length ? " Nguồn phát phía trên chỉ có trailer hoặc clip, không phải nội dung đầy đủ." : " Chưa có trailer hoặc nguồn video nào trong kho."}</p>
               <div class="episode-list" id="episodeList" role="group" aria-label="Danh sách tập phim"></div>
             </section>
 

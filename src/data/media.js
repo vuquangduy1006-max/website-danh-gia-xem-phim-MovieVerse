@@ -90,6 +90,13 @@ export function getVideoSource(value, title, label) {
   }
 }
 
+function getSavedTrailer(movie) {
+  const url = movie.trailerUrl || movie.trailer;
+  return url
+    ? getVideoSource(url, `${movie.title} · Trailer`, "Trailer")
+    : null;
+}
+
 // Mỗi phim sở hữu riêng danh sách nguồn của chính nó.
 // Mọi video ID đều đã kiểm tra phát được và thuộc kênh nhà phát chính thức.
 // clip[0] luôn là trailer chính, dùng làm nguồn mặc định ở trang chi tiết.
@@ -188,17 +195,18 @@ const MOVIE_SOURCES = {
 
 
 export function getTrailer(movie) {
-  const savedTrailer = movie.trailerUrl
-    ? getVideoSource(movie.trailerUrl, `${movie.title} · Trailer`, "Trailer")
-    : null;
+  const savedTrailer = getSavedTrailer(movie);
   if (savedTrailer) return savedTrailer;
   return getLocalTrailer(movie) || MOVIE_SOURCES[movie.title]?.[0] || null;
 }
 
 export function getEpisodeSource(movie, episodeNumber) {
-  const url = Array.isArray(movie.episodes)
-    ? movie.episodes[episodeNumber - 1]
-    : "";
+  const episodes = Array.isArray(movie.episodes) ? movie.episodes : [];
+  const url = movie.movieUrl
+    ? episodeNumber === 1
+      ? movie.movieUrl
+      : episodes[episodeNumber - 2]
+    : episodes[episodeNumber - 1];
   return getVideoSource(
     url,
     `${movie.title} · Tập ${String(episodeNumber).padStart(2, "0")}`,
@@ -209,9 +217,7 @@ export function getEpisodeSource(movie, episodeNumber) {
 // Chỉ trả về nguồn của chính phim này. Không bao giờ trộn nguồn của phim khác vào.
 export function getWatchSources(movie) {
   const clips = MOVIE_SOURCES[movie.title];
-  const savedTrailer = movie.trailerUrl
-    ? getVideoSource(movie.trailerUrl, `${movie.title} · Trailer`, "Trailer")
-    : null;
+  const savedTrailer = getSavedTrailer(movie);
   const localTrailer = savedTrailer ? null : getLocalTrailer(movie);
   const sources = localTrailer
     ? [
