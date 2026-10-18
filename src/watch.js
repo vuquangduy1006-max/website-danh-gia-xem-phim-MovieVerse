@@ -72,13 +72,16 @@ function renderWatchPage(current) {
   const credits = getMovieCredits(current);
   const similar = getSimilarMovies(current, movieList);
   const episodeUrls = Array.isArray(current.episodes) ? current.episodes : [];
+  const playableEpisodeUrls = current.movieUrl
+    ? [current.movieUrl, ...episodeUrls]
+    : episodeUrls;
   const rawEpisodeCount = Number(current.episodeCount ?? 0);
   const isKamenRiderBuild =
     current.id === "n19" ||
     current.title.trim().toLocaleLowerCase("vi") === "kamen rider build";
   const episodeCount =
-    episodeUrls.length > 0
-      ? episodeUrls.length
+    playableEpisodeUrls.length > 0
+      ? playableEpisodeUrls.length
       : Number.isFinite(rawEpisodeCount) && rawEpisodeCount > 1
         ? rawEpisodeCount
         : isKamenRiderBuild
@@ -266,7 +269,7 @@ function renderWatchPage(current) {
                 <div><p class="eyebrow">${episodeCount > 1 ? "Series" : "Phim lẻ"}</p><h3 id="episodesHeading">Tập phim</h3></div>
                 <span class="watch-aside-count" id="episodeCount" aria-label="${episodeCount} tập">${String(episodeCount).padStart(2, "0")}</span>
               </div>
-              <p class="aside-desc episode-note">${episodeCount > 1 ? "Chọn tập muốn xem." : "Phim này có một nội dung độc lập."}${episodeUrls.length ? " Video từng tập được phát từ liên kết đã cập nhật." : " Video từng tập chưa có trong kho; player hiện phát trailer hoặc clip có sẵn."}</p>
+              <p class="aside-desc episode-note">${episodeCount > 1 ? "Chọn tập muốn xem." : "Phim này có một nội dung độc lập."}${playableEpisodeUrls.length ? " Video từng tập được phát từ liên kết đã cập nhật." : " Video từng tập chưa có trong kho; player hiện phát trailer hoặc clip có sẵn."}</p>
               <div class="episode-list" id="episodeList" role="group" aria-label="Danh sách tập phim"></div>
             </section>
 
