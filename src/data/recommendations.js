@@ -50,6 +50,13 @@ function normalize(value) {
     .toLocaleLowerCase("vi");
 }
 
+export function getRequestedGenres(query, movies) {
+  const normalizedQuery = normalize(query);
+  return [...new Set(movies.flatMap(getMovieGenres))].filter((genre) =>
+    normalizedQuery.includes(normalize(genre)),
+  );
+}
+
 export function findReferencedMovies(query, movies) {
   const normalizedQuery = normalize(query);
   if (!/(?:giong|tuong tu|na na|similar to|like)/.test(normalizedQuery)) {

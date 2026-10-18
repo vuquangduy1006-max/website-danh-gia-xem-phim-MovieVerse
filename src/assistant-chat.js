@@ -2,14 +2,125 @@ import "./assistant-chat.css";
 import {
   answerFromCatalog,
   findMovieNamedInQuestion,
+  getRequestedMinimumRating,
+  getRequestedPersonalSections,
   isUnrecognizedMovieRequest,
 } from "../assistant-recommendations.js";
-import { getMovieGenres } from "./data/data.js";
-import { rankMovieRecommendations } from "./data/recommendations.js";
+import { getMovieGenres, getReleaseSchedule } from "./data/data.js";
+import { loadFavorites } from "./data/favorites.js";
+import { loadWatchHistory } from "./data/history.js";
+import { loadReviews } from "./data/reviews.js";
+import { getMovieRanking } from "./data/rankings.js";
+import {
+  getRequestedGenres,
+  rankMovieRecommendations,
+} from "./data/recommendations.js";
 
 const WELCOME_MESSAGE =
   "Chào bạn! Tối nay bạn muốn xem phim theo thể loại, tâm trạng hay thời lượng nào?";
 const MOVIE_NOT_FOUND_MESSAGE = "Không thể tìm ra phim này.";
+
+function getPersonalListData(section, movies) {
+  const movieById = new Map(movies.map((movie) => [movie.id, movie]));
+  if (section === "history") {
+    const items = loadWatchHistory()
+      .map((entry) => {
+        const movie = movieById.get(entry.id);
+        if (!movie) return null;
+        const watchedAt = new Date(entry.viewedAt);
+        return {
+          movie,
+          href: `/watch.html?id=${encodeURIComponent(movie.id)}`,
+          reason: `Xem lần cuối ${Number.isNaN(watchedAt.getTime()) ? "gần đây" : watchedAt.toLocaleDateString("vi-VN")}`,
+        };
+      })
+      .filter(Boolean);
+    return {
+      title: "Lịch sử xem",
+      href: "/history.html",
+      emptyMessage: "Bạn chưa có phim nào trong lịch sử xem.",
+      items,
+    };
+  }
+
+  if (section === "favorites") {
+    const items = loadFavorites()
+      .map((id) => movieById.get(id))
+      .filter(Boolean)
+      .map((movie) => ({
+        movie,
+        href: `/movie-detail.html?id=${encodeURIComponent(movie.id)}`,
+        reason: "Phim yêu thích",
+      }));
+    return {
+      title: "Phim yêu thích",
+      href: "/favorites.html",
+      emptyMessage: "Bạn chưa lưu phim yêu thích nào.",
+      items,
+    };
+  }
+
+  if (section === "ranking") {
+    const items = getMovieRanking(movies, loadReviews(), "all").map(
+      ({ movie, score, reviewCount }, index) => ({
+        movie,
+        href: `/movie-detail.html?id=${encodeURIComponent(movie.id)}`,
+        reason: `#${index + 1} · ★ ${score.toFixed(1)}/10 · ${reviewCount} review`,
+      }),
+    );
+    return {
+      title: "Top phim",
+      href: "/ranking.html",
+      emptyMessage: "Chưa có phim nào trong bảng xếp hạng.",
+      items,
+    };
+  }
+
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const items = getReleaseSchedule()
+    .filter((event) => event.date >= todayKey && movieById.has(event.movieId))
+    .sort((first, second) =>
+      `${first.date} ${first.time || ""}`.localeCompare(
+        `${second.date} ${second.time || ""}`,
+      ),
+    )
+    .map((event) => {
+      const movie = movieById.get(event.movieId);
+      const date = new Date(`${event.date}T00:00:00`);
+      const dateLabel = Number.isNaN(date.getTime())
+        ? event.date
+        : date.toLocaleDateString("vi-VN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+      const eventLabel = event.type === "episode"
+        ? `Tập ${String(event.episodeNumber).padStart(2, "0")}`
+        : "Phim mới";
+      return {
+        movie,
+        href: `/movie-detail.html?id=${encodeURIComponent(movie.id)}`,
+        reason: `${eventLabel} · ${dateLabel}${event.time ? ` · ${event.time}` : ""}`,
+      };
+    });
+  return {
+    title: "Lịch phát hành sắp tới",
+    href: "/schedule.html",
+    emptyMessage: "Hiện chưa có sự kiện phát hành sắp tới.",
+    items,
+  };
+}
+
+function summarizePersonalLists(lists) {
+  return lists
+    .map((list) =>
+      list.items.length
+        ? `${list.title}: ${list.items.length} mục. ${list.items.slice(0, 4).map(({ movie }) => movie.title).join(", ")}.`
+        : list.emptyMessage,
+    )
+    .join(" ");
+}
 
 export function mountAssistantChat(movies) {
   const messages = [];
@@ -69,7 +180,11 @@ export function mountAssistantChat(movies) {
     if (open) input.focus();
   }
 
-  function addMessage(role, content, { notice = "", pending = false } = {}) {
+  function addMessage(
+    role,
+    content,
+    { notice = "", pending = false, personalLists = [] } = {},
+  ) {
     const message = document.createElement("article");
     message.className = `assistant-message assistant-message-${role}${pending ? " is-pending" : ""}`;
     if (pending) {
@@ -85,26 +200,33 @@ export function mountAssistantChat(movies) {
         const requestedMovie = findMovieNamedInQuestion(userQuery, movies);
         const firstMentionedMovie = requestedMovie ||
           findMovieNamedInQuestion(content, movies);
+        const requestedGenres = getRequestedGenres(userQuery, movies);
+        const requestedRating = getRequestedMinimumRating(userQuery);
+        const wantsFilteredList =
+          requestedGenres.length > 0 || requestedRating !== null;
 
-        if (firstMentionedMovie) {
+        if (personalLists.length || firstMentionedMovie || wantsFilteredList) {
           message.classList.add("has-recommendations");
           const cards = document.createElement("div");
           cards.className = "assistant-chat-recommendations";
-          const createMovieCard = (movie, { primary = false, reason = "", searched = false } = {}) => {
+          const createMovieCard = (movie, { primary = false, reason = "", searched = false, href = "" } = {}) => {
             const link = document.createElement("a");
             link.className = `assistant-chat-recommendation${primary ? " is-primary" : " is-extra"}`;
-            link.href = `/movie-detail.html?id=${encodeURIComponent(movie.id)}`;
+            link.href = href || `/movie-detail.html?id=${encodeURIComponent(movie.id)}`;
 
             const poster = document.createElement("img");
-            poster.src = movie.poster || movie.backdrop || "";
             poster.alt = `Poster phim ${movie.title}`;
-            poster.loading = "lazy";
+            poster.loading = "eager";
+            poster.decoding = "async";
+            const posterSources = [movie.poster, movie.backdrop].filter(Boolean);
+            const posterPlaceholder = document.createElement("span");
+            posterPlaceholder.className = "assistant-chat-poster-placeholder";
+            posterPlaceholder.textContent = movie.title;
             poster.addEventListener("error", () => {
-              if (movie.backdrop && poster.src !== movie.backdrop) {
-                poster.src = movie.backdrop;
+              if (posterSources.length) {
+                poster.src = posterSources.shift();
               } else {
-                poster.removeAttribute("src");
-                poster.classList.add("is-unavailable");
+                poster.replaceWith(posterPlaceholder);
               }
             });
 
@@ -127,35 +249,137 @@ export function mountAssistantChat(movies) {
               ? `${description.slice(0, maxDescriptionLength - 3).trimEnd()}...`
               : description;
             link.append(poster, title, detail, summary);
+            if (posterSources.length) {
+              poster.src = posterSources.shift();
+            } else {
+              poster.replaceWith(posterPlaceholder);
+            }
             return link;
           };
 
-          cards.append(createMovieCard(firstMentionedMovie, {
-            primary: true,
-            searched: Boolean(requestedMovie),
-          }));
-          message.insertBefore(cards, text);
-
-          const extraRecommendations = rankMovieRecommendations({
-            movies,
-            query: userQuery,
-            limit: 4,
-            excludeMovieIds: [firstMentionedMovie.id],
-          });
-          if (extraRecommendations.length) {
+          if (personalLists.length) {
+            personalLists.forEach((list) => {
+              const section = document.createElement("div");
+              section.className = "assistant-chat-extra-section";
+              const heading = document.createElement("p");
+              heading.className = "assistant-chat-recommendations-heading";
+              heading.textContent = list.title;
+              section.append(heading);
+              if (list.items.length) {
+                const itemCards = document.createElement("div");
+                itemCards.className = "assistant-chat-more-recommendations";
+                list.items.slice(0, 4).forEach((item) => {
+                  itemCards.append(
+                    createMovieCard(item.movie, {
+                      reason: item.reason,
+                      href: item.href,
+                    }),
+                  );
+                });
+                section.append(itemCards);
+                if (list.items.length > 4) {
+                  const viewAll = document.createElement("a");
+                  viewAll.className = "assistant-chat-list-link";
+                  viewAll.href = list.href;
+                  viewAll.textContent = `Xem toàn bộ ${list.title.toLocaleLowerCase("vi")} →`;
+                  section.append(viewAll);
+                }
+              } else {
+                const emptyMessage = document.createElement("p");
+                emptyMessage.className = "assistant-chat-list-empty";
+                emptyMessage.textContent = list.emptyMessage;
+                section.append(emptyMessage);
+              }
+              cards.append(section);
+            });
+          } else if (wantsFilteredList) {
+            const genreRecommendations = rankMovieRecommendations({
+              movies,
+              query: userQuery,
+              limit: movies.length,
+            })
+              .filter(({ movie }) =>
+                (!requestedGenres.length ||
+                  getMovieGenres(movie).some((genre) =>
+                    requestedGenres.includes(genre),
+                  )) &&
+                  (requestedRating === null ||
+                    Number(movie.rating) >= requestedRating),
+              )
+              .slice(0, 4);
+            const firstRecommendedMovie = genreRecommendations[0]?.movie;
+            if (firstRecommendedMovie) {
+              const firstMovieDetails = [
+                getMovieGenres(firstRecommendedMovie).join(", "),
+                firstRecommendedMovie.year,
+                Number.isFinite(Number(firstRecommendedMovie.rating))
+                  ? `IMDb ${Number(firstRecommendedMovie.rating).toFixed(1)}/10`
+                  : "",
+              ].filter(Boolean);
+              text.textContent = `Phim đầu tiên trong danh sách là ${firstRecommendedMovie.title}${firstMovieDetails.length ? ` (${firstMovieDetails.join(" · ")})` : ""}.`;
+              const latestAssistantMessage = messages.at(-1);
+              if (latestAssistantMessage?.role === "assistant") {
+                latestAssistantMessage.content = text.textContent;
+              }
+            }
             const extraSection = document.createElement("div");
             extraSection.className = "assistant-chat-extra-section";
             const heading = document.createElement("p");
             heading.className = "assistant-chat-recommendations-heading";
-            heading.textContent = "Gợi ý thêm";
+            const filters = [
+              requestedGenres.length
+                ? `thể loại ${requestedGenres.join(", ")}`
+                : "",
+              requestedRating !== null
+                ? `IMDb từ ${requestedRating}/10`
+                : "",
+            ].filter(Boolean);
+            heading.textContent = `Phim ${filters.join(" · ")}`;
             extraSection.append(heading);
             const extras = document.createElement("div");
             extras.className = "assistant-chat-more-recommendations";
-            extraRecommendations.forEach(({ movie, reasons }) => {
+            genreRecommendations.forEach(({ movie, reasons }) => {
               extras.append(createMovieCard(movie, { reason: reasons[0] }));
             });
-            extraSection.append(extras);
-            message.append(extraSection);
+            if (!genreRecommendations.length) {
+              const emptyNote = document.createElement("p");
+              emptyNote.className = "assistant-chat-recommendations-heading";
+              emptyNote.textContent = "Chưa có phim thuộc thể loại này trong kho.";
+              extraSection.append(emptyNote);
+            } else {
+              extraSection.append(extras);
+            }
+            cards.append(extraSection);
+          } else {
+            cards.append(createMovieCard(firstMentionedMovie, {
+              primary: true,
+              searched: Boolean(requestedMovie),
+            }));
+          }
+          message.insertBefore(cards, text);
+
+          if (!personalLists.length && firstMentionedMovie && !wantsFilteredList) {
+            const extraRecommendations = rankMovieRecommendations({
+              movies,
+              query: `${userQuery} ${getMovieGenres(firstMentionedMovie).join(" ")}`,
+              limit: 4,
+              excludeMovieIds: [firstMentionedMovie.id],
+            });
+            if (extraRecommendations.length) {
+              const extraSection = document.createElement("div");
+              extraSection.className = "assistant-chat-extra-section";
+              const heading = document.createElement("p");
+              heading.className = "assistant-chat-recommendations-heading";
+              heading.textContent = "Phim cùng thể loại";
+              extraSection.append(heading);
+              const extras = document.createElement("div");
+              extras.className = "assistant-chat-more-recommendations";
+              extraRecommendations.forEach(({ movie, reasons }) => {
+                extras.append(createMovieCard(movie, { reason: reasons[0] }));
+              });
+              extraSection.append(extras);
+              message.append(extraSection);
+            }
           }
         }
       }
@@ -190,11 +414,16 @@ export function mountAssistantChat(movies) {
     form.dataset.sending = "true";
     form.querySelector("button").disabled = true;
     const pendingMessage = addMessage("assistant", "", { pending: true });
+    const personalLists = getRequestedPersonalSections(content).map(
+      (section) => getPersonalListData(section, movies),
+    );
 
     try {
       let answer;
       let notice = "";
-      if (isUnrecognizedMovieRequest(content, movies)) {
+      if (personalLists.length) {
+        answer = summarizePersonalLists(personalLists);
+      } else if (isUnrecognizedMovieRequest(content, movies)) {
         answer = MOVIE_NOT_FOUND_MESSAGE;
       } else {
         try {
@@ -216,7 +445,7 @@ export function mountAssistantChat(movies) {
 
       pendingMessage.remove();
       messages.push({ role: "assistant", content: answer });
-      addMessage("assistant", answer, { notice });
+      addMessage("assistant", answer, { notice, personalLists });
     } catch {
       pendingMessage.remove();
       addMessage("assistant", "Mình chưa gửi được câu trả lời. Bạn thử lại sau nhé.");
