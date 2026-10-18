@@ -199,6 +199,28 @@
 .assistant-chat-recommendation img.is-unavailable {
   visibility: hidden;
 }
+.assistant-chat-poster-placeholder {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  aspect-ratio: 2 / 3;
+  padding: 8px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #292d32;
+  color: #c3c4c6;
+  font-size: 10px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.assistant-chat-recommendation.is-extra .assistant-chat-poster-placeholder {
+  grid-column: auto;
+  grid-row: auto;
+  width: 100%;
+}
 .assistant-chat-recommendation strong {
   display: -webkit-box;
   grid-column: 2;
@@ -244,6 +266,16 @@
   color: var(--muted);
   font-size: 11px;
   font-weight: 600;
+}
+.assistant-chat-list-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.assistant-chat-list-link {
+  justify-self: start;
+  color: #ff9a80;
+  font-size: 11px;
 }
 .assistant-chat-extra-section {
   display: grid;

@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   answerFromCatalog,
   findMovieNamedInQuestion,
+  getRequestedMinimumRating,
+  getRequestedPersonalSections,
   hasMovieRecommendationIntent,
   isUnrecognizedMovieRequest,
 } from "../assistant-recommendations.js";
@@ -13,6 +15,7 @@ import {
   movieSeed,
 } from "../src/data/data.js";
 import {
+  getRequestedGenres,
   isMoreRecommendationsRequest,
   rankMovieRecommendations,
 } from "../src/data/recommendations.js";
@@ -64,6 +67,13 @@ const moodCatalog = [
       "Robot Roz học cách sinh tồn và chăm sóc một chú ngỗng con trên hòn đảo hoang.",
   },
 ];
+
+test("detects requested movie genres without matching case or diacritics", () => {
+  assert.deepEqual(
+    getRequestedGenres("Gợi ý phim HANH DONG giúp mình", catalog),
+    ["Hành động"],
+  );
+});
 
 test("recommends Dune for action and a roughly two-hour request with verified runtime", () => {
   const question =
@@ -233,6 +243,36 @@ test("filters recommendations by year and minimum IMDb rating", () => {
   assert.equal(hasMovieRecommendationIntent(question), true);
   assert.match(answerFromCatalog(question, catalog), /Dune: Part Two/);
   assert.doesNotMatch(answerFromCatalog(question, catalog), /Superman/);
+});
+
+test("treats good-rating requests as an eight-point minimum", () => {
+  const question = "Gợi ý phim được đánh giá tốt";
+  const answer = answerFromCatalog(question, catalog);
+
+  assert.equal(hasMovieRecommendationIntent(question), true);
+  assert.equal(getRequestedMinimumRating(question), 8);
+  assert.match(answer, /Dune: Part Two/);
+  assert.doesNotMatch(answer, /Superman/);
+});
+
+test("uses the requested numeric rating threshold when provided", () => {
+  assert.equal(getRequestedMinimumRating("Phim IMDb trên 8,5"), 8.5);
+});
+
+test("detects history, favorites, and release schedule requests together", () => {
+  assert.deepEqual(
+    getRequestedPersonalSections(
+      "Cho tôi xem lịch sử xem, phim yêu thích, lịch phát sóng và top phim",
+    ),
+    ["history", "favorites", "schedule", "ranking"],
+  );
+});
+
+test("recognizes short favorites requests", () => {
+  assert.deepEqual(getRequestedPersonalSections("yêu thích"), ["favorites"]);
+  assert.deepEqual(getRequestedPersonalSections("yêu thích của tôi"), [
+    "favorites",
+  ]);
 });
 
 test("does not recommend movies that fail an explicit runtime limit", () => {

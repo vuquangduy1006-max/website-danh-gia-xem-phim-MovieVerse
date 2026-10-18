@@ -521,6 +521,42 @@ export function normalizeAssistantText(value) {
     .toLocaleLowerCase("vi");
 }
 
+export function getRequestedPersonalSections(question) {
+  const query = normalizeAssistantText(question)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  const sections = [];
+  if (
+    /\b(?:lich su xem|phim da xem|da xem gan day|watch history|recently watched)\b/.test(
+      query,
+    )
+  ) {
+    sections.push("history");
+  }
+  if (
+    /\b(?:phim yeu thich|danh sach(?: phim)? yeu thich|muc yeu thich|yeu thich(?: cua (?:toi|minh|ban))?|favorites?|favourites?)\b/.test(
+      query,
+    )
+  ) {
+    sections.push("favorites");
+  }
+  if (
+    /\b(?:lich phat song|lich phat hanh|lich chieu|lich ra mat|lich phim|release schedule|schedule)\b/.test(
+      query,
+    )
+  ) {
+    sections.push("schedule");
+  }
+  if (
+    /\b(?:top phim|phim top|bang xep hang|xep hang phim|ranking|ranked movies)\b/.test(
+      query,
+    )
+  ) {
+    sections.push("ranking");
+  }
+  return sections;
+}
+
 const MOVIE_QUERY_STOP_WORDS = new Set([
   "a", "an", "and", "ban", "bo", "can", "cho", "co", "cua", "film",
   "films", "for", "gi", "goi", "hay", "hi", "hoi", "in", "khong",
@@ -747,6 +783,22 @@ function requestedRuntimeMinutes(query) {
   return total > 0 ? total : null;
 }
 
+export function getRequestedMinimumRating(question) {
+  const query = normalizeAssistantText(question);
+  const rating = query.match(
+    /(?:imdb|diem|rating)\s*(?:tu|tren|it nhat|at least|above|over|>=|>)?\s*([0-9](?:[.,][0-9])?)/,
+  );
+  if (rating) return Number(rating[1].replace(",", "."));
+  if (
+    /(?:danh gia (?:tot|cao)|duoc danh gia (?:tot|cao)|diem (?:cao|tot)|rating cao|imdb cao|xep hang cao|reviews? tot)/.test(
+      query,
+    )
+  ) {
+    return 8;
+  }
+  return null;
+}
+
 function recommendationFilters(query) {
   const runtimeMinutes = requestedRuntimeMinutes(query);
   const yearRange = query.match(
@@ -756,9 +808,6 @@ function recommendationFilters(query) {
   const yearBefore = query.match(/(?:truoc|before)\s+(19\d{2}|20\d{2})/);
   const exactYear = query.match(
     /(?:phim\s+nam|nam|ra mat nam)\s+(19\d{2}|20\d{2})/,
-  );
-  const rating = query.match(
-    /(?:imdb|diem|rating)\s*(?:tu|tren|it nhat|at least|above|over|>=|>)?\s*([0-9](?:[.,][0-9])?)/,
   );
   const runtimeMaximum =
     runtimeMinutes &&
@@ -789,7 +838,7 @@ function recommendationFilters(query) {
         : exactYear
           ? Number(exactYear[1])
           : null,
-    minimumRating: rating ? Number(rating[1].replace(",", ".")) : null,
+    minimumRating: getRequestedMinimumRating(query),
   };
 }
 
