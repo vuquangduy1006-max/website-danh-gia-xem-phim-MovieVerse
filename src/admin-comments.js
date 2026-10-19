@@ -31,6 +31,7 @@ if (!isAdmin()) {
           <a href="/admin/schedule.html">Lịch phát hành</a>
           <a href="/admin/genres.html">Thể loại</a>
           <a class="active" href="/admin/comments.html">Bình luận</a>
+          <a href="/admin/users.html">Người dùng</a>
           <a href="/" class="back-link">← Trang chủ</a>
         </nav>
         <div class="header-actions"><span class="admin-role">ADMIN</span></div>

@@ -986,6 +986,13 @@ async function handleAuthApi(request, response, pathname) {
         return true;
       }
 
+      if (user.blocked === true) {
+        sendJson(response, 403, {
+          error: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.",
+        });
+        return true;
+      }
+
       const token = randomBytes(32).toString("base64url");
       const expiresAt =
         Date.now() +
@@ -1231,6 +1238,104 @@ async function handleReviewsApi(request, response, pathname) {
         error: badInput
           ? "Yêu cầu kiểm duyệt không hợp lệ."
           : "Không thể cập nhật bình luận trên máy chủ.",
+      });
+    }
+    return true;
+  }
+
+  return false;
+}
+
+async function handleAdminUsersApi(request, response, pathname) {
+  if (!isAdminRequest(request)) {
+    sendJson(response, 403, {
+      error: "Cần đăng nhập quản trị để quản lý người dùng.",
+    });
+    return true;
+  }
+
+  // GET /api/admin/users — list all users (no password fields)
+  if (request.method === "GET" && pathname === "/api/admin/users") {
+    try {
+      const users = await readUsers();
+      const safeUsers = users.map(({ id, name, email, createdAt, blocked }) => ({
+        id,
+        name,
+        email,
+        createdAt: createdAt || null,
+        blocked: blocked === true,
+      }));
+      sendJson(response, 200, { users: safeUsers });
+    } catch (error) {
+      console.error("Unable to read users:", error);
+      sendJson(response, 500, { error: "Không thể tải danh sách người dùng." });
+    }
+    return true;
+  }
+
+  // DELETE /api/admin/users/:id — delete a user
+  const deleteMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)$/);
+  if (request.method === "DELETE" && deleteMatch) {
+    const userId = decodeURIComponent(deleteMatch[1]);
+    try {
+      const result = await updateUsers((users) => {
+        const index = users.findIndex((u) => u.id === userId);
+        if (index === -1) return { ok: false };
+        users.splice(index, 1);
+        return { ok: true };
+      });
+      if (!result.ok) {
+        sendJson(response, 404, { error: "Không tìm thấy người dùng." });
+        return true;
+      }
+      // Revoke any active sessions for this user
+      for (const [token, session] of userTokens) {
+        if (session.userId === userId) userTokens.delete(token);
+      }
+      sendJson(response, 200, { ok: true });
+    } catch (error) {
+      console.error("Unable to delete user:", error);
+      sendJson(response, 500, { error: "Không thể xóa người dùng." });
+    }
+    return true;
+  }
+
+  // PATCH /api/admin/users/:id/block — toggle block status
+  const blockMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)\/block$/);
+  if (request.method === "PATCH" && blockMatch) {
+    const userId = decodeURIComponent(blockMatch[1]);
+    try {
+      const body = await readJson(request);
+      if (!isRecord(body) || typeof body.blocked !== "boolean") {
+        sendJson(response, 400, { error: "Trạng thái khóa không hợp lệ." });
+        return true;
+      }
+      const result = await updateUsers((users) => {
+        const user = users.find((u) => u.id === userId);
+        if (!user) return { ok: false };
+        user.blocked = body.blocked;
+        return { ok: true, blocked: body.blocked };
+      });
+      if (!result.ok) {
+        sendJson(response, 404, { error: "Không tìm thấy người dùng." });
+        return true;
+      }
+      // If blocking, revoke active sessions
+      if (body.blocked) {
+        for (const [token, session] of userTokens) {
+          if (session.userId === userId) userTokens.delete(token);
+        }
+      }
+      sendJson(response, 200, { ok: true, blocked: result.blocked });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to update user block status:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu không hợp lệ."
+          : "Không thể cập nhật trạng thái người dùng.",
       });
     }
     return true;
@@ -1637,6 +1742,9 @@ const server = createServer(async (request, response) => {
     pathname === "/api/admin/schedule"
   ) {
     if (await handleCatalogApi(request, response, pathname)) return;
+  }
+  if (pathname.startsWith("/api/admin/users")) {
+    if (await handleAdminUsersApi(request, response, pathname)) return;
   }
   if (await handleMovieRatingApi(request, response, url)) return;
   if (await serveStatic(request, response, pathname)) return;

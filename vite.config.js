@@ -26,6 +26,9 @@ export default defineConfig({
         adminComments: fileURLToPath(
           new URL("./admin/comments.html", import.meta.url),
         ),
+        adminUsers: fileURLToPath(
+          new URL("./admin/users.html", import.meta.url),
+        ),
         adminGenres: fileURLToPath(
           new URL("./admin/genres.html", import.meta.url),
         ),
@@ -39,6 +42,7 @@ export default defineConfig({
           new URL("./movie-detail.html", import.meta.url),
         ),
         watch: fileURLToPath(new URL("./watch.html", import.meta.url)),
+        search: fileURLToPath(new URL("./search.html", import.meta.url)),
       },
     },
   },
