@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #0b0c0e;
   --surface: #131518;
   --text: #f4f3ef;
@@ -706,7 +706,9 @@ button {
 }
 .movie-card h3 {
   font-size: 14px;
-  margin: 11px 0 3px;
+  margin: 0;
+  min-width: 0;
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -839,9 +841,17 @@ button {
 .new-page-footer .footer-bottom a {
   color: var(--muted);
 }
+.movie-card-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 11px 0 3px;
+}
 .card-rating {
-  float: right;
+  flex-shrink: 0;
   color: #eec65c;
+  font-size: 12px;
+  white-space: nowrap;
 }
 .select-wrap select {
   background: var(--surface);

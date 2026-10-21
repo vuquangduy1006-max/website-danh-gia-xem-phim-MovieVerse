@@ -1,4 +1,4 @@
-import "./style.css";
+﻿import "./style.css";
 import {
   getMovieDB,
   getMovieGenres,
@@ -439,7 +439,7 @@ function renderMovies(filter = "all") {
     ? shown
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="${detailUrl(movie)}">${movie.title}</a><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
@@ -540,7 +540,7 @@ function renderNewMovies() {
     ? newMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><h3><a href="${detailUrl(movie)}">${movie.title}</a><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></h3><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có phim mới.</p>';
