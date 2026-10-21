@@ -18,6 +18,7 @@ import {
   toggleFavorite as toggleFavoriteStorage,
 } from "./data/favorites.js";
 import { addToWatchHistory } from "./data/history.js";
+import { bindHeaderSearch, renderHeaderSearch } from "./components/index.js";
 
 const WATCHLIST_KEY = "movieverse_watchlist";
 const PROGRESS_KEY = "movieverse_watch_progress";
@@ -40,6 +41,7 @@ if (movie) {
 } else {
   renderNotFound();
 }
+bindHeaderSearch();
 
 function resolveMovie() {
   const id = params.get("id");
@@ -59,7 +61,7 @@ function renderNotFound() {
         <nav class="main-nav" aria-label="Điều hướng chính">
           <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
-        <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
+        <div class="nav-actions">${renderHeaderSearch()}<a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
     </header>
     <main class="detail-notfound">
@@ -146,6 +148,7 @@ function renderWatchPage(current) {
           <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
+          ${renderHeaderSearch()}
           <a class="login-link" href="/movie-detail.html?id=${encodeURIComponent(current.id)}">Chi tiết phim <span aria-hidden="true">→</span></a>
           <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>
         </div>

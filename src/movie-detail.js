@@ -17,6 +17,7 @@ import {
   syncReviews,
 } from "./data/reviews.js";
 import { getSession, isAdmin } from "./data/auth.js";
+import { bindHeaderSearch, renderHeaderSearch } from "./components/index.js";
 import {
   loadFavorites,
   toggleFavorite as toggleFavoriteStorage,
@@ -42,6 +43,7 @@ if (movie) {
 } else {
   renderNotFound();
 }
+bindHeaderSearch();
 
 function resolveMovie() {
   const id = params.get("id");
@@ -61,7 +63,7 @@ function renderNotFound() {
         <nav class="main-nav" aria-label="Điều hướng chính">
           <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a href="/genres.html">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
-        <div class="nav-actions"><a class="login-link" href="/">Về trang chủ →</a></div>
+        <div class="nav-actions">${renderHeaderSearch()}<a class="login-link" href="/">Về trang chủ →</a></div>
       </div>
     </header>
     <main class="detail-notfound">
@@ -90,6 +92,7 @@ function renderDetailPage(current) {
           <a href="/">Trang chủ</a><a href="/new-movies.html">Phim mới</a><a href="/schedule.html">Lịch phát hành</a><a class="active" href="/genres.html" aria-current="page">Thể loại</a><a href="/reviews.html">Đánh giá</a><a href="/favorites.html">Yêu thích</a><a href="/ranking.html">Top phim</a>
         </nav>
         <div class="nav-actions">
+          ${renderHeaderSearch()}
           <a class="login-link" href="/new-movies.html">Phim mới <span aria-hidden="true">→</span></a>
           <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>
         </div>

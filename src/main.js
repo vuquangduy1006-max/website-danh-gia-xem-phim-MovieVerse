@@ -58,13 +58,7 @@ function escapeHtml(str) {
   );
 }
 
-const headerActions = `<form class="header-search" id="headerSearch" role="search">
-  <label class="sr-only" for="searchInput">Tìm phim</label>
-  <input id="searchInput" type="search" placeholder="Tìm phim..." autocomplete="off" aria-controls="searchResults">
-  <button class="header-search-button" type="submit" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button>
-  <div class="search-results" id="searchResults" aria-live="polite"></div>
-</form>
-${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
+const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰</button>`;
 
 document.querySelector("#app").innerHTML = `
 ${renderHeader({
@@ -249,27 +243,12 @@ document.querySelectorAll(".pill").forEach((pill) =>
   }),
 );
 
-document.querySelector("#headerSearch").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const first = document.querySelector("#searchResults a.search-result");
-  if (first) window.location.href = first.href;
-});
-document
-  .querySelector("#searchInput")
-  .addEventListener("focus", (event) => renderSearch(event.target.value));
 document
   .querySelector("#recommendationForm")
   .addEventListener("submit", (event) => {
     event.preventDefault();
     renderRecommendations(document.querySelector("#recommendationQuery").value);
   });
-document
-  .querySelector("#searchInput")
-  .addEventListener("input", (event) => renderSearch(event.target.value));
-document.addEventListener("click", (event) => {
-  if (!event.target.closest(".header-search")) closeSearch();
-});
-
 document
   .querySelector(".menu-toggle")
   .addEventListener("click", () =>
@@ -610,45 +589,4 @@ function renderHomeReviews() {
         )
         .join("")
     : '<p class="empty-note">Chưa có đánh giá nào từ cộng đồng.</p>';
-}
-
-function closeSearch() {
-  document.querySelector(".header-search")?.classList.remove("has-results");
-}
-
-function normalizeMovieSearchText(value) {
-  return String(value ?? "")
-    .normalize("NFD")
-    .replace(/[đĐ]/g, "d")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLocaleLowerCase("vi")
-    .trim();
-}
-
-function renderSearch(query = "") {
-  const normalizedQuery = normalizeMovieSearchText(query);
-  const results = movies.filter((movie) =>
-    normalizeMovieSearchText(movie.title).includes(normalizedQuery),
-  );
-  const searchForm = document.querySelector(".header-search");
-  const resultsBox = document.querySelector("#searchResults");
-  if (!resultsBox) return;
-
-  const suggestions = normalizedQuery
-    ? results
-    : [...movies]
-        .sort((a, b) => Number(b.rating) - Number(a.rating))
-        .slice(0, 6);
-
-  // Chỉ mở dropdown khi thực sự có kết quả để tránh hiện khung rỗng.
-  searchForm?.classList.add("has-results");
-
-  resultsBox.innerHTML = suggestions.length
-    ? suggestions
-        .map(
-          (movie) =>
-            `<a class="search-result" href="${detailUrl(movie)}"><img src="${movie.poster}" alt=""><p>${movie.title}<br><small>${movie.year} · ${movie.genre}</small></p></a>`,
-        )
-        .join("")
-    : '<p class="search-empty">Không tìm thấy phim phù hợp.</p>';
 }

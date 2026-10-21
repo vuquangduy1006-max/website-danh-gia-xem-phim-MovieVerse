@@ -22,6 +22,15 @@ function escapeHtml(value) {
   );
 }
 
+export function renderHeaderSearch() {
+  return `<form class="header-search" id="headerSearch" role="search">
+  <label class="sr-only" for="searchInput">Tìm phim</label>
+  <input id="searchInput" type="search" placeholder="Tìm phim..." autocomplete="off" aria-controls="searchResults">
+  <button class="header-search-button" type="submit" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button>
+  <div class="search-results" id="searchResults" aria-live="polite"></div>
+</form>`;
+}
+
 export function renderHeader(values) {
   const availableGenres = [
     ...new Set(getMovieDB().flatMap(getMovieGenres)),
@@ -32,7 +41,15 @@ export function renderHeader(values) {
         `<a href="/genres.html?genre=${encodeURIComponent(genre)}">${genre}</a>`,
     )
     .join("");
-  return renderTemplate(headerTemplate, { ...values, genreMenu });
+  const headerActions = values.headerActions || "";
+  const actionsWithSearch = headerActions.includes('class="header-search"')
+    ? headerActions
+    : `${renderHeaderSearch()}${headerActions}`;
+  return renderTemplate(headerTemplate, {
+    ...values,
+    headerActions: actionsWithSearch,
+    genreMenu,
+  });
 }
 
 export function renderFooter(values) {
@@ -65,6 +82,7 @@ export function renderAccountActions() {
 
 export function bindAccountActions() {
   mountAssistantChat(getMovieDB());
+  bindHeaderSearch();
 
   const genreNav = document.querySelector(".genre-nav");
   if (genreNav) {
@@ -76,5 +94,65 @@ export function bindAccountActions() {
   document.querySelector("#logoutButton")?.addEventListener("click", async () => {
     await logoutUser();
     window.location.href = "/login.html";
+  });
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[đĐ]/g, "d")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("vi")
+    .trim();
+}
+
+export function bindHeaderSearch() {
+  const form = document.querySelector("#headerSearch");
+  const input = document.querySelector("#searchInput");
+  const results = document.querySelector("#searchResults");
+  if (!form || !input || !results) return;
+
+  const movies = getMovieDB();
+  const renderResults = (query = "") => {
+    const normalizedQuery = normalizeSearchText(query);
+    const matches = normalizedQuery
+      ? movies.filter((movie) =>
+          normalizeSearchText(movie.title).includes(normalizedQuery),
+        )
+      : [...movies].sort(
+          (a, b) => Number(b.rating || 0) - Number(a.rating || 0),
+        );
+    const suggestions = matches.slice(0, 6);
+
+    if (!query.trim() && document.activeElement !== input) {
+      form.classList.remove("has-results");
+      return;
+    }
+
+    form.classList.add("has-results");
+    results.innerHTML = suggestions.length
+      ? suggestions
+          .map(
+            (movie) =>
+              `<a class="search-result" href="/watch.html?id=${encodeURIComponent(movie.id)}"><img src="${escapeHtml(movie.poster || "")}" alt=""><p>${escapeHtml(movie.title)}<br><small>${escapeHtml(movie.year || "")} · ${escapeHtml(movie.genre || "")}</small></p></a>`,
+          )
+          .join("") +
+        (normalizedQuery
+          ? `<a class="search-result search-result-all" href="/search.html?q=${encodeURIComponent(query.trim())}">Xem tất cả kết quả →</a>`
+          : "")
+      : '<p class="search-empty">Không tìm thấy phim phù hợp.</p>';
+  };
+
+  input.addEventListener("focus", () => renderResults(input.value));
+  input.addEventListener("input", () => renderResults(input.value));
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = input.value.trim();
+    if (query) {
+      window.location.href = `/search.html?q=${encodeURIComponent(query)}`;
+    }
+  });
+  document.addEventListener("click", (event) => {
+    if (!form.contains(event.target)) form.classList.remove("has-results");
   });
 }
