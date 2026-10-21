@@ -1,4 +1,4 @@
-import "./style.css";
+﻿import "./style.css";
 import "./search-page.css";
 import {
   getMovieDB,
@@ -309,12 +309,14 @@ function renderResults() {
           >
             <span class="play-circle" aria-hidden="true">▶</span>
           </a>
-          <h3>
-            <a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">
-              ${highlightMatch(movie.title, query)}
-            </a>
+          <div class="movie-card-info">
+            <h3>
+              <a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">
+                ${highlightMatch(movie.title, query)}
+              </a>
+            </h3>
             <span class="card-rating search-card-rating">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span>
-          </h3>
+          </div>
           <p>${escapeHtml(movie.year || "—")} · ${escapeHtml(getMovieGenres(movie).join(", ") || "—")}</p>
         </article>`,
       )
