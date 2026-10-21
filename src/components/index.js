@@ -60,7 +60,7 @@ export function renderAccountActions() {
     session.role === "user"
       ? '<a href="/account.html">Đổi mật khẩu</a>'
       : "";
-  return `<details class="account-menu"><summary class="account-chip"><span class="account-avatar">${initial}</span><span>${safeName}</span></summary><div class="account-dropdown">${adminLink}${passwordLink}<a href="/history.html">🕘 Lịch sử xem</a><a href="/favorites.html">♡ Phim yêu thích</a><button class="logout-button" id="logoutButton" type="button">↪ Đăng xuất</button></div></details>`;
+  return `<details class="account-menu"><summary class="account-chip" aria-label="${safeName}" title="${safeName}"><span class="account-avatar">${initial}</span><span>${safeName}</span></summary><div class="account-dropdown">${adminLink}${passwordLink}<a href="/history.html">🕘 Lịch sử xem</a><a href="/favorites.html">♡ Phim yêu thích</a><button class="logout-button" id="logoutButton" type="button">↪ Đăng xuất</button></div></details>`;
 }
 
 export function bindAccountActions() {
