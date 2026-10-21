@@ -1299,6 +1299,13 @@ button {
 .search-result:hover {
   background: rgba(255, 255, 255, 0.055);
 }
+.search-result.search-result-all {
+  display: block;
+  padding: 11px 8px;
+  color: var(--accent);
+  font-size: 13px;
+  text-align: center;
+}
 .search-result img {
   flex: 0 0 42px;
   width: 42px;

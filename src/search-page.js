@@ -48,13 +48,7 @@ const params = new URLSearchParams(window.location.search);
 const initialQuery = params.get("q") || "";
 
 // ---- Render ----
-const headerActions = `<form class="header-search" id="headerSearch" role="search">
-  <label class="sr-only" for="searchInput">Tìm phim</label>
-  <input id="searchInput" type="search" placeholder="Tìm phim..." autocomplete="off" aria-controls="searchResults">
-  <button class="header-search-button" type="submit" aria-label="Tìm kiếm" title="Tìm kiếm">⌕</button>
-  <div class="search-results" id="searchResults" aria-live="polite"></div>
-</form>
-${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>`;
+const headerActions = `${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">☰</button>`;
 
 document.querySelector("#app").innerHTML = `
   ${renderHeader({
@@ -378,38 +372,6 @@ searchPagination.addEventListener("click", (e) => {
   document
     .querySelector("#searchMain")
     .scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-// Header search redirect
-document.querySelector("#headerSearch")?.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const q = document.querySelector("#searchInput").value.trim();
-  if (q) window.location.href = `/search.html?q=${encodeURIComponent(q)}`;
-});
-
-// Header inline results
-document.querySelector("#searchInput")?.addEventListener("input", (e) => {
-  const q = e.target.value.trim().toLocaleLowerCase("vi");
-  const container = document.querySelector("#searchResults");
-  if (!container) return;
-  if (!q) {
-    container.innerHTML = "";
-    container.removeAttribute("data-open");
-    return;
-  }
-  const hits = movies
-    .filter((m) => m.title.toLocaleLowerCase("vi").includes(q))
-    .slice(0, 6);
-  container.setAttribute("data-open", "");
-  container.innerHTML = hits.length
-    ? hits
-        .map(
-          (m) =>
-            `<a class="search-result-item" href="/watch.html?id=${encodeURIComponent(m.id)}">${escapeHtml(m.title)} <span>${escapeHtml(m.year || "")}</span></a>`,
-        )
-        .join("") +
-      `<a class="search-result-item search-result-all" href="/search.html?q=${encodeURIComponent(e.target.value.trim())}">Xem tất cả kết quả →</a>`
-    : `<p class="search-result-empty">Không tìm thấy phim phù hợp.</p>`;
 });
 
 function updateUrl() {
