@@ -68,7 +68,7 @@ ${renderAccountActions()}<button class="menu-toggle" aria-label="Mở menu">☰<
 
 document.querySelector("#app").innerHTML = `
 ${renderHeader({
-  headerClass: "",
+  headerClass: " home-page-header",
   homeHref: "#home",
   homeActive: "active",
   homeCurrent: 'aria-current="page"',
