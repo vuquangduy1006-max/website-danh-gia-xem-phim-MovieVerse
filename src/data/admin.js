@@ -167,7 +167,7 @@ document.querySelector("#app").innerHTML = `
         <div class="form-grid">
           <div class="field full">
             <label for="fieldTitle">Tên phim *</label>
-            <input id="fieldTitle" type="text" placeholder="VD: Dune: Part Two" required>
+            <input id="fieldTitle" type="text" placeholder="Nhập tên phim, rồi chọn kết quả phù hợp nếu muốn" required>
           </div>
           <div class="field full movie-search-field" id="movieSearchField" hidden>
             <label>Kết quả tìm phim trên TMDb</label>
@@ -877,8 +877,6 @@ async function lookupMovieDetails(title) {
         document.querySelector(selector).value = value.trim();
       }
     };
-    setIfAvailable("#fieldTitle", result.title);
-
     const releaseYear = String(result.year || "").match(/\b\d{4}\b/)?.[0];
     if (releaseYear && isValidReleaseYear(releaseYear, currentYear)) {
       document.querySelector("#fieldYear").value = releaseYear;
