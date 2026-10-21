@@ -134,7 +134,7 @@ export function bindHeaderSearch() {
       ? suggestions
           .map(
             (movie) =>
-              `<a class="search-result" href="/watch.html?id=${encodeURIComponent(movie.id)}"><img src="${escapeHtml(movie.poster || "")}" alt=""><p>${escapeHtml(movie.title)}<br><small>${escapeHtml(movie.year || "")} · ${escapeHtml(movie.genre || "")}</small></p></a>`,
+              `<a class="search-result" href="/watch.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a>`
           )
           .join("") +
         (normalizedQuery
