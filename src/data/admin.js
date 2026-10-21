@@ -1,7 +1,6 @@
 import "../admin/admin.css";
 import {
   getMovieDB,
-  saveMovieDBToApi,
   remoteMovieCatalogInitialized,
   getGenreList,
   getMovieGenres,
@@ -51,7 +50,7 @@ function loadDB() {
 }
 
 async function persist(nextMovies) {
-  await saveMovieDBToApi(nextMovies, getSession()?.adminToken);
+  await saveSharedCatalog(nextMovies, getGenreList());
 }
 
 function uid() {
