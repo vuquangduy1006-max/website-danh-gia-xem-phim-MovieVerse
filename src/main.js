@@ -101,15 +101,50 @@ ${renderHeader({
     <div class="genre-pills" id="genres"></div>
     <section class="recommendation-tool" aria-labelledby="recommendationHeading">
       <div class="recommendation-copy">
-        <p class="eyebrow">MovieVerse Match</p>
+        <div class="recommendation-badge">
+          <svg class="sparkle-icon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+            <path d="M12 2L14.5 8.5L21 11L14.5 13.5L12 20L9.5 13.5L3 11L9.5 8.5L12 2Z" />
+          </svg>
+          <span>MovieVerse Match</span>
+        </div>
         <h2 id="recommendationHeading">Tối nay bạn muốn xem gì?</h2>
-        <p>Mô tả thể loại, nội dung hoặc một phim bạn yêu thích để nhận gợi ý kèm lý do.</p>
+        <p>Mô tả thể loại, tâm trạng hoặc một phim yêu thích để nhận gợi ý chuẩn gu.</p>
       </div>
-      <form class="recommendation-form" id="recommendationForm">
-        <label class="sr-only" for="recommendationQuery">Mô tả phim bạn muốn xem</label>
-        <input id="recommendationQuery" type="search" maxlength="120" placeholder="Ví dụ: hành động, khoa học viễn tưởng, giống Dune">
-        <button class="recommendation-submit" type="submit">Gợi ý phim <span aria-hidden="true">→</span></button>
-      </form>
+      <div class="recommendation-form-wrap">
+        <form class="recommendation-form" id="recommendationForm">
+          <label class="sr-only" for="recommendationQuery">Mô tả phim bạn muốn xem</label>
+          <div class="recommendation-input-box">
+            <span class="recommendation-input-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+            <input id="recommendationQuery" type="search" maxlength="120" placeholder="Ví dụ: hành động, khoa học viễn tưởng, giống Dune..." autocomplete="off">
+            <button type="button" class="recommendation-clear-btn" id="recommendationClear" aria-label="Xóa nội dung" style="display: none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <button class="recommendation-submit" type="submit">
+            <span>Gợi ý phim</span>
+            <svg class="submit-arrow" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+        <div class="recommendation-chips" aria-label="Gợi ý tìm nhanh">
+          <span class="chips-label">Thử ngay:</span>
+          <button type="button" class="rec-chip" data-query="Hành động kịch tính">💥 Hành động</button>
+          <button type="button" class="rec-chip" data-query="Khoa học viễn tưởng">🚀 Viễn tưởng</button>
+          <button type="button" class="rec-chip" data-query="giống Dune">🌌 Giống Dune</button>
+          <button type="button" class="rec-chip" data-query="phim nhẹ nhàng chữa lành">🌿 Chữa lành</button>
+          <button type="button" class="rec-chip" data-query="IMDb trên 8">⭐ IMDb &gt; 8</button>
+        </div>
+      </div>
       <div class="recommendation-results" id="recommendationResults" aria-live="polite"></div>
     </section>
     <div class="movie-grid" id="movieGrid"></div>
@@ -243,12 +278,36 @@ document.querySelectorAll(".pill").forEach((pill) =>
   }),
 );
 
-document
-  .querySelector("#recommendationForm")
-  .addEventListener("submit", (event) => {
+const recForm = document.querySelector("#recommendationForm");
+const recQuery = document.querySelector("#recommendationQuery");
+const recClear = document.querySelector("#recommendationClear");
+
+if (recForm && recQuery) {
+  recForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    renderRecommendations(document.querySelector("#recommendationQuery").value);
+    renderRecommendations(recQuery.value);
   });
+
+  if (recClear) {
+    recQuery.addEventListener("input", () => {
+      recClear.style.display = recQuery.value.trim() ? "flex" : "none";
+    });
+    recClear.addEventListener("click", () => {
+      recQuery.value = "";
+      recClear.style.display = "none";
+      recQuery.focus();
+    });
+  }
+
+  document.querySelectorAll(".rec-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const query = chip.dataset.query;
+      recQuery.value = query;
+      if (recClear) recClear.style.display = "flex";
+      renderRecommendations(query);
+    });
+  });
+}
 document
   .querySelector(".menu-toggle")
   .addEventListener("click", () =>
