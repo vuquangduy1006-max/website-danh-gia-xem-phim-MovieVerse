@@ -1,4 +1,4 @@
-﻿import "./style.css";
+import "./style.css";
 import {
   getMovieDB,
   getMovieGenres,
@@ -366,7 +366,7 @@ function renderHero() {
           ? `<video class="hero-video" autoplay muted loop playsinline preload="metadata" poster="${movie.poster || movie.backdrop || ""}" src="${trailer.url}"></video>`
           : `<div class="hero-bg" style="background-image:url('${movie.backdrop || movie.poster}')"></div>`;
 
-      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}</div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}">▶ &nbsp;Xem ngay</a></div></article>`;
+      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}</div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}"><span class="watch-button-icon" aria-hidden="true">▶</span><span>Xem ngay</span></a></div></article>`;
     })
     .join("");
   document.querySelector("#sliderDots").innerHTML = heroMovies

@@ -44,6 +44,14 @@
   padding: 9px 16px;
   border-radius: 999px;
   font-size: 12px;
+  line-height: 1.35;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition:
     border-color 160ms ease,
     background 160ms ease,
