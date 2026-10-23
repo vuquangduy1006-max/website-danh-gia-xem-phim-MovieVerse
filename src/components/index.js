@@ -243,94 +243,20 @@ function renderDefaultState() {
   return recentHtml + popularHtml;
 }
 
+
 function renderMovieCards(matches, query) {
   if (!matches.length) {
-    return `<div class="search-empty">
-      <p>Không tìm thấy phim phù hợp với "<strong>${escapeHtml(query)}</strong>".</p>
-    </div>`;
+    return '<p class="search-empty">Không tìm thấy phim phù hợp.</p>';
   }
 
-  const trimmed = query.trim();
-  const allGenres = getGenreList();
-  const isExactGenre = allGenres.some(
-    (g) => normalizeSearchText(g) === normalizeSearchText(trimmed),
-  );
-  const footerUrl = isExactGenre
-    ? `/genres.html?genre=${encodeURIComponent(trimmed)}`
-    : `/search.html?q=${encodeURIComponent(trimmed)}`;
-  const footerText = isExactGenre
-    ? `Xem tất cả phim thể loại "${escapeHtml(trimmed)}" →`
-    : `Xem tất cả kết quả cho "${escapeHtml(trimmed)}" →`;
-
-  const cardsHtml = matches
-    .slice(0, 6)
-    .map((movie) => {
-      const genres = getMovieGenres(movie);
-      const primaryGenre = genres[0] || movie.genre || "Phim";
-      const isAnimeOrAnimation =
-        /hoạt hình|anime/i.test(primaryGenre) ||
-        /hoạt hình|anime/i.test(movie.genre || "");
-      const isSeries =
-        /tập|season|phần|bộ|series/i.test(movie.title) || isAnimeOrAnimation;
-
-      const badgeText = isSeries ? "Mùa mở đầu" : "Phim điện ảnh";
-      const badgeClass = isSeries ? "badge-series" : "badge-movie";
-
-      const subTitle =
-        movie.originalTitle ||
-        movie.englishTitle ||
-        movie.subTitle ||
-        movie.title;
-
-      let extraLine = "";
-      if (movie.episodes) {
-        extraLine = `Tập ${escapeHtml(movie.episodes)}`;
-      } else if (movie.status) {
-        extraLine = escapeHtml(movie.status);
-      } else if (isSeries) {
-        extraLine = "Tập 2";
-      } else if (movie.rating && Number(movie.rating) > 0) {
-        extraLine = `★ ${Number(movie.rating).toFixed(1)}/10`;
-      } else {
-        extraLine = "Full";
-      }
-
-      const posterUrl = movie.poster || movie.backdrop || "";
-
-      return `
-        <a class="search-result search-result-card" href="/watch.html?id=${encodeURIComponent(movie.id)}" data-movie-id="${encodeURIComponent(movie.id)}">
-          <div class="search-card-poster">
-            ${
-              posterUrl
-                ? `<img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.title)}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">`
-                : ""
-            }
-            <div class="search-poster-placeholder" style="${posterUrl ? "display:none;" : "display:flex;"}" aria-hidden="true">🎬</div>
-          </div>
-          <div class="search-card-info">
-            <div class="search-card-title">${escapeHtml(movie.title)}</div>
-            <div class="search-card-sub">${escapeHtml(subTitle)}</div>
-            <div class="search-card-meta">
-              <span class="search-card-badge ${badgeClass}">${badgeText}</span>
-              <span class="search-card-year">${escapeHtml(String(movie.year || "2024").slice(0, 4))}</span>
-              <span class="search-card-genre">${escapeHtml(isAnimeOrAnimation ? "Hoạt Hình" : (primaryGenre || "Phim Lẻ"))}</span>
-              ${!isSeries ? '<span class="search-card-tag">Full</span>' : ""}
-            </div>
-            <div class="search-card-extra">${extraLine}</div>
-          </div>
-        </a>
-      `;
-    })
-    .join("");
-
-  const footerLink = `
-    <a class="search-result search-result-all" href="${footerUrl}">
-      ${footerText}
+  return matches.slice(0, 6).map((movie) => `
+    <a class="search-result search-result-card"
+       href="/watch.html?id=${encodeURIComponent(movie.id)}">
+      ${escapeHtml(movie.title)}
     </a>
-  `;
-
-  return cardsHtml + footerLink;
+  `).join("");
 }
+
 
 export function bindHeaderSearch() {
   const form = document.querySelector("#headerSearch");
@@ -379,14 +305,46 @@ export function bindHeaderSearch() {
   input.addEventListener("focus", () => updateDropdown());
   input.addEventListener("input", () => updateDropdown());
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const query = input.value.trim();
-    if (query) {
-      addRecentSearch(query);
-      window.location.href = `/search.html?q=${encodeURIComponent(query)}`;
-    }
-  });
+  
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const query = input.value.trim();
+  if (!query) return;
+
+  const keyword = normalizeSearchText(query);
+
+  const selectedGenre = getGenreList().find(
+    (genre) => normalizeSearchText(genre) === keyword
+  );
+
+  if (selectedGenre) {
+    addRecentSearch(query);
+    window.location.href =
+      `/genres.html?genre=${encodeURIComponent(selectedGenre)}`;
+    return;
+  }
+
+  const exactMovie = movies.find(
+    (movie) => normalizeSearchText(movie.title) === keyword
+  );
+
+  const matchingMovies = movies.filter(
+    (movie) => normalizeSearchText(movie.title).includes(keyword)
+  );
+
+  const selectedMovie = exactMovie || matchingMovies[0];
+
+  if (selectedMovie) {
+    addRecentSearch(query);
+    window.location.href =
+      `/watch.html?id=${encodeURIComponent(selectedMovie.id)}`;
+    return;
+  }
+
+  alert("Không tìm thấy phim hoặc thể loại phù hợp!");
+});
+
 
   results.addEventListener("click", (event) => {
     const deleteBtn = event.target.closest("[data-delete-query]");
