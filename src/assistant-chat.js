@@ -17,7 +17,7 @@ import {
 } from "./data/recommendations.js";
 
 const WELCOME_MESSAGE =
-  "Chào bạn! Tối nay bạn muốn xem phim theo thể loại, tâm trạng hay thời lượng nào?";
+  "Chào bạn! ✨ Mình là MovieVerse AI. Bạn thích phim hành động, tình cảm hay muốn chọn phim theo tâm trạng hôm nay?";
 const MOVIE_NOT_FOUND_MESSAGE = "Không thể tìm ra phim này.";
 
 function getPersonalListData(section, movies) {
@@ -136,31 +136,31 @@ export function mountAssistantChat(movies) {
   document.body.insertAdjacentHTML(
     "beforeend",
     `<div class="assistant-chat" id="assistantChat">
-      <button class="assistant-chat-launcher" id="assistantChatLauncher" type="button" aria-label="Mở tư vấn phim" aria-expanded="false" aria-controls="assistantChatPanel">
-        <span class="assistant-chat-launcher-icon" aria-hidden="true">✦</span>
+      <button class="assistant-chat-launcher" id="assistantChatLauncher" type="button" aria-label="Mở MovieVerse AI" aria-expanded="false" aria-controls="assistantChatPanel">
+        <span class="assistant-chat-launcher-icon" aria-hidden="true">✦</span><span class="assistant-chat-launcher-label">Hỏi AI</span>
       </button>
       <section class="assistant-chat-panel" id="assistantChatPanel" aria-label="Tư vấn phim MovieVerse" aria-hidden="true" hidden>
         <header class="assistant-chat-header">
-          <div class="assistant-chat-avatar" aria-hidden="true">M</div>
+          <div class="assistant-chat-avatar" aria-hidden="true">✦</div>
           <div class="assistant-chat-heading">
-            <strong>MovieVerse Match</strong>
-            <span><i aria-hidden="true"></i> Sẵn sàng tìm phim cùng bạn</span>
+            <strong>MovieVerse <span class="assistant-chat-ai-label">AI</span></strong>
+            <span><i aria-hidden="true"></i> Trợ lý chọn phim của bạn</span>
           </div>
           <button class="assistant-chat-reset" id="assistantChatReset" type="button" title="Cuộc trò chuyện mới" aria-label="Bắt đầu cuộc trò chuyện mới">↻</button>
           <button class="assistant-chat-close" id="assistantChatClose" type="button" title="Đóng chat" aria-label="Đóng cửa sổ tư vấn">×</button>
         </header>
         <div class="assistant-chat-messages" id="assistantChatMessages" role="log" aria-live="polite" aria-relevant="additions text"></div>
         <div class="assistant-chat-suggestions" id="assistantChatSuggestions" aria-label="Gợi ý câu hỏi">
-          <button type="button">Phim hài nhẹ nhàng</button>
-          <button type="button">Phim hành động cuốn hút</button>
-          <button type="button">Mình cần được an ủi</button>
+          <button type="button">🍿 Phim hài nhẹ nhàng</button>
+          <button type="button">🔥 Phim hành động cuốn hút</button>
+          <button type="button">💜 Mình cần được an ủi</button>
         </div>
         <form class="assistant-chat-form" id="assistantChatForm">
           <label class="sr-only" for="assistantChatInput">Bạn muốn xem phim như thế nào?</label>
-          <textarea id="assistantChatInput" rows="1" maxlength="500" placeholder="Chia sẻ gu phim hoặc tâm trạng..." required></textarea>
+          <textarea id="assistantChatInput" rows="1" maxlength="500" placeholder="Bạn muốn xem phim gì hôm nay?" required></textarea>
           <button type="submit" aria-label="Gửi tin nhắn" title="Gửi tin nhắn"><span aria-hidden="true">↑</span></button>
         </form>
-        <p class="assistant-chat-footnote">Gợi ý dựa trên kho phim MovieVerse</p>
+        <p class="assistant-chat-footnote">✦ Gợi ý dựa trên thư viện phim MovieVerse</p>
       </section>
     </div>`,
   );
