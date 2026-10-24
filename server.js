@@ -64,6 +64,10 @@ const moviesFilePath = resolve(
   process.env.MOVIES_STORE_PATH ||
     fileURLToPath(new URL("./.data/movies.json", import.meta.url)),
 );
+const newsletterFilePath = resolve(
+  process.env.NEWSLETTER_STORE_PATH ||
+    fileURLToPath(new URL("./.data/newsletter.json", import.meta.url)),
+);
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
 let catalogWriteQueue = Promise.resolve();
@@ -71,6 +75,8 @@ let catalogStoreInitialization;
 let userWriteQueue = Promise.resolve();
 let userStoreInitialization;
 let movieWriteQueue = Promise.resolve();
+let newsletterWriteQueue = Promise.resolve();
+let newsletterStoreInitialization;
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -1747,6 +1753,9 @@ const server = createServer(async (request, response) => {
     if (await handleAdminUsersApi(request, response, pathname)) return;
   }
   if (await handleMovieRatingApi(request, response, url)) return;
+  if (pathname.startsWith("/api/newsletter/")) {
+    if (await handleNewsletterApi(request, response, pathname)) return;
+  }
   if (await serveStatic(request, response, pathname)) return;
 
   if (request.method !== "POST" || pathname !== "/api/assistant") {

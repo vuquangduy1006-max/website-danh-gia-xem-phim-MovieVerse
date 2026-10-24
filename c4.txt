@@ -1,0 +1,169 @@
+﻿commit c4fe6fc48846f6a9bf3a88288a920de7e64bfd9a
+Author: V┼⌐ Quang Duy <vuquangduy1006@gmail.com>
+Date:   Fri Oct 23 13:04:59 2026 +0700
+
+    Navigate search directly to movie details or genres
+
+diff --git a/src/components/index.js b/src/components/index.js
+index 053d003..07a2d94 100644
+--- a/src/components/index.js
++++ b/src/components/index.js
+@@ -243,95 +243,21 @@ function renderDefaultState() {
+   return recentHtml + popularHtml;
+ }
+ 
++
+ function renderMovieCards(matches, query) {
+   if (!matches.length) {
+-    return `<div class="search-empty">
+-      <p>Kh├┤ng t├¼m thß║Ñy phim ph├╣ hß╗úp vß╗¢i "<strong>${escapeHtml(query)}</strong>".</p>
+-    </div>`;
++    return '<p class="search-empty">Kh├┤ng t├¼m thß║Ñy phim ph├╣ hß╗úp.</p>';
+   }
+ 
+-  const trimmed = query.trim();
+-  const allGenres = getGenreList();
+-  const isExactGenre = allGenres.some(
+-    (g) => normalizeSearchText(g) === normalizeSearchText(trimmed),
+-  );
+-  const footerUrl = isExactGenre
+-    ? `/genres.html?genre=${encodeURIComponent(trimmed)}`
+-    : `/search.html?q=${encodeURIComponent(trimmed)}`;
+-  const footerText = isExactGenre
+-    ? `Xem tß║Ñt cß║ú phim thß╗â loß║íi "${escapeHtml(trimmed)}" ΓåÆ`
+-    : `Xem tß║Ñt cß║ú kß║┐t quß║ú cho "${escapeHtml(trimmed)}" ΓåÆ`;
+-
+-  const cardsHtml = matches
+-    .slice(0, 6)
+-    .map((movie) => {
+-      const genres = getMovieGenres(movie);
+-      const primaryGenre = genres[0] || movie.genre || "Phim";
+-      const isAnimeOrAnimation =
+-        /hoß║ít h├¼nh|anime/i.test(primaryGenre) ||
+-        /hoß║ít h├¼nh|anime/i.test(movie.genre || "");
+-      const isSeries =
+-        /tß║¡p|season|phß║ºn|bß╗Ö|series/i.test(movie.title) || isAnimeOrAnimation;
+-
+-      const badgeText = isSeries ? "M├╣a mß╗ƒ ─æß║ºu" : "Phim ─æiß╗çn ß║únh";
+-      const badgeClass = isSeries ? "badge-series" : "badge-movie";
+-
+-      const subTitle =
+-        movie.originalTitle ||
+-        movie.englishTitle ||
+-        movie.subTitle ||
+-        movie.title;
+-
+-      let extraLine = "";
+-      if (movie.episodes) {
+-        extraLine = `Tß║¡p ${escapeHtml(movie.episodes)}`;
+-      } else if (movie.status) {
+-        extraLine = escapeHtml(movie.status);
+-      } else if (isSeries) {
+-        extraLine = "Tß║¡p 2";
+-      } else if (movie.rating && Number(movie.rating) > 0) {
+-        extraLine = `Γÿà ${Number(movie.rating).toFixed(1)}/10`;
+-      } else {
+-        extraLine = "Full";
+-      }
+-
+-      const posterUrl = movie.poster || movie.backdrop || "";
+-
+-      return `
+-        <a class="search-result search-result-card" href="/watch.html?id=${encodeURIComponent(movie.id)}" data-movie-id="${encodeURIComponent(movie.id)}">
+-          <div class="search-card-poster">
+-            ${
+-              posterUrl
+-                ? `<img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.title)}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">`
+-                : ""
+-            }
+-            <div class="search-poster-placeholder" style="${posterUrl ? "display:none;" : "display:flex;"}" aria-hidden="true">≡ƒÄ¼</div>
+-          </div>
+-          <div class="search-card-info">
+-            <div class="search-card-title">${escapeHtml(movie.title)}</div>
+-            <div class="search-card-sub">${escapeHtml(subTitle)}</div>
+-            <div class="search-card-meta">
+-              <span class="search-card-badge ${badgeClass}">${badgeText}</span>
+-              <span class="search-card-year">${escapeHtml(String(movie.year || "2024").slice(0, 4))}</span>
+-              <span class="search-card-genre">${escapeHtml(isAnimeOrAnimation ? "Hoß║ít H├¼nh" : (primaryGenre || "Phim Lß║╗"))}</span>
+-              ${!isSeries ? '<span class="search-card-tag">Full</span>' : ""}
+-            </div>
+-            <div class="search-card-extra">${extraLine}</div>
+-          </div>
+-        </a>
+-      `;
+-    })
+-    .join("");
+-
+-  const footerLink = `
+-    <a class="search-result search-result-all" href="${footerUrl}">
+-      ${footerText}
++  return matches.slice(0, 6).map((movie) => `
++    <a class="search-result search-result-card"
++       href="/watch.html?id=${encodeURIComponent(movie.id)}">
++      ${escapeHtml(movie.title)}
+     </a>
+-  `;
+-
+-  return cardsHtml + footerLink;
++  `).join("");
+ }
+ 
++
+ export function bindHeaderSearch() {
+   const form = document.querySelector("#headerSearch");
+   const input = document.querySelector("#searchInput");
+@@ -379,14 +305,46 @@ export function bindHeaderSearch() {
+   input.addEventListener("focus", () => updateDropdown());
+   input.addEventListener("input", () => updateDropdown());
+ 
+-  form.addEventListener("submit", (event) => {
+-    event.preventDefault();
+-    const query = input.value.trim();
+-    if (query) {
+-      addRecentSearch(query);
+-      window.location.href = `/search.html?q=${encodeURIComponent(query)}`;
+-    }
+-  });
++  
++form.addEventListener("submit", (event) => {
++  event.preventDefault();
++
++  const query = input.value.trim();
++  if (!query) return;
++
++  const keyword = normalizeSearchText(query);
++
++  const selectedGenre = getGenreList().find(
++    (genre) => normalizeSearchText(genre) === keyword
++  );
++
++  if (selectedGenre) {
++    addRecentSearch(query);
++    window.location.href =
++      `/genres.html?genre=${encodeURIComponent(selectedGenre)}`;
++    return;
++  }
++
++  const exactMovie = movies.find(
++    (movie) => normalizeSearchText(movie.title) === keyword
++  );
++
++  const matchingMovies = movies.filter(
++    (movie) => normalizeSearchText(movie.title).includes(keyword)
++  );
++
++  const selectedMovie = exactMovie || matchingMovies[0];
++
++  if (selectedMovie) {
++    addRecentSearch(query);
++    window.location.href =
++      `/watch.html?id=${encodeURIComponent(selectedMovie.id)}`;
++    return;
++  }
++
++  alert("Kh├┤ng t├¼m thß║Ñy phim hoß║╖c thß╗â loß║íi ph├╣ hß╗úp!");
++});
++
+ 
+   results.addEventListener("click", (event) => {
+     const deleteBtn = event.target.closest("[data-delete-query]");

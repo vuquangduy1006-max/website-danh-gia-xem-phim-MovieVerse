@@ -244,17 +244,70 @@ function renderDefaultState() {
 }
 
 
-function renderMovieCards(matches, query) {
+export function renderMovieCards(matches, query) {
   if (!matches.length) {
     return '<p class="search-empty">Không tìm thấy phim phù hợp.</p>';
   }
 
-  return matches.slice(0, 6).map((movie) => `
-    <a class="search-result search-result-card"
-       href="/watch.html?id=${encodeURIComponent(movie.id)}">
-      ${escapeHtml(movie.title)}
-    </a>
-  `).join("");
+  const cardsHtml = matches
+    .slice(0, 6)
+    .map((movie) => {
+      const genres = getMovieGenres(movie);
+      const primaryGenre = genres[0] || movie.genre || "Phim";
+      const isAnimeOrAnimation =
+        /hoạt hình|anime/i.test(primaryGenre) ||
+        /hoạt hình|anime/i.test(movie.genre || "");
+      const rawEpisodeCount = Number(movie.episodeCount ?? 0);
+      const episodeCount =
+        rawEpisodeCount > 0
+          ? rawEpisodeCount
+          : Array.isArray(movie.episodes) && movie.episodes.length > 0
+            ? movie.episodes.length
+            : 1;
+      const isSeries = episodeCount > 1 || isAnimeOrAnimation;
+
+      const badgeText = isSeries ? "Phim bộ" : "Phim lẻ";
+      const badgeClass = isSeries ? "badge-series" : "badge-movie";
+
+      const subTitle =
+        movie.originalTitle ||
+        movie.englishTitle ||
+        movie.subTitle ||
+        movie.title;
+
+      const extraLine =
+        episodeCount > 1 ? `${episodeCount} tập` : "Phim lẻ";
+
+      const posterUrl = movie.poster || movie.backdrop || "";
+
+      return `
+        <a class="search-result search-result-card"
+           href="/watch.html?id=${encodeURIComponent(movie.id)}"
+           data-movie-id="${encodeURIComponent(movie.id)}">
+          <div class="search-card-poster">
+            ${
+              posterUrl
+                ? `<img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.title)}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">`
+                : ""
+            }
+            <div class="search-poster-placeholder" style="${posterUrl ? "display:none;" : "display:flex;"}" aria-hidden="true">🎬</div>
+          </div>
+          <div class="search-card-info">
+            <div class="search-card-title">${escapeHtml(movie.title)}</div>
+            <div class="search-card-sub">${escapeHtml(subTitle)}</div>
+            <div class="search-card-meta">
+              <span class="search-card-badge ${badgeClass}">${badgeText}</span>
+              <span class="search-card-year">${escapeHtml(String(movie.year || "").slice(0, 4))}</span>
+              <span class="search-card-genre">${escapeHtml(primaryGenre)}</span>
+            </div>
+            <div class="search-card-extra">${escapeHtml(extraLine)}</div>
+          </div>
+        </a>
+      `;
+    })
+    .join("");
+
+  return cardsHtml;
 }
 
 

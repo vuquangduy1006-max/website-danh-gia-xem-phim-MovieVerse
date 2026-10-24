@@ -164,6 +164,7 @@ test("review API shares replies, persists moderation and protects admin actions"
       REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
       AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
       MOVIES_STORE_PATH: path.join(directory, "movies.json"),
+      NEWSLETTER_STORE_PATH: path.join(directory, "newsletter.json"),
     },
     stdio: ["ignore", "ignore", "pipe"],
   });

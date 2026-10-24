@@ -1,0 +1,405 @@
+﻿commit c132b8c44ae139fc60469f4414ae12dadc5eaaee
+Author: Trß║ºn Tiß║┐n D┼⌐ng <tiendung6307tq@gmail.com>
+Date:   Thu Oct 22 23:02:45 2026 +0700
+
+    gß╗úi ├╜ v├á nav
+
+diff --git a/src/components/index.js b/src/components/index.js
+index c007f59..053d003 100644
+--- a/src/components/index.js
++++ b/src/components/index.js
+@@ -1,7 +1,7 @@
+ import footerTemplate from "./footer.html?raw";
+ import headerTemplate from "./header.html?raw";
+ import { getSession, logoutUser } from "../data/auth.js";
+-import { getMovieDB, getMovieGenres } from "../data/data.js";
++import { getGenreList, getMovieDB, getMovieGenres } from "../data/data.js";
+ import { mountAssistantChat } from "../assistant-chat.js";
+ 
+ function renderTemplate(template, values) {
+@@ -106,6 +106,232 @@ function normalizeSearchText(value) {
+     .trim();
+ }
+ 
++const RECENT_SEARCHES_KEY = "movieverse_recent_searches";
++
++const POPULAR_GENRES = [
++  {
++    genre: "H├ánh ─æß╗Öng",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "Hoß║ít h├¼nh",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "Khoa hß╗ìc viß╗àn t╞░ß╗ƒng",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"/><circle cx="12" cy="12" r="6"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "Phi├¬u l╞░u",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "Kinh dß╗ï",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01m5.99 0h.01M9 16a3 3 0 0 0 6 0"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "T├¼nh cß║úm",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "H├ái",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
++    hot: true,
++  },
++  {
++    genre: "T├óm l├╜",
++    icon: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6m-6 4h6m-6 4h4"/></svg>`,
++    hot: true,
++  },
++];
++
++function getRecentSearches() {
++  try {
++    const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
++    if (raw) {
++      const parsed = JSON.parse(raw);
++      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
++    }
++  } catch (_) {}
++  return ["H├ánh ─æß╗Öng", "Hoß║ít h├¼nh"];
++}
++
++function saveRecentSearches(list) {
++  try {
++    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list));
++  } catch (_) {}
++}
++
++function addRecentSearch(item) {
++  const clean = String(item ?? "").trim();
++  if (!clean) return;
++  const list = getRecentSearches().filter(
++    (s) => s.toLowerCase() !== clean.toLowerCase(),
++  );
++  list.unshift(clean);
++  saveRecentSearches(list.slice(0, 6));
++}
++
++function removeRecentSearch(item) {
++  const list = getRecentSearches().filter((s) => s !== item);
++  saveRecentSearches(list);
++}
++
++function clearRecentSearches() {
++  saveRecentSearches([]);
++}
++
++function renderDefaultState() {
++  const recents = getRecentSearches();
++  const recentHtml = recents.length
++    ? `<div class="search-section search-section-recent">
++        <div class="search-section-header">
++          <span class="search-section-title">
++            <svg class="search-section-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
++            Gß║ªN ─É├éY
++          </span>
++          <button type="button" class="search-clear-all-btn" title="X├│a tß║Ñt cß║ú lß╗ïch sß╗¡" aria-label="X├│a tß║Ñt cß║ú">Γ£ò</button>
++        </div>
++        <div class="search-recent-list">
++          ${recents
++            .map(
++              (item) => `
++            <div class="search-recent-item" data-query="${escapeHtml(item)}">
++              <span class="search-recent-left">
++                <svg class="search-recent-clock" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
++                <span class="search-recent-text">${escapeHtml(item)}</span>
++              </span>
++              <button type="button" class="search-recent-delete" data-delete-query="${escapeHtml(item)}" title="X├│a" aria-label="X├│a">Γ£ò</button>
++            </div>
++          `,
++            )
++            .join("")}
++        </div>
++      </div>`
++    : "";
++
++  const popularHtml = `
++    <div class="search-section search-section-popular">
++      <div class="search-section-header">
++        <span class="search-section-title search-popular-title">
++          <span class="search-flame-icon" aria-hidden="true">≡ƒöÑ</span>
++          THß╗é LOß║áI PHß╗ö BIß║╛N
++        </span>
++      </div>
++      <div class="search-popular-list">
++        ${POPULAR_GENRES.map(
++          (p) => `
++          <button type="button" class="search-popular-item" data-query="${escapeHtml(p.genre)}">
++            <span class="search-popular-left">
++              <span class="search-popular-icon">${p.icon}</span>
++              <span class="search-popular-text">${escapeHtml(p.genre)}</span>
++            </span>
++            <span class="search-hot-badge">HOT</span>
++          </button>
++        `,
++        ).join("")}
++      </div>
++    </div>
++  `;
++
++  return recentHtml + popularHtml;
++}
++
++function renderMovieCards(matches, query) {
++  if (!matches.length) {
++    return `<div class="search-empty">
++      <p>Kh├┤ng t├¼m thß║Ñy phim ph├╣ hß╗úp vß╗¢i "<strong>${escapeHtml(query)}</strong>".</p>
++    </div>`;
++  }
++
++  const trimmed = query.trim();
++  const allGenres = getGenreList();
++  const isExactGenre = allGenres.some(
++    (g) => normalizeSearchText(g) === normalizeSearchText(trimmed),
++  );
++  const footerUrl = isExactGenre
++    ? `/genres.html?genre=${encodeURIComponent(trimmed)}`
++    : `/search.html?q=${encodeURIComponent(trimmed)}`;
++  const footerText = isExactGenre
++    ? `Xem tß║Ñt cß║ú phim thß╗â loß║íi "${escapeHtml(trimmed)}" ΓåÆ`
++    : `Xem tß║Ñt cß║ú kß║┐t quß║ú cho "${escapeHtml(trimmed)}" ΓåÆ`;
++
++  const cardsHtml = matches
++    .slice(0, 6)
++    .map((movie) => {
++      const genres = getMovieGenres(movie);
++      const primaryGenre = genres[0] || movie.genre || "Phim";
++      const isAnimeOrAnimation =
++        /hoß║ít h├¼nh|anime/i.test(primaryGenre) ||
++        /hoß║ít h├¼nh|anime/i.test(movie.genre || "");
++      const isSeries =
++        /tß║¡p|season|phß║ºn|bß╗Ö|series/i.test(movie.title) || isAnimeOrAnimation;
++
++      const badgeText = isSeries ? "M├╣a mß╗ƒ ─æß║ºu" : "Phim ─æiß╗çn ß║únh";
++      const badgeClass = isSeries ? "badge-series" : "badge-movie";
++
++      const subTitle =
++        movie.originalTitle ||
++        movie.englishTitle ||
++        movie.subTitle ||
++        movie.title;
++
++      let extraLine = "";
++      if (movie.episodes) {
++        extraLine = `Tß║¡p ${escapeHtml(movie.episodes)}`;
++      } else if (movie.status) {
++        extraLine = escapeHtml(movie.status);
++      } else if (isSeries) {
++        extraLine = "Tß║¡p 2";
++      } else if (movie.rating && Number(movie.rating) > 0) {
++        extraLine = `Γÿà ${Number(movie.rating).toFixed(1)}/10`;
++      } else {
++        extraLine = "Full";
++      }
++
++      const posterUrl = movie.poster || movie.backdrop || "";
++
++      return `
++        <a class="search-result search-result-card" href="/watch.html?id=${encodeURIComponent(movie.id)}" data-movie-id="${encodeURIComponent(movie.id)}">
++          <div class="search-card-poster">
++            ${
++              posterUrl
++                ? `<img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.title)}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">`
++                : ""
++            }
++            <div class="search-poster-placeholder" style="${posterUrl ? "display:none;" : "display:flex;"}" aria-hidden="true">≡ƒÄ¼</div>
++          </div>
++          <div class="search-card-info">
++            <div class="search-card-title">${escapeHtml(movie.title)}</div>
++            <div class="search-card-sub">${escapeHtml(subTitle)}</div>
++            <div class="search-card-meta">
++              <span class="search-card-badge ${badgeClass}">${badgeText}</span>
++              <span class="search-card-year">${escapeHtml(String(movie.year || "2024").slice(0, 4))}</span>
++              <span class="search-card-genre">${escapeHtml(isAnimeOrAnimation ? "Hoß║ít H├¼nh" : (primaryGenre || "Phim Lß║╗"))}</span>
++              ${!isSeries ? '<span class="search-card-tag">Full</span>' : ""}
++            </div>
++            <div class="search-card-extra">${extraLine}</div>
++          </div>
++        </a>
++      `;
++    })
++    .join("");
++
++  const footerLink = `
++    <a class="search-result search-result-all" href="${footerUrl}">
++      ${footerText}
++    </a>
++  `;
++
++  return cardsHtml + footerLink;
++}
++
+ export function bindHeaderSearch() {
+   const form = document.querySelector("#headerSearch");
+   const input = document.querySelector("#searchInput");
+@@ -113,46 +339,124 @@ export function bindHeaderSearch() {
+   if (!form || !input || !results) return;
+ 
+   const movies = getMovieDB();
+-  const renderResults = (query = "") => {
+-    const normalizedQuery = normalizeSearchText(query);
+-    const matches = normalizedQuery
+-      ? movies.filter((movie) =>
+-          normalizeSearchText(movie.title).includes(normalizedQuery),
+-        )
+-      : [...movies].sort(
+-          (a, b) => Number(b.rating || 0) - Number(a.rating || 0),
++
++  const updateDropdown = () => {
++    const rawVal = input.value;
++    const trimmed = rawVal.trim();
++    form.classList.add("has-results");
++
++    if (!trimmed) {
++      results.innerHTML = renderDefaultState();
++    } else {
++      const normalizedQuery = normalizeSearchText(trimmed);
++      const matches = movies.filter((movie) => {
++        const titleNorm = normalizeSearchText(movie.title);
++        const origNorm = normalizeSearchText(
++          movie.originalTitle || movie.englishTitle || "",
+         );
+-    const suggestions = matches.slice(0, 6);
++        const descNorm = normalizeSearchText(movie.description || "");
++        const genreNorm = normalizeSearchText(getMovieGenres(movie).join(" "));
++        return (
++          titleNorm.includes(normalizedQuery) ||
++          origNorm.includes(normalizedQuery) ||
++          descNorm.includes(normalizedQuery) ||
++          genreNorm.includes(normalizedQuery)
++        );
++      });
+ 
+-    if (!query.trim() && document.activeElement !== input) {
+-      form.classList.remove("has-results");
+-      return;
+-    }
++      matches.sort((a, b) => {
++        const aStart = normalizeSearchText(a.title).startsWith(normalizedQuery);
++        const bStart = normalizeSearchText(b.title).startsWith(normalizedQuery);
++        if (aStart && !bStart) return -1;
++        if (!aStart && bStart) return 1;
++        return Number(b.rating || 0) - Number(a.rating || 0);
++      });
+ 
+-    form.classList.add("has-results");
+-    results.innerHTML = suggestions.length
+-      ? suggestions
+-          .map(
+-            (movie) =>
+-              `<a class="search-result" href="/watch.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a>`
+-          )
+-          .join("") +
+-        (normalizedQuery
+-          ? `<a class="search-result search-result-all" href="/search.html?q=${encodeURIComponent(query.trim())}">Xem tß║Ñt cß║ú kß║┐t quß║ú ΓåÆ</a>`
+-          : "")
+-      : '<p class="search-empty">Kh├┤ng t├¼m thß║Ñy phim ph├╣ hß╗úp.</p>';
++      results.innerHTML = renderMovieCards(matches, trimmed);
++    }
+   };
+ 
+-  input.addEventListener("focus", () => renderResults(input.value));
+-  input.addEventListener("input", () => renderResults(input.value));
++  input.addEventListener("focus", () => updateDropdown());
++  input.addEventListener("input", () => updateDropdown());
++
+   form.addEventListener("submit", (event) => {
+     event.preventDefault();
+     const query = input.value.trim();
+     if (query) {
++      addRecentSearch(query);
+       window.location.href = `/search.html?q=${encodeURIComponent(query)}`;
+     }
+   });
++
++  results.addEventListener("click", (event) => {
++    const deleteBtn = event.target.closest("[data-delete-query]");
++    if (deleteBtn) {
++      event.preventDefault();
++      event.stopPropagation();
++      const q = deleteBtn.getAttribute("data-delete-query");
++      removeRecentSearch(q);
++      updateDropdown();
++      input.focus();
++      return;
++    }
++
++    const clearAllBtn = event.target.closest(".search-clear-all-btn");
++    if (clearAllBtn) {
++      event.preventDefault();
++      event.stopPropagation();
++      clearRecentSearches();
++      updateDropdown();
++      input.focus();
++      return;
++    }
++
++    const recentItem = event.target.closest(".search-recent-item");
++    if (recentItem) {
++      event.preventDefault();
++      const q = recentItem.getAttribute("data-query");
++      if (q) {
++        input.value = q;
++        addRecentSearch(q);
++        updateDropdown();
++        input.focus();
++      }
++      return;
++    }
++
++    const popularItem = event.target.closest(".search-popular-item");
++    if (popularItem) {
++      event.preventDefault();
++      const q = popularItem.getAttribute("data-query");
++      if (q) {
++        input.value = q;
++        addRecentSearch(q);
++        updateDropdown();
++        input.focus();
++      }
++      return;
++    }
++
++    const card = event.target.closest(".search-result-card");
++    if (card) {
++      if (input.value.trim()) {
++        addRecentSearch(input.value.trim());
++      }
++      form.classList.remove("has-results");
++      return;
++    }
++
++    const allLink = event.target.closest(".search-result-all");
++    if (allLink) {
++      if (input.value.trim()) {
++        addRecentSearch(input.value.trim());
++      }
++    }
++  });
++
+   document.addEventListener("click", (event) => {
+-    if (!form.contains(event.target)) form.classList.remove("has-results");
++    if (!form.contains(event.target)) {
++      form.classList.remove("has-results");
++    }
+   });
+ }
++
