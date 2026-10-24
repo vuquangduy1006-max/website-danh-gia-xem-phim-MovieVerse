@@ -17,6 +17,9 @@ export default defineConfig({
         info: fileURLToPath(new URL("./info.html", import.meta.url)),
         login: fileURLToPath(new URL("./login.html", import.meta.url)),
         register: fileURLToPath(new URL("./register.html", import.meta.url)),
+        forgotPassword: fileURLToPath(
+          new URL("./forgot-password.html", import.meta.url),
+        ),
         account: fileURLToPath(new URL("./account.html", import.meta.url)),
         schedule: fileURLToPath(new URL("./schedule.html", import.meta.url)),
         adminSchedule: fileURLToPath(

@@ -280,3 +280,51 @@ export async function logoutUser() {
     console.error("Không thể thu hồi phiên đăng nhập trên máy chủ:", error);
   }
 }
+
+export async function requestPasswordReset(email) {
+  let result;
+  try {
+    result = await requestJson("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (!result.response.ok) {
+    return {
+      ok: false,
+      message: result.payload.error || "Không thể yêu cầu đặt lại mật khẩu.",
+    };
+  }
+  return {
+    ok: true,
+    message: result.payload.message,
+    resetCode: result.payload.resetCode,
+    expiresIn: result.payload.expiresIn,
+  };
+}
+
+export async function resetPasswordWithCode({ email, code, newPassword }) {
+  let result;
+  try {
+    result = await requestJson("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, newPassword }),
+    });
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (!result.response.ok) {
+    return {
+      ok: false,
+      message: result.payload.error || "Không thể đặt lại mật khẩu.",
+    };
+  }
+  return { ok: true, message: result.payload.message };
+}
+

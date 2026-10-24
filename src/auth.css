@@ -231,6 +231,92 @@ body.auth-page {
   accent-color: var(--auth-accent);
 }
 
+.auth-options > a:hover,
+.auth-terms a:hover {
+  color: var(--auth-accent);
+  text-decoration-color: var(--auth-accent);
+}
+
+.auth-field input:read-only.auth-input-readonly {
+  background: rgba(255, 255, 255, 0.04);
+  color: #c2c5c9;
+  cursor: default;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.auth-demo-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(240, 91, 60, 0.08);
+  border: 1px dashed rgba(240, 91, 60, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+}
+
+.auth-demo-hint .hint-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.auth-demo-hint .hint-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--auth-text);
+}
+
+.auth-demo-hint .hint-code {
+  font-family: var(--auth-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ff856b;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(240, 91, 60, 0.25);
+}
+
+.auth-demo-hint .hint-paste-btn {
+  background: rgba(240, 91, 60, 0.2);
+  color: #ff9d85;
+  border: 1px solid rgba(240, 91, 60, 0.35);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.auth-demo-hint .hint-paste-btn:hover {
+  background: var(--auth-accent);
+  color: #17100e;
+}
+
+.auth-link-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--auth-muted);
+  font-size: 12px;
+  font-family: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.3);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.auth-link-btn:hover {
+  color: var(--auth-accent);
+  text-decoration-color: var(--auth-accent);
+}
+
 .auth-terms {
   margin-top: 1px;
 }

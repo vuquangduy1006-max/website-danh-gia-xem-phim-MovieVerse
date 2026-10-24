@@ -503,6 +503,79 @@ test("review API shares replies, persists moderation and protects admin actions"
     headers: { Authorization: `Bearer ${temporarySession.token}` },
   });
 
+  const unknownEmailForgot = await fetch(`${baseUrl}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "nonexistent@example.com" }),
+  });
+  assert.equal(unknownEmailForgot.status, 404);
+
+  const adminEmailForgot = await fetch(`${baseUrl}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "admin@test.local" }),
+  });
+  assert.equal(adminEmailForgot.status, 400);
+
+  const validForgot = await fetch(`${baseUrl}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "viewer@example.com" }),
+  });
+  assert.equal(validForgot.status, 200);
+  const forgotData = await validForgot.json();
+  assert.equal(typeof forgotData.resetCode, "string");
+  assert.equal(forgotData.resetCode.length, 6);
+
+  const wrongCodeReset = await fetch(`${baseUrl}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      code: "000000",
+      newPassword: "reset-password-123",
+    }),
+  });
+  assert.equal(wrongCodeReset.status, 400);
+
+  const shortPasswordReset = await fetch(`${baseUrl}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      code: forgotData.resetCode,
+      newPassword: "short",
+    }),
+  });
+  assert.equal(shortPasswordReset.status, 400);
+
+  const successfulReset = await fetch(`${baseUrl}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      code: forgotData.resetCode,
+      newPassword: "reset-password-123",
+    }),
+  });
+  assert.equal(successfulReset.status, 200);
+
+  const resetPasswordLogin = await fetch(`${baseUrl}/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "viewer@example.com",
+      password: "reset-password-123",
+    }),
+  });
+  assert.equal(resetPasswordLogin.status, 200);
+  const resetUserSession = await resetPasswordLogin.json();
+
+  await fetch(`${baseUrl}/auth/session`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + resetUserSession.token },
+  });
+
   const createdResponse = await fetch(`${baseUrl}/reviews`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

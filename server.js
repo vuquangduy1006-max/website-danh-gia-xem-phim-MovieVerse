@@ -48,6 +48,8 @@ const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
 const userTokens = new Map();
+const passwordResetTokens = new Map();
+const passwordResetRequestsByIp = new Map();
 const catalogFilePath = resolve(
   process.env.MOVIE_CATALOG_STORE_PATH ||
     fileURLToPath(new URL("./.data/catalog.json", import.meta.url)),
@@ -1029,6 +1031,174 @@ async function handleAuthApi(request, response, pathname) {
     const token = getBearerToken(request);
     if (token) userTokens.delete(token);
     sendJson(response, 200, { ok: true });
+    return true;
+  }
+
+  if (request.method === "POST" && pathname === "/api/auth/forgot-password") {
+    const ip = request.socket.remoteAddress || "unknown";
+    if (isRateLimited(ip, passwordResetRequestsByIp)) {
+      sendJson(response, 429, {
+        error: "Bạn thao tác quá nhanh. Vui lòng chờ một phút rồi thử lại.",
+      });
+      return true;
+    }
+
+    try {
+      const body = await readJson(request);
+      if (!isRecord(body) || typeof body.email !== "string") {
+        sendJson(response, 400, { error: "Vui lòng nhập địa chỉ email hợp lệ." });
+        return true;
+      }
+      const email = body.email.trim().toLowerCase();
+      if (!isValidEmail(email)) {
+        sendJson(response, 400, { error: "Địa chỉ email không đúng định dạng." });
+        return true;
+      }
+      if (email === adminEmail) {
+        sendJson(response, 400, {
+          error: "Tài khoản quản trị viên được cấu hình qua biến môi trường (.env), không thể đặt lại bằng cách này.",
+        });
+        return true;
+      }
+
+      const users = await readUsers();
+      const user = users.find((item) => item.email === email);
+      if (!user) {
+        sendJson(response, 404, {
+          error: "Không tìm thấy tài khoản với email này. Vui lòng kiểm tra lại hoặc tạo tài khoản mới.",
+        });
+        return true;
+      }
+      if (user.blocked === true) {
+        sendJson(response, 403, {
+          error: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.",
+        });
+        return true;
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      passwordResetTokens.set(email, {
+        code,
+        expiresAt: Date.now() + 15 * 60 * 1000,
+        attempts: 0,
+      });
+
+      sendJson(response, 200, {
+        ok: true,
+        message: "Mã xác thực đã được tạo thành công.",
+        resetCode: code,
+        expiresIn: 900,
+      });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to process forgot password request:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu yêu cầu không hợp lệ hoặc quá lớn."
+          : "Không thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.",
+      });
+    }
+    return true;
+  }
+
+  if (request.method === "POST" && pathname === "/api/auth/reset-password") {
+    const ip = request.socket.remoteAddress || "unknown";
+    if (isRateLimited(ip, passwordResetRequestsByIp)) {
+      sendJson(response, 429, {
+        error: "Bạn thao tác quá nhanh. Vui lòng chờ một phút rồi thử lại.",
+      });
+      return true;
+    }
+
+    try {
+      const body = await readJson(request);
+      if (!isRecord(body)) {
+        sendJson(response, 400, { error: "Dữ liệu đặt lại mật khẩu không hợp lệ." });
+        return true;
+      }
+      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+      const code = typeof body.code === "string" ? body.code.trim() : "";
+      const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+
+      if (!isValidEmail(email) || !/^\d{6}$/.test(code)) {
+        sendJson(response, 400, { error: "Email hoặc mã xác thực 6 số không hợp lệ." });
+        return true;
+      }
+      if (newPassword.length < 8 || newPassword.length > 128) {
+        sendJson(response, 400, {
+          error: "Mật khẩu mới phải có độ dài từ 8 đến 128 ký tự.",
+        });
+        return true;
+      }
+
+      const record = passwordResetTokens.get(email);
+      if (!record || record.expiresAt <= Date.now()) {
+        if (record) passwordResetTokens.delete(email);
+        sendJson(response, 400, {
+          error: "Mã xác thực đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới.",
+        });
+        return true;
+      }
+
+      if (record.attempts >= 5) {
+        passwordResetTokens.delete(email);
+        sendJson(response, 429, {
+          error: "Bạn đã nhập sai mã xác thực quá nhiều lần. Vui lòng gửi lại yêu cầu mã mới.",
+        });
+        return true;
+      }
+
+      if (record.code !== code) {
+        record.attempts += 1;
+        const remaining = 5 - record.attempts;
+        sendJson(response, 400, {
+          error: `Mã xác thực không chính xác${remaining > 0 ? ` (còn ${remaining} lần thử)` : ""}.`,
+        });
+        return true;
+      }
+
+      const { salt, hash } = await hashPassword(newPassword);
+      let targetUserId = null;
+      const result = await updateUsers((users) => {
+        const user = users.find((item) => item.email === email);
+        if (!user) return { ok: false };
+        user.passwordSalt = salt;
+        user.passwordHash = hash;
+        targetUserId = user.id;
+        return { ok: true };
+      });
+
+      if (!result.ok) {
+        sendJson(response, 404, { error: "Không tìm thấy tài khoản người dùng." });
+        return true;
+      }
+
+      passwordResetTokens.delete(email);
+      if (targetUserId) {
+        for (const [token, session] of userTokens) {
+          if (session.userId === targetUserId) {
+            userTokens.delete(token);
+          }
+        }
+      }
+
+      sendJson(response, 200, {
+        ok: true,
+        message: "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.",
+      });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to reset user password:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu không hợp lệ hoặc quá lớn."
+          : "Không thể đặt lại mật khẩu lúc này. Vui lòng thử lại sau.",
+      });
+    }
     return true;
   }
 
