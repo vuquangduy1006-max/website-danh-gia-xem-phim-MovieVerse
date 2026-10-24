@@ -8,7 +8,7 @@ const viteCli = fileURLToPath(
 const children = [
   spawn(
     process.execPath,
-    ["--env-file-if-exists=.env", "server.js"],
+    ["--env-file-if-exists=.env", "--watch", "server.js"],
     {
       cwd: projectRoot,
       stdio: "inherit",
