@@ -190,8 +190,7 @@ function renderDetailPage(current) {
                 <span class="review-field-label">Bạn chấm phim này thế nào?</span>
                 <div class="star-input" id="detailStarInput" aria-label="Chọn số sao"></div>
               </div>
-              <label class="sr-only" for="detailAuthor">Tên của bạn</label>
-              <input id="detailAuthor" type="text" maxlength="30" placeholder="Tên hiển thị của bạn">
+              <div id="detailAuthorRow"></div>
               <label class="sr-only" for="detailComment">Cảm nhận của bạn</label>
               <textarea id="detailComment" rows="3" placeholder="Điều gì khiến bạn nhớ nhất về bộ phim này?"></textarea>
               <div class="detail-review-foot">
@@ -521,6 +520,25 @@ function renderDetailPage(current) {
       }),
     );
     input.addEventListener("mouseleave", () => paint(selectedRating));
+
+    // Hiển thị identity row hoặc input nhập tên tùy theo trạng thái đăng nhập
+    const session = getSession();
+    const authorRow = document.querySelector("#detailAuthorRow");
+    if (authorRow) {
+      if (session?.name) {
+        authorRow.innerHTML = `
+          <div class="watch-comment-identity">
+            <span class="detail-reply-avatar">${escapeHtml(session.name.charAt(0))}</span>
+            <span>Đánh giá với tư cách <strong>${escapeHtml(session.name)}</strong></span>
+            ${session.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}
+          </div>
+          <input id="detailAuthor" type="text" value="${escapeHtml(session.name)}" readonly hidden>`;
+      } else {
+        authorRow.innerHTML = `
+          <label class="sr-only" for="detailAuthor">Tên của bạn</label>
+          <input id="detailAuthor" type="text" maxlength="30" placeholder="Tên hiển thị của bạn">`;
+      }
+    }
   }
 
   function renderReviews() {
