@@ -146,8 +146,20 @@ export function mountAssistantChat(movies) {
             <strong>MovieVerse <span class="assistant-chat-ai-label">AI</span></strong>
             <span><i aria-hidden="true"></i> Trợ lý chọn phim của bạn</span>
           </div>
-          <button class="assistant-chat-reset" id="assistantChatReset" type="button" title="Cuộc trò chuyện mới" aria-label="Bắt đầu cuộc trò chuyện mới">↻</button>
-          <button class="assistant-chat-close" id="assistantChatClose" type="button" title="Đóng chat" aria-label="Đóng cửa sổ tư vấn">×</button>
+          <div class="assistant-chat-actions">
+            <button class="assistant-chat-reset" id="assistantChatReset" type="button" title="Cuộc trò chuyện mới" aria-label="Bắt đầu cuộc trò chuyện mới">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+            </button>
+            <button class="assistant-chat-close" id="assistantChatClose" type="button" title="Đóng chat" aria-label="Đóng cửa sổ tư vấn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
         </header>
         <div class="assistant-chat-messages" id="assistantChatMessages" role="log" aria-live="polite" aria-relevant="additions text"></div>
         <div class="assistant-chat-suggestions" id="assistantChatSuggestions" aria-label="Gợi ý câu hỏi">
