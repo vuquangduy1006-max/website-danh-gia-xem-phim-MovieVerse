@@ -335,6 +335,16 @@ function renderWatchPage(current) {
               </form>
               <div class="detail-review-list" id="watchCommentList"></div>
             </section>
+
+            <section class="detail-block watch-recommendations" aria-labelledby="watchRecommendationsHeading">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Khám phá thêm</p>
+                  <h2 id="watchRecommendationsHeading">Phim liên quan &amp; đáng xem</h2>
+                </div>
+              </div>
+              <div class="watch-recommendation-grid" id="watchRecommendationList"></div>
+            </section>
           </div>
 
           <aside class="watch-aside">
@@ -546,6 +556,7 @@ function renderWatchPage(current) {
   renderEpisodes();
   renderPlaylist();
   renderSimilar();
+  renderWatchRecommendations();
   renderWatchStarInput();
   renderWatchComments();
   loadPlayerPrefs();
@@ -956,6 +967,24 @@ function renderWatchPage(current) {
         </a>`,
       )
       .join("");
+  }
+
+  function renderWatchRecommendations() {
+    document.querySelector("#watchRecommendationList").innerHTML = similar.length
+      ? similar
+          .map(
+            (item) => `
+              <a class="watch-recommendation-card" href="/watch.html?id=${encodeURIComponent(item.id)}">
+                <img class="watch-recommendation-poster" src="${escapeHtml(item.poster)}" alt="Áp phích ${escapeHtml(item.title)}" loading="lazy">
+                <span class="watch-recommendation-info">
+                  <strong>${escapeHtml(item.title)}</strong>
+                  <small>${escapeHtml(String(item.year))} · ${escapeHtml(item.genre)}</small>
+                  <span class="watch-recommendation-score">★ ${getMovieScoreOutOfTen(item, allReviews).toFixed(1)}/10</span>
+                </span>
+              </a>`,
+          )
+          .join("")
+      : '<p class="empty-note">Chưa có phim phù hợp để gợi ý.</p>';
   }
 
   function loadSource(index, sourceOverride = null) {

@@ -166,10 +166,10 @@ document.querySelector("#app").innerHTML = `
         <div class="form-grid">
           <div class="field full">
             <label for="fieldTitle">Tên phim *</label>
-            <input id="fieldTitle" type="text" placeholder="Nhập tên phim, rồi chọn kết quả phù hợp nếu muốn" required>
+            <input id="fieldTitle" type="text" placeholder="Nhập ít nhất 1 ký tự để tìm và chọn phim" autocomplete="off" aria-autocomplete="list" aria-controls="movieSearchList" aria-expanded="false" required>
           </div>
           <div class="field full movie-search-field" id="movieSearchField" hidden>
-            <label>Kết quả tìm phim trên TMDb</label>
+            <label>Chọn phim trong kho hoặc tìm phim trên TMDb</label>
             <div class="related-movie-list" id="movieSearchList" role="listbox" aria-label="Kết quả tìm phim"></div>
             <small class="field-hint" id="movieSearchStatus" aria-live="polite"></small>
           </div>
@@ -366,8 +366,12 @@ function bindEvents() {
     scheduleRatingLookup();
   });
   document.querySelector("#movieSearchList").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-search-title]");
+    const button = event.target.closest("[data-search-title], [data-existing-id]");
     if (!button) return;
+    if (button.dataset.existingId) {
+      openEditForm(button.dataset.existingId);
+      return;
+    }
     const titleInput = document.querySelector("#fieldTitle");
     titleInput.value = button.dataset.searchTitle;
     titleInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -803,22 +807,40 @@ function scheduleMovieSearch() {
   clearTimeout(movieSearchTimer);
   movieSearchController?.abort();
   const query = document.querySelector("#fieldTitle").value.trim();
-  if (query.length < 2) {
+  if (!query) {
     hideMovieSearchResults();
     return;
   }
-  movieSearchTimer = setTimeout(() => searchMovies(query), 350);
+  const localMatches = movies
+    .filter((movie) =>
+      normalizeMovieSearchText(movie.title).includes(
+        normalizeMovieSearchText(query),
+      ),
+    )
+    .slice(0, 6);
+  renderMovieSearchResults([], localMatches);
+  movieSearchTimer = setTimeout(() => searchMovies(query, localMatches), 350);
 }
 
-async function searchMovies(query) {
+async function searchMovies(query, localMatches) {
   const session = getSession();
-  if (!session?.adminToken) return;
+  if (!session?.adminToken) {
+    setMovieSearchStatus(
+      localMatches.length
+        ? `${localMatches.length} phim trong kho. Hãy đăng nhập lại để tìm thêm trên TMDb.`
+        : "Phiên quản trị không hợp lệ. Hãy đăng nhập lại để tìm phim trên TMDb.",
+    );
+    return;
+  }
   const controller = new AbortController();
   movieSearchController = controller;
   const field = document.querySelector("#movieSearchField");
   field.hidden = false;
-  document.querySelector("#movieSearchList").innerHTML = "";
-  setMovieSearchStatus("Đang tìm phim...");
+  setMovieSearchStatus(
+    localMatches.length
+      ? `${localMatches.length} phim trong kho · Đang tìm thêm trên TMDb...`
+      : "Đang tìm phim trên TMDb...",
+  );
   try {
     const response = await fetch(
       `/api/admin/movie-search?query=${encodeURIComponent(query)}`,
@@ -835,10 +857,14 @@ async function searchMovies(query) {
     ) {
       return;
     }
-    renderMovieSearchResults(result.movies);
+    renderMovieSearchResults(result.movies, localMatches);
   } catch (error) {
     if (error.name === "AbortError") return;
-    hideMovieSearchResults();
+    setMovieSearchStatus(
+      localMatches.length
+        ? `${localMatches.length} phim trong kho. Không thể tìm thêm trên TMDb: ${error.message}`
+        : `Không thể tìm phim trên TMDb: ${error.message}`,
+    );
   } finally {
     if (movieSearchController === controller) movieSearchController = null;
   }
@@ -1002,11 +1028,36 @@ async function lookupMovieDetails(title) {
   }
 }
 
-function renderMovieSearchResults(movies) {
+function normalizeMovieSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("vi");
+}
+
+function renderMovieSearchResults(remoteMovies, localMovies = []) {
   const list = document.querySelector("#movieSearchList");
-  const searchResults = Array.isArray(movies) ? movies : [];
-  list.innerHTML = searchResults
-    .map(
+  const searchResults = Array.isArray(remoteMovies) ? remoteMovies : [];
+  const localTitles = new Set(
+    localMovies.map((movie) => normalizeMovieSearchText(movie.title)),
+  );
+  const uniqueRemoteResults = searchResults.filter(
+    (movie) => !localTitles.has(normalizeMovieSearchText(movie.title)),
+  );
+  document.querySelector("#movieSearchField").hidden = false;
+  document.querySelector("#fieldTitle").setAttribute("aria-expanded", "true");
+  list.innerHTML = [
+    ...localMovies.map(
+      (movie) => `
+        <button class="btn btn-ghost related-movie-option" type="button" role="option" data-existing-id="${escapeHtml(movie.id)}">
+          ${movie.poster ? `<img src="${escapeHtml(movie.poster)}" alt="" loading="lazy">` : ""}
+          <span class="movie-search-copy"><span><strong>${escapeHtml(movie.title)}</strong>${movie.year ? ` <small>${escapeHtml(movie.year)}</small>` : ""}</span>
+          <span class="related-movie-overview">Đang có trong kho · Chọn để chỉnh sửa</span>
+          </span>
+        </button>`,
+    ),
+    ...uniqueRemoteResults.map(
       (movie) => `
         <button class="btn btn-ghost related-movie-option" type="button" role="option" data-search-title="${escapeHtml(movie.title)}">
           ${movie.poster ? `<img src="${escapeHtml(movie.poster)}" alt="" loading="lazy">` : ""}
@@ -1014,11 +1065,11 @@ function renderMovieSearchResults(movies) {
           ${movie.overview ? `<span class="related-movie-overview">${escapeHtml(movie.overview)}</span>` : ""}
           </span>
         </button>`,
-    )
-    .join("");
+    ),
+  ].join("");
   setMovieSearchStatus(
-    searchResults.length
-      ? `${searchResults.length} kết quả. Chọn phim để điền thông tin.`
+    localMovies.length || uniqueRemoteResults.length
+      ? `${localMovies.length + uniqueRemoteResults.length} kết quả. Chọn phim để tiếp tục.`
       : "Không tìm thấy phim phù hợp.",
   );
 }
@@ -1031,6 +1082,7 @@ function setMovieSearchStatus(message) {
 function hideMovieSearchResults() {
   const field = document.querySelector("#movieSearchField");
   if (field) field.hidden = true;
+  document.querySelector("#fieldTitle")?.setAttribute("aria-expanded", "false");
 }
 
 function parseNames(value) {
