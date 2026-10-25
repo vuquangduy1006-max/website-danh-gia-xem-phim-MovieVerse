@@ -96,25 +96,39 @@
   border-radius: 50%;
   background: #79c78a;
 }
+.assistant-chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
 .assistant-chat-reset,
 .assistant-chat-close {
-  display: grid;
+  display: inline-flex;
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
   background: transparent;
   color: #c6c7ca;
-  font-size: 21px;
+  cursor: pointer;
+  transition: all 160ms ease;
 }
 .assistant-chat-reset:hover,
 .assistant-chat-close:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
   color: #fff;
 }
-.assistant-chat-close {
-  font-size: 26px;
+.assistant-chat-reset svg,
+.assistant-chat-close svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
 }
 .assistant-chat-messages {
   display: flex;
