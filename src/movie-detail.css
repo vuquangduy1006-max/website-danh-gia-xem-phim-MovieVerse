@@ -670,6 +670,21 @@
 .detail-reply-identity strong {
   color: var(--text);
 }
+.watch-comment-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.watch-comment-identity strong {
+  color: var(--text);
+}
 .detail-reply-login {
   display: flex;
   align-items: center;
