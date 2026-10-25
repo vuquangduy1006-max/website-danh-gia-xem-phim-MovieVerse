@@ -12,7 +12,13 @@ import {
   getMovieScoreOutOfTen,
   loadReviews,
   syncReviews,
+  getMovieReviews,
+  addReview,
+  deleteReview,
+  addReviewReply,
+  getReviewReplies,
 } from "./data/reviews.js";
+import { getSession, isAdmin } from "./data/auth.js";
 import {
   loadFavorites,
   toggleFavorite as toggleFavoriteStorage,
@@ -262,6 +268,7 @@ function renderWatchPage(current) {
                   <p class="detail-summary">${current.description}</p>
                   <div class="detail-toolbar" role="toolbar" aria-label="Công cụ phim ${current.title}">
                     <button type="button" class="tb-btn" data-tool="favorite" aria-pressed="false">♡ <span>Yêu thích</span></button>
+                    <a class="tb-btn" href="#watchComments">💬 <span>Bình luận</span></a>
                     <div class="tb-share">
                       <button type="button" class="tb-btn" data-tool="share" aria-expanded="false" aria-controls="watchSharePanel">↗ <span>Chia sẻ</span></button>
                       <div class="tb-share-menu" id="watchSharePanel" hidden>
@@ -295,6 +302,38 @@ function renderWatchPage(current) {
                 <div><dt>Nguồn phát</dt><dd>${sources.length ? `${sources.length} nguồn phát` : "Chưa cập nhật"}</dd></div>
               </dl>
               <p class="metadata-attribution">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+            </section>
+
+            <section class="detail-block watch-comments-section" id="watchComments" aria-labelledby="watchCommentsHeading">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Góc nhìn cộng đồng</p>
+                  <h2 id="watchCommentsHeading">Bình luận phim</h2>
+                </div>
+                <span class="detail-review-badge" id="watchCommentBadge"></span>
+              </div>
+              <div id="watchCommentSummary"></div>
+              <form class="detail-review-form" id="watchCommentForm" novalidate>
+                <div class="review-form-heading">
+                  <div>
+                    <span class="review-form-kicker">Đang xem phim?</span>
+                    <h3>Chia sẻ cảm nhận của bạn</h3>
+                  </div>
+                  <span class="review-form-note">Mất chưa đến 1 phút</span>
+                </div>
+                <div class="review-form-rating">
+                  <span class="review-field-label">Bạn chấm phim này thế nào?</span>
+                  <div class="star-input" id="watchStarInput" aria-label="Chọn số sao"></div>
+                </div>
+                <div id="watchAuthorRow"></div>
+                <label class="sr-only" for="watchCommentText">Cảm nhận của bạn</label>
+                <textarea id="watchCommentText" rows="3" placeholder="Điều gì khiến bạn nhớ nhất về bộ phim này?"></textarea>
+                <div class="detail-review-foot">
+                  <p id="watchCommentHint" aria-live="polite"></p>
+                  <button type="submit" class="tb-btn tb-btn-primary">Gửi bình luận <span aria-hidden="true">→</span></button>
+                </div>
+              </form>
+              <div class="detail-review-list" id="watchCommentList"></div>
             </section>
           </div>
 
@@ -507,6 +546,8 @@ function renderWatchPage(current) {
   renderEpisodes();
   renderPlaylist();
   renderSimilar();
+  renderWatchStarInput();
+  renderWatchComments();
   loadPlayerPrefs();
   bindServers();
   bindEpisodes();
@@ -515,6 +556,7 @@ function renderWatchPage(current) {
   bindShareButtons(pageUrl, shareText);
   bindMenuToggle();
   bindKeyboard();
+  bindWatchComments();
 
   // load last, so every listener is already attached
   loadSource(activeSource, getEpisodeSource(current, activeEpisode));
@@ -633,6 +675,248 @@ function renderWatchPage(current) {
 
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
+    });
+  }
+
+  let watchSelectedRating = 0;
+
+  function renderWatchStarInput() {
+    const input = document.querySelector("#watchStarInput");
+    if (!input) return;
+    input.innerHTML = [1, 2, 3, 4, 5]
+      .map(
+        (n) =>
+          `<button type="button" class="star" data-star="${n}" aria-label="Chọn ${n} sao">★</button>`,
+      )
+      .join("");
+
+    const stars = input.querySelectorAll(".star");
+    const hint = document.querySelector("#watchCommentHint");
+
+    const paint = (count) => {
+      stars.forEach((star) =>
+        star.classList.toggle("filled", Number(star.dataset.star) <= count),
+      );
+    };
+
+    stars.forEach((star) =>
+      star.addEventListener("mouseenter", () => {
+        if (!watchSelectedRating) paint(Number(star.dataset.star));
+      }),
+    );
+    stars.forEach((star) =>
+      star.addEventListener("click", () => {
+        watchSelectedRating = Number(star.dataset.star);
+        paint(watchSelectedRating);
+        if (hint) {
+          hint.textContent = `Bạn đã chấm ${watchSelectedRating}/5 sao`;
+          hint.style.color = "var(--accent)";
+        }
+      }),
+    );
+    input.addEventListener("mouseleave", () => paint(watchSelectedRating));
+  }
+
+  function renderWatchComments() {
+    const list = getMovieReviews(current.title);
+    const badge = document.querySelector("#watchCommentBadge");
+    const summary = document.querySelector("#watchCommentSummary");
+    if (!badge || !summary) return;
+
+    if (!list.length) {
+      badge.textContent = "Chưa có bình luận";
+      summary.innerHTML = "";
+    } else {
+      const average =
+        list.reduce((sum, review) => sum + Number(review.rating), 0) /
+        list.length;
+      const distribution = [1, 2, 3, 4, 5].map((star) => ({
+        star,
+        count: list.filter((review) => Number(review.rating) === star).length,
+      }));
+
+      badge.textContent = `★ ${average.toFixed(1)}/5 · ${list.length} bình luận`;
+      summary.innerHTML = `
+        <div class="review-overview">
+          <div class="review-overview-score">
+            <strong>${average.toFixed(1)}</strong>
+            <div class="review-stars">${"★".repeat(Math.round(average))}${"☆".repeat(5 - Math.round(average))}</div>
+            <small>${list.length} đánh giá từ cộng đồng</small>
+          </div>
+          <div class="review-bars">
+            ${distribution
+              .map(
+                (row) => `
+              <div class="review-bar">
+                <span>${row.star} ★</span>
+                <span class="review-bar-track"><span style="width:${(row.count / list.length) * 100}%"></span></span>
+                <span class="review-bar-count">${row.count}</span>
+              </div>`,
+              )
+              .join("")}
+          </div>
+        </div>`;
+    }
+
+    const sorted = [...list].sort((a, b) => {
+      const dateA = new Date(String(a.date).split("/").reverse().join("-"));
+      const dateB = new Date(String(b.date).split("/").reverse().join("-"));
+      return dateB - dateA;
+    });
+
+    const commentList = document.querySelector("#watchCommentList");
+    if (!commentList) return;
+    commentList.innerHTML = sorted.length
+      ? sorted
+          .map(
+            (review) => {
+              const replies = getReviewReplies(review);
+              const session = getSession();
+              return `
+        <article class="review-item">
+          <div class="review-avatar">${escapeHtml(review.author.charAt(0))}</div>
+          <div class="review-body">
+            <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
+            <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
+            <p>${escapeHtml(review.comment)}</p>
+            ${replies.length ? `<div class="detail-reply-thread" aria-label="Các câu trả lời">${replies.map((reply) => `<div class="detail-admin-reply${reply.role === "admin" ? " is-admin" : ""}"><div class="detail-reply-heading"><strong>${escapeHtml(reply.author)}</strong>${reply.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}<small>${escapeHtml(reply.date)}</small></div><p>${escapeHtml(reply.comment)}</p></div>`).join("")}</div>` : ""}
+            ${session
+              ? `<form class="detail-reply-form" data-watch-reply="${escapeHtml(review.id)}">
+                  <div class="detail-reply-identity">
+                    <span class="detail-reply-avatar">${escapeHtml(session.name.charAt(0))}</span>
+                    <span>Trả lời với tư cách <strong>${escapeHtml(session.name)}</strong></span>
+                    ${session.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}
+                  </div>
+                  <label class="sr-only" for="watch-reply-${escapeHtml(review.id)}">Nội dung trả lời</label>
+                  <textarea id="watch-reply-${escapeHtml(review.id)}" name="comment" maxlength="280" rows="2" placeholder="Viết câu trả lời..." required></textarea>
+                  <div class="detail-reply-submit-row">
+                    <span class="detail-reply-hint" aria-live="polite"></span>
+                    <button type="submit" class="detail-reply-submit">Gửi trả lời <span aria-hidden="true">→</span></button>
+                  </div>
+                </form>`
+              : `<div class="detail-reply-login">
+                  <span>Đăng nhập để tham gia thảo luận</span>
+                  <a href="/login.html?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}">Đăng nhập <span aria-hidden="true">→</span></a>
+                </div>`}
+            <div class="detail-review-actions"><span></span>${isAdmin() ? `<button type="button" class="delete-review" data-watch-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div>
+          </div>
+        </article>`;
+            },
+          )
+          .join("")
+      : '<p class="review-empty">Chưa có bình luận nào cho phim này. Hãy là người đầu tiên chia sẻ cảm nhận!</p>';
+  }
+
+  function bindWatchComments() {
+    const form = document.querySelector("#watchCommentForm");
+    if (!form) return;
+
+    // Hiển thị identity row hoặc input nhập tên tùy theo trạng thái đăng nhập
+    const session = getSession();
+    const authorRow = document.querySelector("#watchAuthorRow");
+    if (authorRow) {
+      if (session?.name) {
+        authorRow.innerHTML = `
+          <div class="watch-comment-identity">
+            <span class="detail-reply-avatar">${escapeHtml(session.name.charAt(0))}</span>
+            <span>Bình luận với tư cách <strong>${escapeHtml(session.name)}</strong></span>
+            ${session.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}
+          </div>
+          <input id="watchCommentAuthor" type="text" value="${escapeHtml(session.name)}" readonly hidden>`;
+      } else {
+        authorRow.innerHTML = `
+          <label class="sr-only" for="watchCommentAuthor">Tên của bạn</label>
+          <input id="watchCommentAuthor" type="text" maxlength="30" placeholder="Tên hiển thị của bạn">`;
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const authorInput = document.querySelector("#watchCommentAuthor");
+      const commentInput = document.querySelector("#watchCommentText");
+      const hint = document.querySelector("#watchCommentHint");
+      const author = authorInput.value.trim();
+      const comment = commentInput.value.trim();
+
+      if (!watchSelectedRating) {
+        hint.textContent = "Hãy chọn số sao bạn muốn chấm.";
+        hint.style.color = "#ff6b5c";
+        return;
+      }
+      if (!author) {
+        hint.textContent = "Hãy điền tên của bạn.";
+        hint.style.color = "#ff6b5c";
+        authorInput.focus();
+        return;
+      }
+      if (!comment) {
+        hint.textContent = "Hãy viết vài cảm nhận về phim.";
+        hint.style.color = "#ff6b5c";
+        commentInput.focus();
+        return;
+      }
+
+      try {
+        await addReview({
+          movieTitle: current.title,
+          author,
+          rating: watchSelectedRating,
+          comment,
+        });
+      } catch (error) {
+        hint.textContent = error.message;
+        hint.style.color = "#ff6b5c";
+        return;
+      }
+
+      event.target.reset();
+      watchSelectedRating = 0;
+      document
+        .querySelectorAll("#watchStarInput .star")
+        .forEach((star) => star.classList.remove("filled"));
+      hint.textContent = "Cảm ơn bạn, bình luận đã được gửi!";
+      hint.style.color = "var(--accent)";
+      renderWatchComments();
+    });
+
+    const commentList = document.querySelector("#watchCommentList");
+    if (!commentList) return;
+
+    commentList.addEventListener("click", async (event) => {
+      const deleteButton = event.target.closest("[data-watch-delete-review]");
+      if (!deleteButton || !isAdmin()) return;
+      const review = getMovieReviews(current.title).find(
+        (item) => item.id === deleteButton.dataset.watchDeleteReview,
+      );
+      if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
+        return;
+      try {
+        await deleteReview(review.id);
+      } catch (error) {
+        window.alert(error.message);
+        return;
+      }
+      renderWatchComments();
+    });
+
+    commentList.addEventListener("submit", async (event) => {
+      const replyForm = event.target.closest("[data-watch-reply]");
+      if (!replyForm) return;
+      event.preventDefault();
+      const hint = replyForm.querySelector(".detail-reply-hint");
+      const comment = replyForm.elements.comment.value.trim();
+      try {
+        if (!await addReviewReply(replyForm.dataset.watchReply, comment)) {
+          hint.textContent = "Hãy đăng nhập để gửi câu trả lời.";
+          hint.classList.add("is-error");
+          return;
+        }
+      } catch (error) {
+        hint.textContent = error.message;
+        hint.classList.add("is-error");
+        return;
+      }
+      renderWatchComments();
     });
   }
 
