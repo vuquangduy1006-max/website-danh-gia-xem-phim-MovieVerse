@@ -663,6 +663,20 @@ test("review API shares replies, persists moderation and protects admin actions"
       },
     ],
   });
+  const singleCharacterMovieSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=L`,
+    { headers: adminHeaders },
+  );
+  assert.equal(singleCharacterMovieSearch.status, 200);
+  assert.deepEqual((await singleCharacterMovieSearch.json()).movies, [
+    {
+      id: 42,
+      title: "Lookup Film",
+      year: "2024",
+      overview: "",
+      poster: "",
+    },
+  ]);
 
   const movieCatalog = [
     {

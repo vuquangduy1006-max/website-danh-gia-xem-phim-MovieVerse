@@ -1541,7 +1541,7 @@ async function handleMovieRatingApi(request, response, url) {
   if (isMovieSearchLookup) {
     const query = url.searchParams.get("query")?.trim();
     if (!validText(query, 120)) {
-      sendJson(response, 400, { error: "Tên phim cần tìm phải dài từ 2 đến 120 ký tự." });
+      sendJson(response, 400, { error: "Tên phim cần tìm phải có từ 1 đến 120 ký tự." });
       return true;
     }
     if (!tmdbApiKey) {

@@ -900,6 +900,59 @@
   scroll-margin-top: 88px;
 }
 
+.watch-recommendations {
+  border-top: 1px solid var(--line);
+}
+.watch-recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.watch-recommendation-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+.watch-recommendation-card:hover {
+  border-color: rgba(240, 91, 60, 0.6);
+  transform: translateY(-3px);
+}
+.watch-recommendation-poster {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: #17191d;
+  object-fit: cover;
+}
+.watch-recommendation-info {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+.watch-recommendation-info strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.watch-recommendation-info small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.watch-recommendation-score {
+  color: #efc457;
+  font-size: 12px;
+}
+
 /* Identity row (logged-in user) */
 .watch-comment-identity {
   display: flex;
@@ -1303,6 +1356,9 @@
 }
 
 @media (max-width: 600px) {
+  .watch-recommendation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .review-overview {
     flex-direction: column;
     gap: 16px;
