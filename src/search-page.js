@@ -1,4 +1,4 @@
-﻿import "./style.css";
+import "./style.css";
 import "./search-page.css";
 import {
   getMovieDB,
@@ -297,9 +297,9 @@ function renderResults() {
         <article class="movie-card" style="animation-delay:${index * 0.04}s">
           <a
             class="poster poster-link"
-            href="/watch.html?id=${encodeURIComponent(movie.id)}"
+            href="/movie-detail.html?id=${encodeURIComponent(movie.id)}"
             style="${getPosterStyle(movie)}"
-            aria-label="Xem phim ${escapeAttr(movie.title)}"
+            aria-label="Xem chi tiết ${escapeAttr(movie.title)}"
           >
             <span class="play-circle" aria-hidden="true">▶</span>
           </a>

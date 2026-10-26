@@ -1,4 +1,5 @@
 import { requestPasswordReset, resetPasswordWithCode } from "./data/auth.js";
+import { setupPasswordToggle, resetPasswordVisibility } from "./password-toggle.js";
 
 const requestForm = document.querySelector("#forgotRequestForm");
 const resetForm = document.querySelector("#forgotResetForm");
@@ -14,6 +15,8 @@ const resetTargetEmail = document.querySelector("#resetTargetEmail");
 const resetCodeInput = document.querySelector("#resetCode");
 const newPasswordInput = document.querySelector("#resetNewPassword");
 const confirmPasswordInput = document.querySelector("#resetConfirmPassword");
+
+setupPasswordToggle();
 
 // Message container for request form
 const requestMessage = document.createElement("p");
@@ -52,6 +55,7 @@ function switchToResetStep(email, resetCode) {
   resetCodeInput.value = "";
   newPasswordInput.value = "";
   confirmPasswordInput.value = "";
+  resetPasswordVisibility(resetForm);
   resetMessage.textContent = "";
   resetCodeInput.focus();
 }
@@ -62,6 +66,7 @@ function switchToRequestStep() {
   subtitle.textContent =
     "Nhập email tài khoản của bạn để nhận mã xác thực đặt lại mật khẩu mới.";
   requestMessage.textContent = "";
+  resetPasswordVisibility(resetForm);
   emailInput.focus();
 }
 

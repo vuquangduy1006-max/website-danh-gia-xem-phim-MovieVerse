@@ -282,7 +282,7 @@ export function renderMovieCards(matches, query) {
 
       return `
         <a class="search-result search-result-card"
-           href="/watch.html?id=${encodeURIComponent(movie.id)}"
+           href="/movie-detail.html?id=${encodeURIComponent(movie.id)}"
            data-movie-id="${encodeURIComponent(movie.id)}">
           <div class="search-card-poster">
             ${
@@ -391,7 +391,7 @@ form.addEventListener("submit", (event) => {
   if (selectedMovie) {
     addRecentSearch(query);
     window.location.href =
-      `/watch.html?id=${encodeURIComponent(selectedMovie.id)}`;
+      `/movie-detail.html?id=${encodeURIComponent(selectedMovie.id)}`;
     return;
   }
 

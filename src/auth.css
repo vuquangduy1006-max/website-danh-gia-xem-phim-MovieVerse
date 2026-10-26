@@ -197,6 +197,79 @@ body.auth-page {
   background: rgba(7, 9, 10, 0.58);
 }
 
+/* Password visibility wrapper & toggle */
+.auth-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.auth-password-wrapper input {
+  padding-right: 48px;
+}
+
+/* Hide native Edge/IE password reveal icon to prevent duplicate controls */
+.auth-field input::-ms-reveal,
+.auth-field input::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--auth-muted);
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.auth-password-toggle:hover {
+  color: var(--auth-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-password-toggle:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.auth-password-toggle.is-active,
+.auth-password-toggle[aria-pressed="true"] {
+  color: var(--auth-accent);
+}
+
+.auth-password-toggle.is-active:hover,
+.auth-password-toggle[aria-pressed="true"]:hover {
+  color: #ff7559;
+  background: rgba(240, 91, 60, 0.12);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 2px solid var(--auth-accent);
+  outline-offset: 1px;
+}
+
+.auth-password-toggle .password-icon {
+  display: block;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
 .auth-options {
   display: flex;
   align-items: center;

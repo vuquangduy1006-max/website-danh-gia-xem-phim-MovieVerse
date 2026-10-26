@@ -117,12 +117,12 @@ function renderHistory() {
         .map(
           (movie) => `
             <article class="favorite-card">
-              <a class="favorite-poster" href="/watch.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')">
+              <a class="favorite-poster" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="background-image:url('${movie.poster}')">
                 <span class="favorite-play" aria-hidden="true">▶</span>
               </a>
               <div class="favorite-card-body">
                 <div>
-                  <h3><a href="/watch.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3>
+                  <h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3>
                   <p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p>
                   <p class="history-date">Xem lần cuối: ${escapeHtml(formatDate(movie.viewedAt))}</p>
                 </div>

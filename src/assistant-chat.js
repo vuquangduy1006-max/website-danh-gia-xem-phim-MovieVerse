@@ -30,7 +30,7 @@ function getPersonalListData(section, movies) {
         const watchedAt = new Date(entry.viewedAt);
         return {
           movie,
-          href: `/watch.html?id=${encodeURIComponent(movie.id)}`,
+          href: `/movie-detail.html?id=${encodeURIComponent(movie.id)}`,
           reason: `Xem lần cuối ${Number.isNaN(watchedAt.getTime()) ? "gần đây" : watchedAt.toLocaleDateString("vi-VN")}`,
         };
       })

@@ -16,8 +16,13 @@ import {
   loadReviews,
   syncReviews,
 } from "./data/reviews.js";
+import { getMovieRanking } from "./data/rankings.js";
 import { getSession, isAdmin } from "./data/auth.js";
-import { bindHeaderSearch, renderHeaderSearch } from "./components/index.js";
+import {
+  bindHeaderSearch,
+  getPosterStyle,
+  renderHeaderSearch,
+} from "./components/index.js";
 import {
   loadFavorites,
   toggleFavorite as toggleFavoriteStorage,
@@ -80,7 +85,10 @@ function renderNotFound() {
 function renderDetailPage(current) {
   const media = getMovieMedia(current, movieList);
   const credits = getMovieCredits(current);
-  const similar = getSimilarMovies(current, movieList);
+  const similar = getSimilarMovies(current, movieList, 6);
+  const topRanked = getMovieRanking(movieList, allReviews, "all")
+    .filter(({ movie: item }) => item.id !== current.id)
+    .slice(0, 5);
   const pageUrl = `${window.location.origin}/movie-detail.html?id=${encodeURIComponent(current.id)}`;
   const shareText = `Xem phim ${current.title} (${current.year}) trên MovieVerse`;
 
@@ -200,6 +208,17 @@ function renderDetailPage(current) {
             </form>
             <div class="detail-review-list" id="detailReviewList"></div>
           </section>
+
+          <section class="detail-block" id="detailSimilarMovies" aria-labelledby="similarHeading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Gợi ý tương tự</p>
+                <h2 id="similarHeading">Phim liên quan</h2>
+              </div>
+              <a class="text-link" href="/genres.html?genre=${encodeURIComponent(current.genre)}">Xem thêm thể loại <span>→</span></a>
+            </div>
+            <div class="similar-movies-grid" id="similarMoviesList"></div>
+          </section>
         </div>
 
         <aside class="detail-aside">
@@ -236,9 +255,12 @@ function renderDetailPage(current) {
             </div>
           </section>
 
-          <section class="aside-card" aria-labelledby="similarHeading">
-            <h3 id="similarHeading">Phim liên quan</h3>
-            <div class="similar-list" id="similarList"></div>
+          <section class="aside-card" id="topMoviesPanel" aria-labelledby="topHeading">
+            <div class="aside-card-head">
+              <h3 id="topHeading">Top phim</h3>
+              <a class="aside-more-link" href="/ranking.html">Bảng xếp hạng →</a>
+            </div>
+            <div class="aside-top-list" id="topMoviesAsideList"></div>
           </section>
         </aside>
       </div>
@@ -263,6 +285,7 @@ function renderDetailPage(current) {
   renderReviews();
   renderRelatedVideos(media.related);
   renderSimilarMovies(similar);
+  renderTopMoviesAside(topRanked);
   bindToolbar();
   bindShareButtons(pageUrl, shareText);
   bindMenuToggle();
@@ -370,21 +393,58 @@ function renderDetailPage(current) {
   }
 
   function renderSimilarMovies(list) {
-    document.querySelector("#similarList").innerHTML = list.length
+    const container = document.querySelector("#similarMoviesList");
+    if (!container) return;
+    container.innerHTML = list.length
       ? list
-          .map(
-            (item) => `
-            <a class="similar-item" href="/movie-detail.html?id=${encodeURIComponent(item.id)}">
-              <span class="similar-poster" style="background-image:url('${item.poster}')"></span>
-              <span class="similar-info">
-                <strong>${item.title}</strong>
-                <small>${item.year} · ${item.genre}</small>
-              </span>
-              <span class="similar-score">★ ${getMovieScoreOutOfTen(item, allReviews).toFixed(1)}/10</span>
-            </a>`,
-          )
+          .map((item) => {
+            const score = getMovieScoreOutOfTen(item, allReviews);
+            const reviewCount = allReviews.filter(
+              (r) => r.movieTitle === item.title && !r.hidden,
+            ).length;
+            return `
+            <a class="similar-movie-card" href="/movie-detail.html?id=${encodeURIComponent(item.id)}">
+              <span class="similar-movie-poster" style="${getPosterStyle(item)}"></span>
+              <div class="similar-movie-info">
+                <strong class="similar-movie-title">${escapeHtml(item.title)}</strong>
+                <span class="similar-movie-meta">${escapeHtml(item.year)} · ${escapeHtml(item.genre)}</span>
+                <span class="similar-movie-sub">${reviewCount} đánh giá</span>
+              </div>
+              <span class="similar-movie-score">★ ${score.toFixed(1)}/10</span>
+            </a>`;
+          })
           .join("")
-      : '<p class="empty-note">Chưa có phim liên quan.</p>';
+      : '<p class="empty-note">Chưa có phim liên quan phù hợp.</p>';
+  }
+
+  function renderTopMoviesAside(list) {
+    const container = document.querySelector("#topMoviesAsideList");
+    if (!container) return;
+    container.innerHTML = list.length
+      ? list
+          .map(({ movie: item, score }, index) => {
+            const rank = String(index + 1).padStart(2, "0");
+            const rankClass =
+              index === 0
+                ? "rank-1"
+                : index === 1
+                  ? "rank-2"
+                  : index === 2
+                    ? "rank-3"
+                    : "";
+            return `
+            <a class="aside-top-item ${rankClass}" href="/movie-detail.html?id=${encodeURIComponent(item.id)}">
+              <span class="aside-top-rank">${rank}</span>
+              <span class="aside-top-poster" style="${getPosterStyle(item)}"></span>
+              <span class="aside-top-info">
+                <strong class="aside-top-title">${escapeHtml(item.title)}</strong>
+                <small class="aside-top-meta">${escapeHtml(item.year)} · ${escapeHtml(item.genre)}</small>
+              </span>
+              <span class="aside-top-score">★ ${score.toFixed(1)}/10</span>
+            </a>`;
+          })
+          .join("")
+      : '<p class="empty-note">Chưa có bảng xếp hạng phim.</p>';
   }
 
   function safePlay() {

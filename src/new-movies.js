@@ -1,4 +1,4 @@
-﻿import "./style.css";
+import "./style.css";
 import {
   getMovieDB,
   getMovieGenres,
@@ -117,7 +117,7 @@ function renderMovies() {
     ? filteredMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/watch.html?id=${movie.id}" aria-label="Xem phim ${movie.title}"><div class="poster" style="${getPosterStyle(movie)}"><span class="new-movie-badge">Mới</span></div></a><div class="movie-card-info"><h3><a href="/movie-detail.html?id=${movie.id}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="new-page-poster-link" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" aria-label="Xem chi tiết ${movie.title}"><div class="poster" style="${getPosterStyle(movie)}"><span class="new-movie-badge">Mới</span></div></a><div class="movie-card-info"><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Không tìm thấy phim phù hợp.</p>';

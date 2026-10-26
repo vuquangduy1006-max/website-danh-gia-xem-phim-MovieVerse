@@ -1,4 +1,5 @@
 import { changePassword, getSession } from "./data/auth.js";
+import { setupPasswordToggle } from "./password-toggle.js";
 
 const form = document.querySelector("#passwordForm");
 const session = getSession();
@@ -8,6 +9,7 @@ if (!session || session.role !== "user") {
     session?.role === "admin" ? "/admin/admin.html" : "/login.html?next=%2Faccount.html",
   );
 } else if (form) {
+  setupPasswordToggle();
   const message = document.createElement("p");
   message.className = "auth-message";
   message.setAttribute("aria-live", "polite");
