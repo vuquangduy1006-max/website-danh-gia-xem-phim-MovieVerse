@@ -1,6 +1,7 @@
 import { changePassword, getSession } from "./data/auth.js";
 import { setupPasswordToggle } from "./password-toggle.js";
 import { loadReviews, syncReviews } from "./data/reviews.js";
+import { movieSeed } from "./data/data.js";
 
 const form = document.querySelector("#passwordForm");
 const session = getSession();
@@ -119,7 +120,20 @@ async function renderMyReviewHistory() {
     item.className = "profile-review-item";
 
     const movieTitle = document.createElement("h4");
-    movieTitle.textContent = review.movieTitle || "Phim không xác định";
+
+const movie = movieSeed.find(
+  (item) => item.title === review.movieTitle
+);
+
+if (movie) {
+  const movieLink = document.createElement("a");
+  movieLink.href = `/watch.html?id=${encodeURIComponent(movie.id)}`;
+  movieLink.textContent = review.movieTitle;
+
+  movieTitle.appendChild(movieLink);
+} else {
+  movieTitle.textContent = review.movieTitle || "Phim không xác định";
+}
 
     const rating = document.createElement("p");
     rating.textContent = `Đánh giá: ${review.rating || 0}/5 sao`;
