@@ -803,6 +803,22 @@ function getBearerToken(request) {
   return request.headers.authorization?.match(/^Bearer ([A-Za-z0-9_-]+)$/)?.[1];
 }
 
+function getAuthenticatedUserId(request) {
+  const token = getBearerToken(request);
+  if (!token) return null;
+
+  const session = userTokens.get(token);
+
+  if (!session) return null;
+
+  if (session.expiresAt <= Date.now()) {
+    userTokens.delete(token);
+    return null;
+  }
+
+  return session.userId;
+}
+
 async function hashPassword(password, salt = randomBytes(16)) {
   const hash = await scrypt(password, salt, PASSWORD_HASH_BYTES);
   return { salt: salt.toString("hex"), hash: Buffer.from(hash).toString("hex") };
@@ -1294,6 +1310,7 @@ async function handleReviewsApi(request, response, pathname) {
       }
       const result = await updateReviews((reviews) => {
         reviews.unshift({
+          userId: getAuthenticatedUserId(request),
           id: createId(),
           movieTitle: body.movieTitle.trim(),
           author: body.author.trim(),
@@ -1375,7 +1392,9 @@ async function handleReviewsApi(request, response, pathname) {
 
   const reviewMatch = pathname.match(/^\/api\/reviews\/([^/]+)$/);
   if (reviewMatch && ["DELETE", "PATCH"].includes(request.method)) {
-    if (!isAdminRequest(request)) {
+    if (
+  request.method === "PATCH" && !isAdminRequest(request)
+) {
       sendJson(response, 403, {
         error: "Cần đăng nhập quản trị để kiểm duyệt bình luận.",
       });
@@ -1391,20 +1410,51 @@ async function handleReviewsApi(request, response, pathname) {
         sendJson(response, 400, { error: "Trạng thái bình luận không hợp lệ." });
         return true;
       }
-      const result = await updateReviews((reviews) => {
-        const index = reviews.findIndex(
-          (item) => String(item.id) === reviewId,
-        );
-        if (index === -1) return { ok: false };
-        if (request.method === "DELETE") reviews.splice(index, 1);
-        else reviews[index].hidden = body.hidden;
-        return { ok: true };
-      });
-      if (!result.ok) {
-        sendJson(response, 404, { error: "Không tìm thấy bình luận." });
-        return true;
-      }
-      sendJson(response, 200, { reviews: result.reviews });
+      const currentUserId = getAuthenticatedUserId(request);
+const isAdmin = isAdminRequest(request);
+
+const result = await updateReviews((reviews) => {
+  const index = reviews.findIndex(
+    (item) => String(item.id) === reviewId
+  );
+
+  if (index === -1) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  if (request.method === "DELETE") {
+    const review = reviews[index];
+
+    if (
+      !isAdmin &&
+      (!currentUserId || !review.userId ||
+        String(review.userId) !== String(currentUserId))
+    ) {
+      return { ok: false, reason: "forbidden" };
+    }
+
+    reviews.splice(index, 1);
+  } else {
+    reviews[index].hidden = body.hidden;
+  }
+
+  return { ok: true };
+});
+
+if (!result.ok) {
+  if (result.reason === "forbidden") {
+    sendJson(response, 403, {
+      error: "Bạn chỉ có thể xóa bình luận của chính mình.",
+    });
+  } else {
+    sendJson(response, 404, {
+      error: "Không tìm thấy bình luận.",
+    });
+  }
+  return true;
+}
+
+sendJson(response, 200, { reviews: result.reviews });
     } catch (error) {
       const badInput =
         error instanceof SyntaxError ||

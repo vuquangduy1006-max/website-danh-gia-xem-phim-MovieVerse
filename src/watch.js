@@ -783,6 +783,12 @@ function renderWatchPage(current) {
             (review) => {
               const replies = getReviewReplies(review);
               const session = getSession();
+              const canDelete = Boolean(
+  isAdmin() ||
+  (session?.id &&
+    review.userId &&
+    String(session.id) === String(review.userId))
+);
               return `
         <article class="review-item">
           <div class="review-avatar">${escapeHtml(review.author.charAt(0))}</div>
@@ -790,6 +796,15 @@ function renderWatchPage(current) {
             <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
             <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
             <p>${escapeHtml(review.comment)}</p>
+            ${canDelete ? `
+  <button
+    type="button"
+    class="review-delete-btn"
+    data-watch-delete-review="${escapeHtml(review.id)}"
+  >
+    Xóa bình luận
+  </button>
+` : ""}
             ${replies.length ? `<div class="detail-reply-thread" aria-label="Các câu trả lời">${replies.map((reply) => `<div class="detail-admin-reply${reply.role === "admin" ? " is-admin" : ""}"><div class="detail-reply-heading"><strong>${escapeHtml(reply.author)}</strong>${reply.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}<small>${escapeHtml(reply.date)}</small></div><p>${escapeHtml(reply.comment)}</p></div>`).join("")}</div>` : ""}
             ${session
               ? `<form class="detail-reply-form" data-watch-reply="${escapeHtml(review.id)}">
@@ -895,19 +910,33 @@ function renderWatchPage(current) {
 
     commentList.addEventListener("click", async (event) => {
       const deleteButton = event.target.closest("[data-watch-delete-review]");
-      if (!deleteButton || !isAdmin()) return;
+if (!deleteButton) return;
+      const session = getSession();
       const review = getMovieReviews(current.title).find(
-        (item) => item.id === deleteButton.dataset.watchDeleteReview,
-      );
+  (item) =>
+    String(item.id) === String(deleteButton.dataset.watchDeleteReview)
+);
+
+if (!review) return;
+
+const canDelete = Boolean(
+  isAdmin() ||
+  (session?.id &&
+    review?.userId &&
+    String(session.id) === String(review.userId))
+);
+
+if (!canDelete) return;
       if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
         return;
       try {
-        await deleteReview(review.id);
-      } catch (error) {
-        window.alert(error.message);
-        return;
-      }
-      renderWatchComments();
+  await deleteReview(review.id);
+  await syncReviews();
+  renderWatchComments();
+} catch (error) {
+  window.alert(error.message);
+  return;
+}
     });
 
     commentList.addEventListener("submit", async (event) => {

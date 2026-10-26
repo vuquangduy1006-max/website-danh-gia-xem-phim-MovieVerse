@@ -687,6 +687,7 @@
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .watch-aside .similar-copy > span:not(.watch-progress):not(.playlist-now) {
   overflow: hidden;
@@ -1382,4 +1383,38 @@
     flex-direction: column;
     gap: 4px;
   }
+}
+/* Nút xóa bình luận - MovieVerse */
+.review-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 8px 14px;
+
+  background: rgba(255, 86, 65, 0.1);
+  color: #ff6b57;
+  border: 1px solid rgba(255, 107, 87, 0.35);
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-delete-btn:hover {
+  background: #ff6048;
+  border-color: #ff6048;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.review-delete-btn:active {
+  transform: translateY(0);
+}
+
+.review-delete-btn:focus-visible {
+  outline: 2px solid #ff806b;
+  outline-offset: 3px;
 }

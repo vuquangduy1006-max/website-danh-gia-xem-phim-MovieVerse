@@ -652,6 +652,12 @@ function renderDetailPage(current) {
             (review) => {
               const replies = getReviewReplies(review);
               const session = getSession();
+              const canDelete = Boolean(
+  isAdmin() ||
+  (session?.id &&
+    review.userId &&
+    String(session.id) === String(review.userId))
+);
               return `
         <article class="review-item">
           <div class="review-avatar">${escapeHtml(review.author.charAt(0))}</div>
@@ -659,6 +665,15 @@ function renderDetailPage(current) {
             <div class="review-top"><strong>${escapeHtml(review.author)}</strong><span class="review-date">${escapeHtml(review.date)}</span></div>
             <div class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</div>
             <p>${escapeHtml(review.comment)}</p>
+            ${canDelete ? `
+        <button
+    type="button"
+    class="review-delete-btn"
+    data-delete-review="${escapeHtml(review.id)}"
+  >
+    Xóa bình luận
+  </button>
+` : ""}
             ${replies.length ? `<div class="detail-reply-thread" aria-label="Các câu trả lời">${replies.map((reply) => `<div class="detail-admin-reply${reply.role === "admin" ? " is-admin" : ""}"><div class="detail-reply-heading"><strong>${escapeHtml(reply.author)}</strong>${reply.role === "admin" ? '<span class="reply-admin-badge">ADMIN</span>' : ""}<small>${escapeHtml(reply.date)}</small></div><p>${escapeHtml(reply.comment)}</p></div>`).join("")}</div>` : ""}
             ${session
               ? `<form class="detail-reply-form" data-review-reply="${escapeHtml(review.id)}">
@@ -678,7 +693,17 @@ function renderDetailPage(current) {
                   <span>Đăng nhập để tham gia thảo luận</span>
                   <a href="/login.html?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}">Đăng nhập <span aria-hidden="true">→</span></a>
                 </div>`}
-            <div class="detail-review-actions"><span></span>${isAdmin() ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>` : ""}</div>
+            <div class="detail-review-actions">
+  <span></span>
+  ${
+    isAdmin() ||
+    (session &&
+      review.userId &&
+      String(session.id) === String(review.userId))
+      ? `<button type="button" class="delete-review" data-delete-review="${escapeHtml(review.id)}">Xóa bình luận</button>`
+      : ""
+  }
+</div>
           </div>
         </article>`;
             },
@@ -742,11 +767,21 @@ function renderDetailPage(current) {
   document
     .querySelector("#detailReviewList")
     .addEventListener("click", async (event) => {
-      const deleteButton = event.target.closest("[data-delete-review]");
-      if (!deleteButton || !isAdmin()) return;
-      const review = getMovieReviews(current.title).find(
-        (item) => item.id === deleteButton.dataset.deleteReview,
-      );
+     const deleteButton = event.target.closest("[data-delete-review]");
+if (!deleteButton) return;
+
+const review = getMovieReviews(current.title).find(
+  (item) => String(item.id) === deleteButton.dataset.deleteReview,
+);
+
+const session = getSession();
+const canDelete =
+  isAdmin() ||
+  (session?.id &&
+    review?.userId &&
+    String(session.id) === String(review.userId));
+
+if (!canDelete) return;
       if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
         return;
       try {

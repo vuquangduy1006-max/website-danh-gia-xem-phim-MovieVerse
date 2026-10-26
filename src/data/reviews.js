@@ -101,12 +101,11 @@ export async function addReview(review) {
     movieTitle: review.movieTitle,
     author: review.author,
     comment: review.comment,
-    rating,
+    rating, 
   });
 }
 
 export async function deleteReview(id) {
-  if (!isAdmin()) return false;
   await mutateReviews(`/api/reviews/${encodeURIComponent(id)}`, "DELETE");
   return true;
 }
@@ -158,9 +157,11 @@ export async function setReviewHidden(id, hidden) {
 async function mutateReviews(url, method, body) {
   const session = getSession();
   const headers = { "Content-Type": "application/json" };
-  if (session?.adminToken) {
-    headers.Authorization = `Bearer ${session.adminToken}`;
-  }
+  const token = session?.token || session?.adminToken;
+
+if (token) {
+  headers.Authorization = `Bearer ${token}`;
+}
   const response = await fetch(url, {
     method,
     headers,
