@@ -537,3 +537,143 @@ body.auth-page {
     transition-duration: 0.01ms !important;
   }
 }
+/* ===== MOVIEVERSE USER PROFILE ===== */
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+  margin: 24px 0 16px;
+  background: #17191f;
+  border: 1px solid #30323a;
+  border-radius: 16px;
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff684a, #e33c2c);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.profile-info {
+  min-width: 0;
+}
+
+.profile-info h3 {
+  margin: 0 0 6px;
+  color: #fff;
+  font-size: 20px;
+}
+
+.profile-info p {
+  margin: 0 0 8px;
+  color: #a6a8b2;
+  overflow-wrap: anywhere;
+}
+
+.profile-role {
+  color: #ff795f;
+  font-size: 13px;
+}
+
+.profile-links {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.profile-links a {
+  flex: 1;
+  padding: 14px 12px;
+  border: 1px solid #30323a;
+  border-radius: 10px;
+  background: #17191f;
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.profile-links a:hover {
+  border-color: #ff684a;
+  color: #ff795f;
+}
+
+.profile-section-title {
+  margin: 0 0 12px;
+  padding-top: 22px;
+  border-top: 1px solid #30323a;
+  color: #fff;
+  font-size: 20px;
+}
+
+@media (max-width: 600px) {
+  .profile-card {
+    padding: 16px;
+  }
+
+  .profile-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .profile-links {
+    flex-direction: column;
+  }
+}
+/* Lịch sử bình luận trong hồ sơ cá nhân */
+
+.profile-reviews-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #30323a;
+}
+
+.profile-reviews-section h3 {
+  color: #fff;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.profile-reviews-section > p {
+  color: #9ca3af;
+  margin-bottom: 20px;
+}
+
+#myReviewHistory {
+  display: grid;
+  gap: 14px;
+}
+
+.profile-review-item {
+  background: #181a20;
+  border: 1px solid #30323a;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.profile-review-item h4 {
+  color: #ff684a;
+  margin: 0 0 10px;
+}
+
+.profile-review-item p {
+  color: #e5e7eb;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-review-item small {
+  color: #9ca3af;
+}
