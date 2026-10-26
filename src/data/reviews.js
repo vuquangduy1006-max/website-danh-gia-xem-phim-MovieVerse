@@ -184,3 +184,19 @@ function saveReviews(reviews) {
 export function getVisibleMovieReviews(title) {
   return getMovieReviews(title);
 }
+export function getMyReviewHistory() {
+  const session = getSession();
+
+  if (!session) return [];
+
+  return loadReviews()
+    .filter((review) => {
+      return (
+        review.author === session.name &&
+        !review.hidden
+      );
+    })
+    .sort((a, b) => {
+      return new Date(b.date || 0) - new Date(a.date || 0);
+    });
+}
