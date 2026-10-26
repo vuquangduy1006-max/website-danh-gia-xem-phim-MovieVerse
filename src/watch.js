@@ -957,7 +957,7 @@ function renderWatchPage(current) {
     document.querySelector("#watchSimilarList").innerHTML = similar
       .map(
         (item, index) => `
-        <a class="similar-item recommendation-item" style="--item-index:${index}" href="/watch.html?id=${encodeURIComponent(item.id)}">
+        <a class="similar-item recommendation-item" style="--item-index:${index}" href="/movie-detail.html?id=${encodeURIComponent(item.id)}">
           <span class="similar-thumb" style="background-image:url('${item.poster}')" aria-hidden="true"><span class="similar-play">▶</span></span>
           <span class="similar-copy">
             <strong>${item.title}</strong>
@@ -974,7 +974,7 @@ function renderWatchPage(current) {
       ? similar
           .map(
             (item) => `
-              <a class="watch-recommendation-card" href="/watch.html?id=${encodeURIComponent(item.id)}">
+              <a class="watch-recommendation-card" href="/movie-detail.html?id=${encodeURIComponent(item.id)}">
                 <img class="watch-recommendation-poster" src="${escapeHtml(item.poster)}" alt="Áp phích ${escapeHtml(item.title)}" loading="lazy">
                 <span class="watch-recommendation-info">
                   <strong>${escapeHtml(item.title)}</strong>

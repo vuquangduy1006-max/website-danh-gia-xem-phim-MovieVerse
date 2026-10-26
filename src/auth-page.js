@@ -1,6 +1,8 @@
 import { loginUser, registerUser } from "./data/auth.js";
+import { setupPasswordToggle } from "./password-toggle.js";
 
 const form = document.querySelector(".auth-form");
+setupPasswordToggle();
 
 function safeNext(role) {
   const next = new URLSearchParams(window.location.search).get("next");

@@ -425,7 +425,7 @@ function renderHero() {
           ? `<video class="hero-video" autoplay muted loop playsinline preload="metadata" poster="${movie.poster || movie.backdrop || ""}" src="${trailer.url}"></video>`
           : `<div class="hero-bg" style="background-image:url('${movie.backdrop || movie.poster}')"></div>`;
 
-      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}</div><p>${movie.description}</p><a class="watch-button" href="${watchUrl(movie)}"><span class="watch-button-icon" aria-hidden="true">▶</span><span>Xem ngay</span></a></div></article>`;
+      return `<article class="hero-slide ${index === 0 ? "active" : ""}">${mediaMarkup}<div class="hero-copy"><span class="kicker">Phim nổi bật · ${movie.year}</span><h1>${movie.title}</h1><div class="hero-meta"><span>IMDb <strong>${movie.rating}</strong></span><span>${movie.genre}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}</div><p>${movie.description}</p><a class="watch-button" href="${detailUrl(movie)}"><span class="watch-button-icon" aria-hidden="true">▶</span><span>Xem chi tiết</span></a></div></article>`;
     })
     .join("");
   document.querySelector("#sliderDots").innerHTML = heroMovies
@@ -477,7 +477,7 @@ function renderMovies(filter = "all") {
     ? shown
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
@@ -545,7 +545,7 @@ function watchUrl(movie) {
 function bindDetailLinks(selector) {
   document.querySelectorAll(`${selector} [data-movie]`).forEach((node) => {
     const movie = movies.find((item) => item.title === node.dataset.movie);
-    if (movie) node.href = watchUrl(movie);
+    if (movie) node.href = detailUrl(movie);
   });
 }
 
@@ -566,7 +566,7 @@ function renderRanking() {
     ? top
         .map(
           ({ movie, score }, index) =>
-            `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${watchUrl(movie)}" aria-label="Xem phim ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${score.toFixed(1)}/10</span></article>`,
+            `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${score.toFixed(1)}/10</span></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có review trong khoảng thời gian này.</p>';
@@ -578,7 +578,7 @@ function renderNewMovies() {
     ? newMovies
         .map(
           (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" aria-label="Xem phim ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
         )
         .join("")
     : '<p class="empty-note">Chưa có phim mới.</p>';

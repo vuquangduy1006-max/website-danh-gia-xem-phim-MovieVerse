@@ -49,65 +49,91 @@ document.querySelector("#app").innerHTML = `
   <div class="container">
     <div class="admin-heading">
       <div>
-        <p class="eyebrow">Quản trị</p>
+        <p class="eyebrow">Quản trị người dùng</p>
         <h1>Quản lý người dùng</h1>
-        <p>Xem, khóa hoặc xóa tài khoản người dùng đã đăng ký.</p>
+        <p>Xem, quản lý trạng thái hoạt động hoặc xóa tài khoản thành viên.</p>
       </div>
     </div>
 
     <div class="stats-grid" id="userStats"></div>
 
     <section class="admin-panel" style="margin-top:32px" aria-label="Danh sách người dùng">
-      <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div class="panel-head">
         <div>
           <h2 class="panel-title">Tài khoản đã đăng ký</h2>
-          <p class="panel-desc">Danh sách người dùng tạo tài khoản qua trang đăng ký.</p>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <label class="sr-only" for="userSearch">Tìm người dùng</label>
-          <input id="userSearch" type="search" class="input-field" placeholder="Tìm tên hoặc email..." style="width:240px" autocomplete="off" />
-          <select id="userFilter" class="input-field" style="width:160px">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="blocked">Đã bị khóa</option>
-          </select>
+          <p class="panel-desc">Danh sách tài khoản người dùng đăng ký qua MovieVerse.</p>
         </div>
       </div>
+      <div class="panel-toolbar user-toolbar">
+        <div class="user-search-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <label class="sr-only" for="userSearch">Tìm kiếm theo tên hoặc email</label>
+          <input id="userSearch" type="search" class="toolbar-input" placeholder="Tìm kiếm theo tên hoặc email..." autocomplete="off" />
+        </div>
+        <label class="sr-only" for="userFilter">Lọc theo trạng thái</label>
+        <select id="userFilter" class="toolbar-select" aria-label="Lọc theo trạng thái người dùng">
+          <option value="all">Tất cả trạng thái</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="blocked">Đã bị khóa</option>
+        </select>
+      </div>
 
-      <div id="userTableWrap" style="margin-top:20px;overflow-x:auto">
-        <p class="panel-desc" id="loadingMsg">Đang tải danh sách người dùng...</p>
+      <div id="userTableWrap" style="overflow-x:auto">
+        <p class="panel-desc" id="loadingMsg" style="padding:28px 24px;margin:0">Đang tải danh sách người dùng...</p>
       </div>
     </section>
   </div>
 </main>
 
 <!-- Confirm delete dialog -->
-<div class="modal-backdrop" id="deleteModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
-  <div class="modal">
-    <h2 id="deleteModalTitle">Xác nhận xóa người dùng</h2>
-    <p id="deleteModalBody">Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác.</p>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" id="cancelDeleteBtn">Hủy</button>
-      <button class="btn btn-danger" id="confirmDeleteBtn">Xóa</button>
+<div class="overlay" id="deleteOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+  <div class="confirm-card">
+    <div class="confirm-icon">!</div>
+    <h3 id="deleteModalTitle">Xác nhận xóa người dùng</h3>
+    <p id="deleteModalBody">Bạn có chắc muốn xóa người dùng này? Hành động này sẽ xóa hoàn toàn tài khoản khỏi hệ thống và không thể hoàn tác.</p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Xóa người dùng</button>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 `;
 
 // ---- State ----
 let users = [];
 let pendingDeleteId = null;
+let toastTimeout;
 
-const session = getSession();
-const adminToken = session?.adminToken;
+function getAdminToken() {
+  const session = getSession();
+  return session?.adminToken || session?.token || "";
+}
+
+function showToast(message, type = "success") {
+  const toast = document.querySelector("#toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.className = "toast";
+  }, 2800);
+}
 
 // ---- Fetch users ----
 async function loadUsers() {
-  document.querySelector("#loadingMsg").textContent = "Đang tải danh sách người dùng...";
-  document.querySelector("#loadingMsg").style.display = "";
+  const wrap = document.querySelector("#userTableWrap");
+  if (!wrap) return;
+  wrap.innerHTML = `<p class="panel-desc" id="loadingMsg" style="padding:28px 24px;margin:0">Đang tải danh sách người dùng...</p>`;
+
   try {
+    const token = getAdminToken();
+    if (!token) throw new Error("Phiên quản trị không hợp lệ. Vui lòng đăng nhập lại.");
+
     const resp = await fetch("/api/admin/users", {
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "Lỗi máy chủ.");
@@ -115,7 +141,8 @@ async function loadUsers() {
     renderStats();
     renderTable();
   } catch (err) {
-    document.querySelector("#loadingMsg").textContent = `Lỗi: ${err.message}`;
+    wrap.innerHTML = `<p class="panel-desc" style="padding:28px 24px;margin:0;color:var(--danger)">Lỗi tải dữ liệu: ${escapeHtml(err.message)}</p>`;
+    showToast(`Lỗi: ${err.message}`, "error");
   }
 }
 
@@ -124,7 +151,9 @@ function renderStats() {
   const total = users.length;
   const active = users.filter((u) => !u.blocked).length;
   const blocked = users.filter((u) => u.blocked).length;
-  document.querySelector("#userStats").innerHTML = `
+  const statsContainer = document.querySelector("#userStats");
+  if (!statsContainer) return;
+  statsContainer.innerHTML = `
     <div class="stat-card"><p class="stat-value">${total}</p><p class="stat-label">Tổng người dùng</p></div>
     <div class="stat-card"><p class="stat-value" style="color:var(--green)">${active}</p><p class="stat-label">Đang hoạt động</p></div>
     <div class="stat-card"><p class="stat-value" style="color:var(--danger)">${blocked}</p><p class="stat-label">Đã bị khóa</p></div>
@@ -133,68 +162,71 @@ function renderStats() {
 
 // ---- Table ----
 function renderTable() {
-  const query = document.querySelector("#userSearch").value.trim().toLowerCase();
-  const filter = document.querySelector("#userFilter").value;
-  const msg = document.querySelector("#loadingMsg");
+  const searchInput = document.querySelector("#userSearch");
+  const filterSelect = document.querySelector("#userFilter");
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+  const filter = filterSelect ? filterSelect.value : "all";
+  const wrap = document.querySelector("#userTableWrap");
+  if (!wrap) return;
 
   let filtered = users;
   if (query) {
     filtered = filtered.filter(
       (u) =>
-        u.name.toLowerCase().includes(query) ||
-        u.email.toLowerCase().includes(query),
+        (u.name && u.name.toLowerCase().includes(query)) ||
+        (u.email && u.email.toLowerCase().includes(query)),
     );
   }
   if (filter === "active") filtered = filtered.filter((u) => !u.blocked);
   if (filter === "blocked") filtered = filtered.filter((u) => u.blocked);
 
   if (filtered.length === 0) {
-    msg.textContent =
-      users.length === 0
-        ? "Chưa có người dùng nào đăng ký."
-        : "Không tìm thấy người dùng phù hợp.";
-    msg.style.display = "";
-    document.querySelector("#userTableWrap").innerHTML = `<p class="panel-desc" id="loadingMsg">${msg.textContent}</p>`;
+    const isNoUsers = users.length === 0;
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <h3>${isNoUsers ? "Chưa có người dùng nào đăng ký" : "Không tìm thấy người dùng phù hợp"}</h3>
+        <p>${isNoUsers ? "Người dùng tạo tài khoản mới sẽ tự động hiển thị ở đây." : "Hãy thử thay đổi từ khóa tìm kiếm hoặc trạng thái lọc."}</p>
+      </div>`;
     return;
   }
 
-  document.querySelector("#userTableWrap").innerHTML = `
-    <table class="admin-table" style="width:100%;border-collapse:collapse">
+  wrap.innerHTML = `
+    <table class="movie-table user-admin-table" style="width:100%;border-collapse:collapse">
       <thead>
         <tr>
-          <th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)">Tên</th>
-          <th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)">Email</th>
-          <th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)">Ngày đăng ký</th>
-          <th style="text-align:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)">Trạng thái</th>
-          <th style="text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)">Thao tác</th>
+          <th>Tên người dùng</th>
+          <th>Email</th>
+          <th>Ngày đăng ký</th>
+          <th style="text-align:center">Trạng thái</th>
+          <th style="text-align:right">Thao tác</th>
         </tr>
       </thead>
       <tbody id="userTbody">
         ${filtered
           .map(
             (u) => `
-          <tr data-user-id="${escapeHtml(u.id)}" style="border-bottom:1px solid rgba(255,255,255,0.05)">
-            <td style="padding:12px;font-weight:500">${escapeHtml(u.name)}</td>
-            <td style="padding:12px;color:var(--muted);font-size:13px">${escapeHtml(u.email)}</td>
-            <td style="padding:12px;color:var(--muted);font-size:13px">${formatDate(u.createdAt)}</td>
-            <td style="padding:12px;text-align:center">
-              <span class="status-badge ${u.blocked ? "badge-hidden" : "badge-visible"}" style="font-size:11px">
+          <tr data-user-id="${escapeHtml(u.id)}">
+            <td style="font-weight:600;color:var(--text)">${escapeHtml(u.name)}</td>
+            <td style="color:var(--muted)">${escapeHtml(u.email)}</td>
+            <td style="color:var(--muted);font-size:13px">${formatDate(u.createdAt)}</td>
+            <td style="text-align:center">
+              <span class="status-badge ${u.blocked ? "badge-hidden" : "badge-visible"}">
                 ${u.blocked ? "🔒 Đã khóa" : "✅ Hoạt động"}
               </span>
             </td>
-            <td style="padding:12px;text-align:right">
-              <div style="display:flex;gap:8px;justify-content:flex-end">
+            <td style="text-align:right">
+              <div class="row-actions">
                 <button
-                  class="btn btn-secondary btn-sm"
-                  style="font-size:12px;padding:5px 12px"
+                  type="button"
+                  class="btn btn-ghost btn-sm"
                   data-action="block"
                   data-id="${escapeHtml(u.id)}"
                   data-blocked="${u.blocked}"
                   title="${u.blocked ? "Mở khóa tài khoản" : "Khóa tài khoản"}"
                 >${u.blocked ? "Mở khóa" : "Khóa"}</button>
                 <button
+                  type="button"
                   class="btn btn-danger btn-sm"
-                  style="font-size:12px;padding:5px 12px"
                   data-action="delete"
                   data-id="${escapeHtml(u.id)}"
                   data-name="${escapeHtml(u.name)}"
@@ -207,7 +239,9 @@ function renderTable() {
           .join("")}
       </tbody>
     </table>
-    <p style="margin-top:12px;font-size:12px;color:var(--muted)">Hiển thị ${filtered.length} / ${users.length} người dùng</p>
+    <div style="padding:14px 24px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center">
+      <span>Hiển thị <strong>${filtered.length}</strong> / <strong>${users.length}</strong> người dùng</span>
+    </div>
   `;
 }
 
@@ -219,11 +253,14 @@ async function toggleBlock(userId, currentlyBlocked) {
     btn.textContent = "Đang xử lý...";
   }
   try {
+    const token = getAdminToken();
+    if (!token) throw new Error("Phiên quản trị đã hết hạn. Vui lòng đăng nhập lại.");
+
     const resp = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/block`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${adminToken}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ blocked: !currentlyBlocked }),
     });
@@ -233,8 +270,14 @@ async function toggleBlock(userId, currentlyBlocked) {
     if (user) user.blocked = data.blocked;
     renderStats();
     renderTable();
+    showToast(
+      data.blocked
+        ? `Đã khóa tài khoản "${user?.name || userId}".`
+        : `Đã mở khóa tài khoản "${user?.name || userId}".`,
+      "success",
+    );
   } catch (err) {
-    alert(`Lỗi: ${err.message}`);
+    showToast(`Lỗi: ${err.message}`, "error");
     if (btn) {
       btn.disabled = false;
       btn.textContent = currentlyBlocked ? "Mở khóa" : "Khóa";
@@ -245,34 +288,67 @@ async function toggleBlock(userId, currentlyBlocked) {
 // ---- Delete ----
 function showDeleteModal(userId, userName) {
   pendingDeleteId = userId;
-  document.querySelector("#deleteModalBody").textContent =
-    `Bạn có chắc muốn xóa người dùng "${userName}"? Hành động này không thể hoàn tác.`;
-  document.querySelector("#deleteModal").style.display = "flex";
+  const bodyEl = document.querySelector("#deleteModalBody");
+  if (bodyEl) {
+    bodyEl.textContent = `Bạn có chắc muốn xóa người dùng "${userName}"? Hành động này sẽ xóa hoàn toàn tài khoản khỏi hệ thống và không thể hoàn tác.`;
+  }
+  const overlay = document.querySelector("#deleteOverlay");
+  if (overlay) {
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+  }
 }
 
-document.querySelector("#cancelDeleteBtn").addEventListener("click", () => {
+function hideDeleteModal() {
   pendingDeleteId = null;
-  document.querySelector("#deleteModal").style.display = "none";
+  const overlay = document.querySelector("#deleteOverlay");
+  if (overlay) {
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+}
+
+document.querySelector("#cancelDeleteBtn").addEventListener("click", hideDeleteModal);
+
+document.querySelector("#deleteOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "deleteOverlay") hideDeleteModal();
+});
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.querySelector("#deleteOverlay")?.classList.contains("open")) {
+    hideDeleteModal();
+  }
 });
 
 document.querySelector("#confirmDeleteBtn").addEventListener("click", async () => {
   if (!pendingDeleteId) return;
   const userId = pendingDeleteId;
-  document.querySelector("#deleteModal").style.display = "none";
-  pendingDeleteId = null;
+  const btn = document.querySelector("#confirmDeleteBtn");
+  btn.disabled = true;
+  btn.textContent = "Đang xóa...";
 
   try {
+    const token = getAdminToken();
+    if (!token) throw new Error("Phiên quản trị đã hết hạn. Vui lòng đăng nhập lại.");
+
     const resp = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "Lỗi máy chủ.");
+
+    const deletedUser = users.find((u) => u.id === userId);
     users = users.filter((u) => u.id !== userId);
+    hideDeleteModal();
     renderStats();
     renderTable();
+    showToast(`Đã xóa người dùng "${deletedUser?.name || userId}" thành công.`, "success");
   } catch (err) {
-    alert(`Lỗi: ${err.message}`);
+    showToast(`Lỗi: ${err.message}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Xóa người dùng";
   }
 });
 

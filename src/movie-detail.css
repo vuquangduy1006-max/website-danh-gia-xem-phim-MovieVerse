@@ -880,6 +880,212 @@
   color: #efc457;
   font-size: 12px;
 }
+
+/* Similar movies block below reviews */
+.similar-movies-grid,
+.top-movies-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.similar-movie-card,
+.top-movie-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  position: relative;
+  text-decoration: none;
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+.similar-movie-card:hover,
+.top-movie-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(240, 91, 60, 0.5);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.similar-movie-poster,
+.top-movie-poster {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 66px;
+  border-radius: 5px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+.similar-movie-info,
+.top-movie-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.similar-movie-title,
+.top-movie-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  transition: color 180ms ease;
+}
+.similar-movie-card:hover .similar-movie-title,
+.top-movie-card:hover .top-movie-title {
+  color: var(--accent);
+}
+.similar-movie-meta,
+.top-movie-meta {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.similar-movie-sub,
+.top-movie-sub {
+  color: #7b818c;
+  font-size: 11px;
+}
+.similar-movie-score,
+.top-movie-score {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(243, 195, 92, 0.1);
+  border: 1px solid rgba(243, 195, 92, 0.25);
+  color: #f3c35c;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Top movies panel in sidebar under share */
+.aside-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.aside-card-head h3 {
+  margin: 0;
+}
+.aside-more-link {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 180ms ease;
+  white-space: nowrap;
+}
+.aside-more-link:hover {
+  color: var(--accent);
+}
+.aside-top-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.aside-top-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: var(--text);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+.aside-top-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(240, 91, 60, 0.3);
+  transform: translateX(2px);
+}
+.aside-top-rank {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  color: #555b66;
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.aside-top-item.rank-1 .aside-top-rank {
+  color: #ffd056;
+}
+.aside-top-item.rank-2 .aside-top-rank {
+  color: #d1d5db;
+}
+.aside-top-item.rank-3 .aside-top-rank {
+  color: #e49f6d;
+}
+.aside-top-poster {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 54px;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+.aside-top-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.aside-top-title {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  transition: color 180ms ease;
+}
+.aside-top-item:hover .aside-top-title {
+  color: var(--accent);
+}
+.aside-top-meta {
+  color: var(--muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aside-top-score {
+  margin-left: auto;
+  align-self: center;
+  color: #efc457;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .detail-toast {
   position: fixed;
   z-index: 60;
@@ -1068,6 +1274,10 @@
     padding-top: 44px;
   }
   .video-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .similar-movies-grid,
+  .top-movies-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .review-overview {
