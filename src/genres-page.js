@@ -94,6 +94,7 @@ document.querySelector("#app").innerHTML = `
           .join("")}
       </nav>
       <div class="movie-grid new-page-grid" id="genreMovieGrid"></div>
+      <div id="genrePagination" class="movie-pagination"></div>
     </section>
   </main>
   ${renderFooter({
@@ -112,18 +113,54 @@ const filteredMovies =
   activeGenre === "all"
     ? movies
     : movies.filter((movie) => getMovieGenres(movie).includes(activeGenre));
+const MOVIES_PER_PAGE = 12;
+const totalPages = Math.ceil(filteredMovies.length / MOVIES_PER_PAGE);
 
+let currentPage = 1;
+
+function renderGenreMovies(page = 1) {
+  currentPage = Math.max(1, Math.min(page, totalPages || 1));
+
+  const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
+  const paginatedMovies = filteredMovies.slice(
+    startIndex,
+    startIndex + MOVIES_PER_PAGE
+  );
 document.querySelector("#genreMovieCount").textContent =
   `${filteredMovies.length}`;
 document.querySelector("#genreMovieGrid").innerHTML = filteredMovies.length
-  ? filteredMovies
+  ? paginatedMovies
       .map(
         (movie, index) =>
           `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" href="/movie-detail.html?id=${encodeURIComponent(movie.id)}" style="${getPosterStyle(movie)}" aria-label="Xem chi tiết ${escapeHtml(movie.title)}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="/movie-detail.html?id=${encodeURIComponent(movie.id)}">${escapeHtml(movie.title)}</a></h3><span class="card-rating">★ ${getMovieScoreOutOfTen(movie, reviews).toFixed(1)}/10</span></div><p>${escapeHtml(movie.year)} · ${escapeHtml(getMovieGenres(movie).join(", "))}</p></article>`,
       )
       .join("")
   : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
+  const pagination = document.querySelector("#genrePagination");
 
+  if (pagination) {
+    pagination.innerHTML =
+      totalPages > 1
+        ? `
+          <button data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""}>‹ Trước</button>
+          ${Array.from({ length: totalPages }, (_, i) => `
+            <button data-page="${i + 1}" class="${currentPage === i + 1 ? "active" : ""}">
+              ${i + 1}
+            </button>
+          `).join("")}
+          <button data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""}>Sau ›</button>
+        `
+        : "";
+
+    pagination.querySelectorAll("button[data-page]").forEach((button) => {
+      button.addEventListener("click", () => {
+        renderGenreMovies(Number(button.dataset.page));
+      });
+    });
+  }
+}
+
+renderGenreMovies();
 document.querySelector(".menu-toggle").addEventListener("click", (event) => {
   const isOpen = document
     .querySelector(".main-nav")
