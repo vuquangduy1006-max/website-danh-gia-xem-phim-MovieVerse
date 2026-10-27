@@ -2829,3 +2829,69 @@ button {
 .notification-count[hidden] {
   display: none;
 }
+/* MovieVerse home: horizontal editorial movie collections */
+.home-collections { padding-top: 54px; }
+.movie-collection { margin-bottom: 54px; }
+.movie-collection .section-heading { margin-bottom: 20px; }
+.home-movie-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(158px, 18vw, 208px);
+  grid-template-columns: none;
+  gap: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 4px 18px;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(240, 91, 60, .45) transparent;
+}
+.home-movie-rail .movie-card {
+  display: block !important;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+.home-movie-rail .poster { border-radius: 12px; }
+.home-movie-rail .movie-card-info { align-items: flex-start; }
+.home-movie-rail .movie-card h3 { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.home-movie-rail .movie-card p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-movie-rail:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.home-collections .text-link,
+#newMovies .text-link { border-radius: 999px; padding: 8px 12px; transition: color .2s, background .2s; }
+.home-collections .text-link:hover { color: #fff; background: rgba(240,91,60,.12); }
+@media (max-width: 700px) {
+  .home-movie-rail { grid-auto-columns: minmax(135px, 42vw); gap: 12px; }
+  .movie-collection { margin-bottom: 32px; }
+  .home-collections { padding-top: 38px; }
+}
+/* Nút phân trang MovieVerse */
+#moviePagination button {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  margin: 0 3px;
+  border: 1px solid #35363b;
+  border-radius: 12px;
+  background: #1b1d22;
+  color: white;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+#moviePagination button:hover:not(:disabled) {
+  background: #38221d;
+  border-color: #f05b3c;
+  color: #ff907a;
+}
+
+#moviePagination button.active {
+  background: #f05b3c;
+  border-color: #f05b3c;
+  color: white;
+}
+
+#moviePagination button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

@@ -46,7 +46,7 @@ let currentSlide = 0;
 let slideTimer;
 let previousRecommendationQuery = "";
 const displayedRecommendationIds = new Set();
-const MOVIES_PER_PAGE = 12;
+const MOVIES_PER_PAGE = 10;
 let currentMoviePage = 1;
 
 const reviews = loadReviews().filter((review) => !review.hidden);
@@ -91,6 +91,21 @@ ${renderHeader({
       <div class="slider-dots" id="sliderDots"></div>
       <button class="slider-arrow" id="nextSlide" aria-label="Phim tiếp theo">→</button>
     </div>
+  </section>
+
+  <section class="content-section container" id="newMovies">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Vừa cập nhật</p>
+        <h2>Phim mới ra mắt</h2>
+      </div>
+      <span class="text-link" id="newCount"></span>
+    </div>
+    <div class="movie-grid home-movie-rail" id="newMovieGrid"></div>
+  </section>
+
+  <section class="content-section container home-collections" id="movieCollections" aria-label="Phim theo chủ đề">
+    <div id="movieCollectionRows"></div>
   </section>
 
   <section class="content-section container" id="movies">
@@ -151,17 +166,6 @@ ${renderHeader({
       <div class="recommendation-results" id="recommendationResults" aria-live="polite"></div>
     </section>
     <div class="movie-grid" id="movieGrid"></div>
-  </section>
-
-  <section class="content-section container" id="newMovies">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Vừa cập nhật</p>
-        <h2>Phim mới ra mắt</h2>
-      </div>
-      <span class="text-link" id="newCount"></span>
-    </div>
-    <div class="movie-grid" id="newMovieGrid"></div>
   </section>
 
   <section class="content-section container" id="ranking">
@@ -275,6 +279,12 @@ if (selectedGenre !== "all") {
   requestAnimationFrame(() =>
     document.querySelector("#movies")?.scrollIntoView(),
   );
+}
+
+try {
+  renderMovieCollectionRows();
+} catch (error) {
+  console.error("Lỗi khi hiển thị các hàng phim:", error);
 }
 
 try {
@@ -562,6 +572,49 @@ function renderMovies(filter = "all", page = 1) {
   } catch (err) {
     console.error("Lỗi khi render danh sách phim:", err);
   }
+}
+
+function renderMovieCollectionRows() {
+  const container = document.querySelector("#movieCollectionRows");
+  if (!container) return;
+
+  // Chỉ tạo hàng cho thể loại thực sự có trong kho phim.
+  const categories = [
+    { title: "Anime nổi bật", keywords: ["anime", "hoạt hình"] },
+    { title: "Phim hành động", keywords: ["hành động"] },
+    { title: "Phim viễn tưởng", keywords: ["viễn tưởng", "khoa học"] },
+    { title: "Phim tình cảm", keywords: ["tình cảm", "lãng mạn"] },
+  ];
+
+  const normalize = (value) => String(value || "").toLocaleLowerCase("vi");
+  container.innerHTML = categories.map(({ title, keywords }) => {
+    const matches = movies.filter((movie) =>
+      getMovieGenres(movie).some((genre) =>
+        keywords.some((keyword) => normalize(genre).includes(keyword))
+      )
+    ).slice(0, 12);
+    if (!matches.length) return "";
+    return `
+      <section class="movie-collection" aria-label="${title}">
+        <div class="section-heading">
+          <div><p class="eyebrow">Tuyển chọn cho bạn</p><h2>${title}</h2></div>
+          <a class="text-link" href="/genres.html">Xem tất cả <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="home-movie-rail" tabindex="0" aria-label="Cuộn ngang danh sách ${title}">
+          ${matches.map((movie) => `
+            <article class="movie-card">
+              <a class="poster poster-link" style="${posterStyle(movie)}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${escapeHtml(movie.title)}">
+                <span class="play-circle" aria-hidden="true">▶</span>
+              </a>
+              <div class="movie-card-info">
+                <h3><a href="${detailUrl(movie)}">${escapeHtml(movie.title)}</a></h3>
+                <span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span>
+              </div>
+              <p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p>
+            </article>`).join("")}
+        </div>
+      </section>`;
+  }).join("");
 }
 
 function renderRecommendations(query = "") {
