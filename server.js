@@ -1278,6 +1278,93 @@ async function handleReviewsApi(request, response, pathname) {
     }
     return true;
   }
+  if (request.method === "GET" && pathname === "/api/notifications") {
+    console.log("ĐÃ VÀO API THÔNG BÁO");
+  const currentUserId = getAuthenticatedUserId(request);
+
+  if (!currentUserId) {
+    sendJson(response, 401, {
+      error: "Vui lòng đăng nhập để xem thông báo.",
+    });
+    return true;
+  }
+
+  try {
+    const reviews = await readReviews();
+    const notifications = [];
+
+    for (const review of reviews) {
+      if (String(review.userId) !== String(currentUserId)) continue;
+
+      for (const reply of review.replies || []) {
+        if (
+          reply.userId &&
+          String(reply.userId) === String(currentUserId)
+        ) continue;
+
+        notifications.push({
+          id: reply.id,
+          reviewId: review.id,
+          movieTitle: review.movieTitle,
+          author: reply.author,
+          comment: reply.comment,
+          date: reply.date,
+          read: reply.read === true,
+        });
+      }
+    }
+
+    sendJson(response, 200, { notifications });
+  } catch (error) {
+    console.error("Unable to load notifications:", error);
+    sendJson(response, 500, {
+      error: "Không thể tải thông báo.",
+    });
+  }
+
+  return true;
+}
+if (
+  request.method === "PATCH" &&
+  pathname === "/api/notifications/read"
+) {
+  const currentUserId = getAuthenticatedUserId(request);
+
+  if (!currentUserId) {
+    sendJson(response, 401, {
+      error: "Vui lòng đăng nhập.",
+    });
+    return true;
+  }
+
+  try {
+    await updateReviews((reviews) => {
+      for (const review of reviews) {
+        if (String(review.userId) !== String(currentUserId)) continue;
+
+        for (const reply of review.replies || []) {
+          if (
+            reply.userId &&
+            String(reply.userId) === String(currentUserId)
+          ) continue;
+
+          reply.read = true;
+        }
+      }
+
+      return { ok: true };
+    });
+
+    sendJson(response, 200, { ok: true });
+  } catch (error) {
+    console.error("Không thể đánh dấu thông báo đã đọc:", error);
+    sendJson(response, 500, {
+      error: "Không thể cập nhật thông báo.",
+    });
+  }
+
+  return true;
+}
 
   if (request.method === "GET" && pathname === "/api/reviews") {
     try {
@@ -1362,13 +1449,17 @@ async function handleReviewsApi(request, response, pathname) {
         const review = reviews.find((item) => String(item.id) === reviewId);
         if (!review) return { ok: false };
         review.replies = Array.isArray(review.replies) ? review.replies : [];
-        review.replies.push({
-          id: createId(),
-          author: body.role === "admin" ? "MovieVerse Admin" : body.author.trim(),
-          role: body.role,
-          comment: body.comment.trim(),
-          date: formatDate(new Date()),
-        });
+        
+review.replies.push({
+  id: createId(),
+  userId: getAuthenticatedUserId(request),
+  author: body.role === "admin" ? "MovieVerse Admin" : body.author.trim(),
+  role: body.role,
+  comment: body.comment.trim(),
+  date: formatDate(new Date()),
+  read: false,
+});
+
         return { ok: true };
       });
       if (!result.ok) {
@@ -1957,11 +2048,12 @@ const server = createServer(async (request, response) => {
   }
 
   if (
-    pathname.startsWith("/api/reviews") ||
-    pathname === "/api/admin/session"
-  ) {
-    if (await handleReviewsApi(request, response, pathname)) return;
-  }
+  pathname.startsWith("/api/reviews") ||
+  pathname === "/api/admin/session" ||
+  pathname.startsWith("/api/notifications")
+) {
+  if (await handleReviewsApi(request, response, pathname)) return;
+}
   if (
     pathname === "/api/catalog" ||
     pathname === "/api/admin/catalog" ||

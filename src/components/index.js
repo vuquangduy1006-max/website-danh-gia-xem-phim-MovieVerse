@@ -63,22 +63,108 @@ export function getPosterStyle(movie) {
   return `background-image:${images.map((image) => `url('${image}')`).join(",")}`;
 }
 
+ 
+export async function updateNotificationCount() {
+  const bell = document.querySelector(".notification-bell");
+  const badge = bell?.querySelector(".notification-count");
+
+  if (!badge) return;
+
+  const session = getSession();
+
+  if (!session?.token) {
+    badge.hidden = true;
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/notifications", {
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const notifications = Array.isArray(data.notifications)
+      ? data.notifications
+      : [];
+
+    const count = notifications.filter(
+  (notification) => !notification.read
+).length;
+
+    badge.textContent = count > 99 ? "99+" : String(count);
+    badge.hidden = count === 0;
+  } catch (error) {
+    console.error("Không thể tải số thông báo:", error);
+    badge.hidden = true;
+  }
+}
+
 export function renderAccountActions() {
   const session = getSession();
-  if (!session) return '<a class="login-link" href="/login.html">Đăng nhập</a>';
+
+  if (!session) {
+    return '<a class="login-link" href="/login.html">Đăng nhập</a>';
+  }
 
   const safeName = escapeHtml(session.name || "User");
-  const initial = escapeHtml(session.name?.charAt(0).toUpperCase() || "U");
-  const adminLink =
-    session.role === "admin"
-      ? '<a href="/admin/admin.html">Quản lý phim</a><a href="/admin/schedule.html">Quản lý lịch phát hành</a>'
-      : "";
+  const initial = escapeHtml(
+    session.name?.charAt(0).toUpperCase() || "U"
+  );
+
+  
+const adminLink =
+  session.role === "admin"
+    ? '<a href="/admin/admin.html">Quản lý phim</a><a href="/admin/schedule.html">Quản lý lịch phát hành</a>'
+    : "";
+
+const notificationBell = `
+  <a
+    href="/notifications.html"
+    class="notification-bell"
+    aria-label="Thông báo bình luận"
+    title="Thông báo bình luận"
+  >
+    🔔
+    <span class="notification-count" hidden></span>
+  </a>
+`;
+
+
   const passwordLink =
     session.role === "user"
-      ? '<a href="/account.html">Đổi mật khẩu</a>'
+      ? '<a href="/account.html">Hồ sơ cá nhân</a>'
       : "";
-  return `<details class="account-menu"><summary class="account-chip" aria-label="${safeName}" title="${safeName}"><span class="account-avatar">${initial}</span><span>${safeName}</span></summary><div class="account-dropdown">${adminLink}${passwordLink}<a href="/history.html">🕘 Lịch sử xem</a><a href="/favorites.html">♡ Phim yêu thích</a><button class="logout-button" id="logoutButton" type="button">↪ Đăng xuất</button></div></details>`;
+
+  const notificationLink =
+    '<a href="/notifications.html">🔔 Thông báo bình luận</a>';
+
+  return `${notificationBell}<details class="account-menu">
+      <summary class="account-chip" aria-label="${safeName}" title="${safeName}">
+        <span class="account-avatar">${initial}</span>
+        <span>${safeName}</span>
+      </summary>
+
+      <div class="account-dropdown">
+        ${adminLink}
+        ${passwordLink}
+        ${notificationLink}
+        <a href="/history.html">🕘 Lịch sử xem</a>
+        <a href="/favorites.html">♡ Phim yêu thích</a>
+        <button class="logout-button" id="logoutButton" type="button">
+          ↪ Đăng xuất
+        </button>
+      </div>
+    </details>
+  `;
 }
+
 
 export function bindAccountActions() {
   mountAssistantChat(getMovieDB());

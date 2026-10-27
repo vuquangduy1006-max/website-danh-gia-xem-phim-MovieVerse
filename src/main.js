@@ -22,6 +22,7 @@ import {
   renderAccountActions,
   renderFooter,
   renderHeader,
+  updateNotificationCount,
 } from "./components/index.js";
 
 try {
@@ -237,6 +238,7 @@ ${renderFooter({
 `;
 
 bindAccountActions();
+updateNotificationCount();
 
 renderGenrePills();
 renderHero();

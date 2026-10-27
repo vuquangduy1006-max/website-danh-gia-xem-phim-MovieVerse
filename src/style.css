@@ -2778,3 +2778,54 @@ button {
     justify-content: center;
   }
 }
+
+.header-notification-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 118, 85, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 118, 85, 0.08);
+  color: #ffffff;
+  font-size: 21px;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.header-notification-btn:hover {
+  background: rgba(255, 118, 85, 0.2);
+  transform: translateY(-2px);
+}
+
+.header-notification-btn:focus-visible {
+  outline: 2px solid #ff7655;
+  outline-offset: 3px;
+}
+.notification-bell {
+  position: relative;
+}
+
+.notification-count {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ff4757;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #101014;
+}
+
+.notification-count[hidden] {
+  display: none;
+}
