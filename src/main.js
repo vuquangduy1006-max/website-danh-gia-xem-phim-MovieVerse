@@ -46,6 +46,8 @@ let currentSlide = 0;
 let slideTimer;
 let previousRecommendationQuery = "";
 const displayedRecommendationIds = new Set();
+const MOVIES_PER_PAGE = 12;
+let currentMoviePage = 1;
 
 const reviews = loadReviews().filter((review) => !review.hidden);
 
@@ -240,28 +242,67 @@ ${renderFooter({
 bindAccountActions();
 updateNotificationCount();
 
-renderGenrePills();
-renderHero();
-renderRecommendations();
+try {
+  renderGenrePills();
+} catch (error) {
+  console.error("Lỗi khi render genre pills:", error);
+}
+
+try {
+  renderHero();
+} catch (error) {
+  console.error("Lỗi khi render hero:", error);
+}
+
+try {
+  renderRecommendations();
+} catch (error) {
+  console.error("Lỗi khi render recommendations:", error);
+}
+
 const requestedGenre = new URLSearchParams(window.location.search).get("genre");
 const selectedGenre = availableGenres.includes(requestedGenre)
   ? requestedGenre
   : "all";
-renderMovies(selectedGenre);
+
+try {
+  renderMovies(selectedGenre);
+} catch (error) {
+  console.error("Lỗi khi render danh sách phim:", error);
+}
+
 if (selectedGenre !== "all") {
   requestAnimationFrame(() =>
-    document.querySelector("#movies").scrollIntoView(),
+    document.querySelector("#movies")?.scrollIntoView(),
   );
 }
-renderRanking();
+
+try {
+  renderRanking();
+} catch (error) {
+  console.error("Lỗi khi render bảng xếp hạng:", error);
+}
+
 document
   .querySelector("#rankFilter")
-  .addEventListener("change", renderRanking);
-renderNewMovies();
-renderHomeReviews();
+  ?.addEventListener("change", renderRanking);
 
-document.querySelector("#newCount").textContent =
-  `${newMovies.length} phim mới`;
+try {
+  renderNewMovies();
+} catch (error) {
+  console.error("Lỗi khi render phim mới:", error);
+}
+
+try {
+  renderHomeReviews();
+} catch (error) {
+  console.error("Lỗi khi render đánh giá trang chủ:", error);
+}
+
+const newCountEl = document.querySelector("#newCount");
+if (newCountEl) {
+  newCountEl.textContent = `${newMovies.length} phim mới`;
+}
 
 document
   .querySelector("#prevSlide")
@@ -464,62 +505,63 @@ function startSlider() {
   slideTimer = setInterval(() => goToSlide(currentSlide + 1), 6500);
 }
 
-  const MOVIES_PER_PAGE = 12;
-  let currentMoviePage = 1;
-
 function renderMovies(filter = "all", page = 1) {
-  currentMoviePage = page;
-  document
-    .querySelectorAll(".pill")
-    .forEach((pill) =>
-      pill.classList.toggle("active", pill.dataset.filter === filter),
-    );
-  const shown =
-    filter === "all"
-      ? movies
-      : movies.filter((movie) => getMovieGenres(movie).includes(filter));
-  const grid = document.querySelector("#movieGrid");
-  const totalPages = Math.ceil(shown.length / MOVIES_PER_PAGE);
-  currentMoviePage = Math.max(1, Math.min(currentMoviePage, totalPages || 1));
+  try {
+    currentMoviePage = page;
+    document
+      .querySelectorAll(".pill")
+      .forEach((pill) =>
+        pill.classList.toggle("active", pill.dataset.filter === filter),
+      );
+    const shown =
+      filter === "all"
+        ? movies
+        : movies.filter((movie) => getMovieGenres(movie).includes(filter));
+    const grid = document.querySelector("#movieGrid");
+    const totalPages = Math.ceil(shown.length / MOVIES_PER_PAGE);
+    currentMoviePage = Math.max(1, Math.min(currentMoviePage, totalPages || 1));
 
-  const startIndex = (currentMoviePage - 1) * MOVIES_PER_PAGE;
-  const paginatedMovies = shown.slice(startIndex, startIndex + MOVIES_PER_PAGE);
-  grid.innerHTML = shown.length
-  ? paginatedMovies
-        .map(
-          (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
-        )
-        .join("")
-    : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
-  bindDetailLinks("#movieGrid");
-  let pagination = document.querySelector("#moviePagination");
+    const startIndex = (currentMoviePage - 1) * MOVIES_PER_PAGE;
+    const paginatedMovies = shown.slice(startIndex, startIndex + MOVIES_PER_PAGE);
+    grid.innerHTML = shown.length
+      ? paginatedMovies
+          .map(
+            (movie, index) =>
+              `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
+          )
+          .join("")
+      : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
+    bindDetailLinks("#movieGrid");
+    let pagination = document.querySelector("#moviePagination");
 
-if (!pagination) {
-  pagination = document.createElement("div");
-  pagination.id = "moviePagination";
-  pagination.style.cssText =
-    "display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:28px 0;";
-  grid.insertAdjacentElement("afterend", pagination);
-}
+    if (!pagination) {
+      pagination = document.createElement("div");
+      pagination.id = "moviePagination";
+      pagination.style.cssText =
+        "display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:28px 0;";
+      grid.insertAdjacentElement("afterend", pagination);
+    }
 
-pagination.innerHTML = totalPages > 1
-  ? `
-    <button ${currentMoviePage === 1 ? "disabled" : ""} data-page="${currentMoviePage - 1}">‹ Trước</button>
-    ${Array.from({ length: totalPages }, (_, i) => `
-      <button data-page="${i + 1}" ${currentMoviePage === i + 1 ? 'class="active"' : ""}>
-        ${i + 1}
-      </button>
-    `).join("")}
-    <button ${currentMoviePage === totalPages ? "disabled" : ""} data-page="${currentMoviePage + 1}">Sau ›</button>
-  `
-  : "";
+    pagination.innerHTML = totalPages > 1
+      ? `
+        <button ${currentMoviePage === 1 ? "disabled" : ""} data-page="${currentMoviePage - 1}">‹ Trước</button>
+        ${Array.from({ length: totalPages }, (_, i) => `
+          <button data-page="${i + 1}" ${currentMoviePage === i + 1 ? 'class="active"' : ""}>
+            ${i + 1}
+          </button>
+        `).join("")}
+        <button ${currentMoviePage === totalPages ? "disabled" : ""} data-page="${currentMoviePage + 1}">Sau ›</button>
+      `
+      : "";
 
-pagination.querySelectorAll("button[data-page]").forEach((button) => {
-  button.addEventListener("click", () => {
-    renderMovies(filter, Number(button.dataset.page));
-  });
-});
+    pagination.querySelectorAll("button[data-page]").forEach((button) => {
+      button.addEventListener("click", () => {
+        renderMovies(filter, Number(button.dataset.page));
+      });
+    });
+  } catch (err) {
+    console.error("Lỗi khi render danh sách phim:", err);
+  }
 }
 
 function renderRecommendations(query = "") {
