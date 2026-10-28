@@ -93,21 +93,6 @@ ${renderHeader({
     </div>
   </section>
 
-  <section class="content-section container" id="newMovies">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Vừa cập nhật</p>
-        <h2>Phim mới ra mắt</h2>
-      </div>
-      <span class="text-link" id="newCount"></span>
-    </div>
-    <div class="movie-grid home-movie-rail" id="newMovieGrid"></div>
-  </section>
-
-  <section class="content-section container home-collections" id="movieCollections" aria-label="Phim theo chủ đề">
-    <div id="movieCollectionRows"></div>
-  </section>
-
   <section class="content-section container" id="movies">
     <div class="section-heading">
       <div>
@@ -166,6 +151,21 @@ ${renderHeader({
       <div class="recommendation-results" id="recommendationResults" aria-live="polite"></div>
     </section>
     <div class="movie-grid" id="movieGrid"></div>
+  </section>
+
+  <section class="content-section container" id="newMovies">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Vừa cập nhật</p>
+        <h2>Phim mới ra mắt</h2>
+      </div>
+      <span class="text-link" id="newCount"></span>
+    </div>
+    <div class="movie-grid home-movie-rail" id="newMovieGrid"></div>
+  </section>
+
+  <section class="content-section container home-collections" id="movieCollections" aria-label="Phim theo chủ đề">
+    <div id="movieCollectionRows"></div>
   </section>
 
   <section class="content-section container" id="ranking">

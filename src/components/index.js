@@ -118,24 +118,40 @@ export function renderAccountActions() {
     session.name?.charAt(0).toUpperCase() || "U"
   );
 
-  
-const adminLink =
-  session.role === "admin"
-    ? '<a href="/admin/admin.html">Quản lý phim</a><a href="/admin/schedule.html">Quản lý lịch phát hành</a>'
-    : "";
+  const adminLink =
+    session.role === "admin"
+      ? '<a href="/admin/admin.html">Quản lý phim</a><a href="/admin/schedule.html">Quản lý lịch phát hành</a>'
+      : "";
 
-const notificationBell = `
-  <a
-    href="/notifications.html"
-    class="notification-bell"
-    aria-label="Thông báo bình luận"
-    title="Thông báo bình luận"
-  >
-    🔔
-    <span class="notification-count" hidden></span>
-  </a>
-`;
+  const notificationContainer = `
+    <div class="notification-container">
+      <button
+        type="button"
+        class="notification-bell"
+        id="notificationBellBtn"
+        aria-label="Thông báo"
+        title="Thông báo"
+        aria-expanded="false"
+        aria-haspopup="true"
+      >
+        <svg class="bell-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span class="notification-count" hidden></span>
+      </button>
 
+      <div class="notification-dropdown" id="notificationDropdown" role="region" aria-label="Khung thông báo" hidden>
+        <div class="notification-header">
+          <h3 class="notification-heading">Thông báo</h3>
+          <button type="button" class="notification-mark-all" id="notificationMarkAllBtn">Đánh dấu đã đọc</button>
+        </div>
+        <div class="notification-body" id="notificationDropdownList">
+          <div class="notification-empty">Bạn chưa có thông báo nào.</div>
+        </div>
+      </div>
+    </div>
+  `;
 
   const passwordLink =
     session.role === "user"
@@ -143,9 +159,9 @@ const notificationBell = `
       : "";
 
   const notificationLink =
-    '<a href="/notifications.html">🔔 Thông báo bình luận</a>';
+    '<button type="button" class="notification-trigger-btn" id="accountNotificationBtn">🔔 Thông báo bình luận</button>';
 
-  return `${notificationBell}<details class="account-menu">
+  return `${notificationContainer}<details class="account-menu">
       <summary class="account-chip" aria-label="${safeName}" title="${safeName}">
         <span class="account-avatar">${initial}</span>
         <span>${safeName}</span>
@@ -165,10 +181,205 @@ const notificationBell = `
   `;
 }
 
+export function bindNotificationDropdown() {
+  const container = document.querySelector(".notification-container");
+  const bellBtn = document.querySelector("#notificationBellBtn");
+  const dropdown = document.querySelector("#notificationDropdown");
+  const listEl = document.querySelector("#notificationDropdownList");
+  const markAllBtn = document.querySelector("#notificationMarkAllBtn");
+  const accountTriggerBtn = document.querySelector("#accountNotificationBtn");
+  const accountMenu = document.querySelector(".account-menu");
+
+  if (!container || !bellBtn || !dropdown || !listEl) return;
+
+  let isFetching = false;
+
+  async function fetchAndRenderNotifications() {
+    const session = getSession();
+    if (!session?.token) {
+      listEl.innerHTML = '<div class="notification-empty">Vui lòng đăng nhập để xem thông báo.</div>';
+      return;
+    }
+
+    if (isFetching) return;
+    isFetching = true;
+
+    try {
+      const response = await fetch("/api/notifications", {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const notifications = Array.isArray(data.notifications)
+        ? data.notifications
+        : [];
+
+      const unreadCount = notifications.filter((n) => !n.read).length;
+      const badge = bellBtn.querySelector(".notification-count");
+      if (badge) {
+        badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+        badge.hidden = unreadCount === 0;
+      }
+
+      if (notifications.length === 0) {
+        listEl.innerHTML = '<div class="notification-empty">Bạn chưa có thông báo nào.</div>';
+        if (markAllBtn) markAllBtn.disabled = true;
+        return;
+      }
+
+      if (markAllBtn) {
+        markAllBtn.disabled = unreadCount === 0;
+      }
+
+      const movies = getMovieDB();
+
+      listEl.innerHTML = notifications
+        .map((notification) => {
+          const author = escapeHtml(notification.author || "Người dùng");
+          const movieTitle = escapeHtml(notification.movieTitle || "");
+          const comment = escapeHtml(notification.comment || "");
+          const date = escapeHtml(notification.date || "");
+          const isUnread = !notification.read;
+
+          return `
+            <div class="notification-item ${isUnread ? "unread" : "read"}" role="button" tabindex="0" data-movie="${movieTitle}">
+              <div class="notification-item-icon" aria-hidden="true">💬</div>
+              <div class="notification-item-content">
+                <div class="notification-item-title">
+                  <strong>${author}</strong> đã trả lời bình luận của bạn
+                </div>
+                ${movieTitle ? `<div class="notification-item-movie">Phim: <span>${movieTitle}</span></div>` : ""}
+                ${comment ? `<div class="notification-item-comment">${comment}</div>` : ""}
+                <div class="notification-item-meta">
+                  <span class="notification-item-time">${date}</span>
+                  ${isUnread ? '<span class="notification-item-unread-dot" title="Chưa đọc"></span>' : ""}
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      listEl.querySelectorAll(".notification-item").forEach((item) => {
+        const handleOpen = () => {
+          const title = item.dataset.movie;
+          if (title) {
+            const matched = movies.find(
+              (m) =>
+                m.title?.toLowerCase() === title.toLowerCase() ||
+                m.vietnameseTitle?.toLowerCase() === title.toLowerCase()
+            );
+            if (matched?.id) {
+              window.location.href = `/movie-detail.html?id=${encodeURIComponent(matched.id)}`;
+              return;
+            }
+            window.location.href = `/search.html?q=${encodeURIComponent(title)}`;
+          }
+        };
+
+        item.addEventListener("click", handleOpen);
+        item.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleOpen();
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Lỗi khi tải thông báo:", error);
+      listEl.innerHTML = '<div class="notification-empty">Không thể tải thông báo. Vui lòng thử lại sau.</div>';
+    } finally {
+      isFetching = false;
+    }
+  }
+
+  function toggleDropdown(forceOpen) {
+    const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : dropdown.hidden;
+    dropdown.hidden = !shouldOpen;
+    bellBtn.setAttribute("aria-expanded", String(shouldOpen));
+
+    if (shouldOpen) {
+      if (accountMenu) accountMenu.removeAttribute("open");
+      fetchAndRenderNotifications();
+    }
+  }
+
+  bellBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleDropdown();
+  });
+
+  if (accountTriggerBtn) {
+    accountTriggerBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (accountMenu) accountMenu.removeAttribute("open");
+      toggleDropdown(true);
+    });
+  }
+
+  if (markAllBtn) {
+    markAllBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const session = getSession();
+      if (!session?.token) return;
+
+      try {
+        markAllBtn.disabled = true;
+        const res = await fetch("/api/notifications/read", {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+          },
+        });
+
+        if (res.ok) {
+          const badge = bellBtn.querySelector(".notification-count");
+          if (badge) {
+            badge.hidden = true;
+            badge.textContent = "";
+          }
+
+          listEl.querySelectorAll(".notification-item.unread").forEach((item) => {
+            item.classList.remove("unread");
+            item.classList.add("read");
+            item.querySelector(".notification-item-unread-dot")?.remove();
+          });
+        }
+      } catch (err) {
+        console.error("Lỗi khi đánh dấu thông báo đã đọc:", err);
+      } finally {
+        markAllBtn.disabled = false;
+      }
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!dropdown.hidden && !container.contains(event.target)) {
+      dropdown.hidden = true;
+      bellBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !dropdown.hidden) {
+      dropdown.hidden = true;
+      bellBtn.setAttribute("aria-expanded", "false");
+      bellBtn.focus();
+    }
+  });
+}
 
 export function bindAccountActions() {
   mountAssistantChat(getMovieDB());
   bindHeaderSearch();
+  bindNotificationDropdown();
+  updateNotificationCount();
 
   const genreNav = document.querySelector(".genre-nav");
   if (genreNav) {
