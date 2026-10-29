@@ -56,7 +56,7 @@ function escapeHtml(str) {
     /[&<>"']/g,
     (char) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        char
+      char
       ],
   );
 }
@@ -154,14 +154,22 @@ ${renderHeader({
   </section>
 
   <section class="content-section container" id="newMovies">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Vừa cập nhật</p>
-        <h2>Phim mới ra mắt</h2>
+    <div class="section-frame">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Vừa cập nhật</p>
+          <h2>Phim mới ra mắt</h2>
+        </div>
+        <a class="text-link view-all-link" id="newViewAllLink" href="/new-movies.html" title="Xem tất cả phim mới">
+          Xem tất cả <span class="view-all-count" id="newCount"></span> <span class="view-all-arrow" aria-hidden="true">→</span>
+        </a>
       </div>
-      <span class="text-link" id="newCount"></span>
+      <div class="rail-wrapper" id="newRailWrapper">
+        <button type="button" class="rail-arrow rail-arrow-prev" id="newRailPrev" aria-label="Cuộn sang trái">‹</button>
+        <div class="movie-grid home-movie-rail" id="newMovieGrid" tabindex="0" aria-label="Danh sách phim mới ra mắt"></div>
+        <button type="button" class="rail-arrow rail-arrow-next" id="newRailNext" aria-label="Cuộn sang phải">›</button>
+      </div>
     </div>
-    <div class="movie-grid home-movie-rail" id="newMovieGrid"></div>
   </section>
 
   <section class="content-section container home-collections" id="movieCollections" aria-label="Phim theo chủ đề">
@@ -311,7 +319,29 @@ try {
 
 const newCountEl = document.querySelector("#newCount");
 if (newCountEl) {
-  newCountEl.textContent = `${newMovies.length} phim mới`;
+  newCountEl.textContent = `(${newMovies.length})`;
+}
+
+const newMovieGrid = document.querySelector("#newMovieGrid");
+const newRailPrev = document.querySelector("#newRailPrev");
+const newRailNext = document.querySelector("#newRailNext");
+if (newRailPrev && newRailNext && newMovieGrid) {
+  const updateRailArrows = () => {
+    const maxScroll = newMovieGrid.scrollWidth - newMovieGrid.clientWidth - 1;
+    newRailPrev.disabled = newMovieGrid.scrollLeft <= 4;
+    newRailNext.disabled = newMovieGrid.scrollLeft >= maxScroll;
+  };
+
+  newRailPrev.addEventListener("click", () => {
+    newMovieGrid.scrollBy({ left: -newMovieGrid.clientWidth * 0.75, behavior: "smooth" });
+  });
+  newRailNext.addEventListener("click", () => {
+    newMovieGrid.scrollBy({ left: newMovieGrid.clientWidth * 0.75, behavior: "smooth" });
+  });
+
+  newMovieGrid.addEventListener("scroll", updateRailArrows, { passive: true });
+  window.addEventListener("resize", updateRailArrows);
+  setTimeout(updateRailArrows, 150);
 }
 
 document
@@ -535,11 +565,11 @@ function renderMovies(filter = "all", page = 1) {
     const paginatedMovies = shown.slice(startIndex, startIndex + MOVIES_PER_PAGE);
     grid.innerHTML = shown.length
       ? paginatedMovies
-          .map(
-            (movie, index) =>
-              `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
-          )
-          .join("")
+        .map(
+          (movie, index) =>
+            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
+        )
+        .join("")
       : '<p class="empty-note">Chưa có phim thuộc thể loại này.</p>';
     bindDetailLinks("#movieGrid");
     let pagination = document.querySelector("#moviePagination");
@@ -580,41 +610,71 @@ function renderMovieCollectionRows() {
 
   // Chỉ tạo hàng cho thể loại thực sự có trong kho phim.
   const categories = [
-    { title: "Anime nổi bật", keywords: ["anime", "hoạt hình"] },
-    { title: "Phim hành động", keywords: ["hành động"] },
-    { title: "Phim viễn tưởng", keywords: ["viễn tưởng", "khoa học"] },
-    { title: "Phim tình cảm", keywords: ["tình cảm", "lãng mạn"] },
+    { title: "Anime nổi bật", keywords: ["anime", "hoạt hình"], genreQuery: "Hoạt hình" },
+    { title: "Phim hành động", keywords: ["hành động"], genreQuery: "Hành động" },
+    { title: "Phim viễn tưởng", keywords: ["viễn tưởng", "khoa học"], genreQuery: "Khoa học viễn tưởng" },
+    { title: "Phim tình cảm", keywords: ["tình cảm", "lãng mạn"], genreQuery: "Tình cảm" },
   ];
 
   const normalize = (value) => String(value || "").toLocaleLowerCase("vi");
-  container.innerHTML = categories.map(({ title, keywords }) => {
-    const matches = movies.filter((movie) =>
+  container.innerHTML = categories.map(({ title, keywords, genreQuery }, catIdx) => {
+    const allMatches = movies.filter((movie) =>
       getMovieGenres(movie).some((genre) =>
         keywords.some((keyword) => normalize(genre).includes(keyword))
       )
-    ).slice(0, 12);
+    );
+    const matches = allMatches.slice(0, 15);
     if (!matches.length) return "";
+    const genreUrl = `/genres.html?genre=${encodeURIComponent(genreQuery)}`;
     return `
-      <section class="movie-collection" aria-label="${title}">
+      <section class="movie-collection section-frame" aria-label="${title}">
         <div class="section-heading">
           <div><p class="eyebrow">Tuyển chọn cho bạn</p><h2>${title}</h2></div>
-          <a class="text-link" href="/genres.html">Xem tất cả <span aria-hidden="true">→</span></a>
+          <a class="text-link view-all-link" href="${genreUrl}" title="Xem tất cả phim ${title}">
+            Xem tất cả <span class="view-all-count">(${allMatches.length})</span> <span class="view-all-arrow" aria-hidden="true">→</span>
+          </a>
         </div>
-        <div class="home-movie-rail" tabindex="0" aria-label="Cuộn ngang danh sách ${title}">
-          ${matches.map((movie) => `
-            <article class="movie-card">
-              <a class="poster poster-link" style="${posterStyle(movie)}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${escapeHtml(movie.title)}">
-                <span class="play-circle" aria-hidden="true">▶</span>
-              </a>
-              <div class="movie-card-info">
-                <h3><a href="${detailUrl(movie)}">${escapeHtml(movie.title)}</a></h3>
-                <span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span>
-              </div>
-              <p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p>
-            </article>`).join("")}
+        <div class="rail-wrapper">
+          <button type="button" class="rail-arrow rail-arrow-prev collection-prev" aria-label="Cuộn sang trái">‹</button>
+          <div class="home-movie-rail" id="collection-rail-${catIdx}" tabindex="0" aria-label="Cuộn ngang danh sách ${title}">
+            ${matches.map((movie) => `
+              <article class="movie-card">
+                <a class="poster poster-link" style="${posterStyle(movie)}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${escapeHtml(movie.title)}">
+                  <span class="play-circle" aria-hidden="true">▶</span>
+                </a>
+                <div class="movie-card-info">
+                  <h3><a href="${detailUrl(movie)}">${escapeHtml(movie.title)}</a></h3>
+                  <span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span>
+                </div>
+                <p>${escapeHtml(movie.year)} · ${escapeHtml(movie.genre)}</p>
+              </article>`).join("")}
+          </div>
+          <button type="button" class="rail-arrow rail-arrow-next collection-next" aria-label="Cuộn sang phải">›</button>
         </div>
       </section>`;
   }).join("");
+
+  container.querySelectorAll(".section-frame").forEach((frame) => {
+    const rail = frame.querySelector(".home-movie-rail");
+    const prevBtn = frame.querySelector(".collection-prev");
+    const nextBtn = frame.querySelector(".collection-next");
+
+    if (rail && prevBtn && nextBtn) {
+      const updateBtns = () => {
+        const maxScroll = rail.scrollWidth - rail.clientWidth - 1;
+        prevBtn.disabled = rail.scrollLeft <= 4;
+        nextBtn.disabled = rail.scrollLeft >= maxScroll;
+      };
+      prevBtn.addEventListener("click", () => {
+        rail.scrollBy({ left: -rail.clientWidth * 0.75, behavior: "smooth" });
+      });
+      nextBtn.addEventListener("click", () => {
+        rail.scrollBy({ left: rail.clientWidth * 0.75, behavior: "smooth" });
+      });
+      rail.addEventListener("scroll", updateBtns, { passive: true });
+      setTimeout(updateBtns, 150);
+    }
+  });
 }
 
 function renderRecommendations(query = "") {
@@ -697,11 +757,11 @@ function renderRanking() {
     `Top phim ${periodName}`;
   document.querySelector("#rankingList").innerHTML = top.length
     ? top
-        .map(
-          ({ movie, score }, index) =>
-            `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${score.toFixed(1)}/10</span></article>`,
-        )
-        .join("")
+      .map(
+        ({ movie, score }, index) =>
+          `<article class="rank-item"><span class="rank-number">0${index + 1}</span><a class="rank-poster" style="${posterStyle(movie)}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"></a><div class="rank-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><p>${movie.year} · ${movie.genre}</p></div><span class="rank-score">★ ${score.toFixed(1)}/10</span></article>`,
+      )
+      .join("")
     : '<p class="empty-note">Chưa có review trong khoảng thời gian này.</p>';
 }
 
@@ -709,11 +769,11 @@ function renderNewMovies() {
   const grid = document.querySelector("#newMovieGrid");
   grid.innerHTML = newMovies.length
     ? newMovies
-        .map(
-          (movie, index) =>
-            `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
-        )
-        .join("")
+      .map(
+        (movie, index) =>
+          `<article class="movie-card" style="animation-delay:${index * 0.05}s"><a class="poster poster-link" style="${posterStyle(movie)}" data-movie="${movie.title}" href="${detailUrl(movie)}" aria-label="Xem chi tiết ${movie.title}"><span class="play-circle" aria-hidden="true">▶</span></a><div class="movie-card-info"><h3><a href="${detailUrl(movie)}">${movie.title}</a></h3><span class="card-rating">★ ${getMovieReviewAverage(movie.title).toFixed(1)}/10</span></div><p>${movie.year} · ${movie.genre}</p></article>`,
+      )
+      .join("")
     : '<p class="empty-note">Chưa có phim mới.</p>';
   bindDetailLinks("#newMovieGrid");
 }
@@ -729,7 +789,7 @@ function renderHomeReviews() {
 
   const average = reviews.length
     ? reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
-      reviews.length
+    reviews.length
     : 0;
 
   const movieCounts = reviews.reduce((acc, review) => {
@@ -746,10 +806,10 @@ function renderHomeReviews() {
     `${reviews.length} đánh giá`;
   const positiveRate = reviews.length
     ? Math.round(
-        (reviews.filter((review) => Number(review.rating) >= 4).length /
-          reviews.length) *
-          100,
-      )
+      (reviews.filter((review) => Number(review.rating) >= 4).length /
+        reviews.length) *
+      100,
+    )
     : null;
   document.querySelector("#positiveReviewStat").textContent =
     positiveRate === null ? "—" : `${positiveRate}%`;
@@ -760,8 +820,8 @@ function renderHomeReviews() {
     : "-";
   document.querySelector("#homeReviewGrid").innerHTML = list.length
     ? list
-        .map(
-          (review) => `
+      .map(
+        (review) => `
             <article class="home-review-card">
               <div class="review-card-header">
                 <div class="review-avatar large">${escapeHtml(review.author.charAt(0))}</div>
@@ -778,7 +838,7 @@ function renderHomeReviews() {
               </div>
             </article>
           `,
-        )
-        .join("")
+      )
+      .join("")
     : '<p class="empty-note">Chưa có đánh giá nào từ cộng đồng.</p>';
 }
