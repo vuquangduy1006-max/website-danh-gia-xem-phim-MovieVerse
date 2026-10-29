@@ -56,17 +56,28 @@ Lịch phát hành tại `/schedule.html` hiển thị ngày chiếu phim và ng
 tập mới do quản trị viên lên lịch tại `/admin/schedule.html`. Lịch được chia
 sẻ công khai cùng danh mục; hiện chưa tự đồng bộ dữ liệu phát hành từ các nền tảng.
 
-Khi nhập tên phim trong form quản trị, máy chủ tra cứu OMDb để tự điền các thông
-tin phim có sẵn (năm, ngày phát hành, rating IMDb, quốc gia, thời lượng, ngôn ngữ,
-phân loại độ tuổi, thể loại, poster, mô tả, đạo diễn, diễn viên, biên kịch,
-hãng sản xuất, giải thưởng, doanh thu và website chính thức). Trailer có sẵn trong thư viện MovieVerse sẽ được
-điền nếu ô trailer còn trống. Khi cấu hình `TMDB_API_KEY`, tra cứu bổ sung ảnh
-nền, nhà sản xuất, quay phim, âm nhạc và trailer YouTube chính thức. Link từng
-tập cần tự cung cấp; nguồn metadata không cung cấp link xem tập. Trường không
-có dữ liệu vẫn có thể nhập thủ công. Khóa API chỉ lưu ở `.env`, không gửi xuống
-trình duyệt. Không chia sẻ hoặc commit khóa API. Nếu chưa cấu hình key, bạn vẫn
-có thể nhập dữ liệu thủ công. Khi dùng dữ liệu TMDb, trang phim hiển thị thông
-báo ghi nhận TMDb theo yêu cầu sử dụng API.
+Trong form quản trị, ô tên phim tìm đồng thời trong kho MovieVerse và qua
+endpoint có xác thực `GET /api/admin/movie-search?query=...`. Backend ưu tiên
+TMDb rồi dùng OMDb làm dự phòng khi TMDb không có kết quả hoặc không phản hồi.
+Các gợi ý bên ngoài không tự được lưu: chọn một gợi ý sẽ tra cứu và điền dữ liệu
+vào form, còn admin vẫn cần nhấn nút lưu. Chọn phim trong kho sẽ mở chế độ chỉnh
+sửa. Tìm kiếm nội bộ vẫn hoạt động nếu dịch vụ ngoài lỗi.
+Nếu giao diện báo `ECONNREFUSED`, máy chạy backend không kết nối được đến
+`api.themoviedb.org:443`; kiểm tra DNS, firewall và kết nối HTTPS outbound.
+Có thể đặt `TMDB_API_URL` trong `.env` nếu môi trường của bạn cần dùng một
+TMDb-compatible API base URL khác.
+
+Máy chủ tra cứu OMDb để tự điền thông tin phim có sẵn (năm, ngày phát hành,
+rating IMDb, quốc gia, thời lượng, ngôn ngữ, phân loại độ tuổi, thể loại, poster,
+mô tả, đạo diễn, diễn viên, biên kịch, hãng sản xuất, giải thưởng, doanh thu và
+website chính thức). Trailer có sẵn trong thư viện MovieVerse sẽ được điền nếu
+ô trailer còn trống. Khi cấu hình `TMDB_API_KEY`, tra cứu bổ sung ảnh nền, nhà
+sản xuất, quay phim, âm nhạc và trailer YouTube chính thức. Link từng tập cần tự
+cung cấp; nguồn metadata không cung cấp link xem tập. Trường không có dữ liệu
+vẫn có thể nhập thủ công. Khóa API chỉ lưu ở `.env`, không gửi xuống trình
+duyệt. Không chia sẻ hoặc commit khóa API. Nếu chưa cấu hình key, bạn vẫn có thể
+nhập dữ liệu thủ công. Khi dùng dữ liệu TMDb, trang phim hiển thị thông báo ghi
+nhận TMDb theo yêu cầu sử dụng API.
 
 Các kho JSON phù hợp với một API instance có ổ đĩa bền vững; nếu chạy nhiều
 instance, hãy chuyển kho danh mục phim, bình luận, tài khoản và email đăng ký

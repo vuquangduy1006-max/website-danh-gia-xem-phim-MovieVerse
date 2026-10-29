@@ -222,6 +222,20 @@ export function isAdmin() {
   return getSession()?.role === "admin";
 }
 
+export function clearAdminSession(adminToken) {
+  const session = getSession();
+  if (
+    session?.role !== "admin" ||
+    !adminToken ||
+    session.adminToken !== adminToken
+  ) {
+    return false;
+  }
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  return true;
+}
+
 export async function changePassword(currentPassword, newPassword) {
   const session = getSession();
   if (!session || session.role !== "user" || !session.token) {
@@ -327,4 +341,3 @@ export async function resetPasswordWithCode({ email, code, newPassword }) {
   }
   return { ok: true, message: result.payload.message };
 }
-

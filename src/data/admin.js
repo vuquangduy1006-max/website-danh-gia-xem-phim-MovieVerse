@@ -7,7 +7,7 @@ import {
   initializeCatalog,
   saveSharedCatalog,
 } from "./data.js";
-import { getSession, isAdmin } from "./auth.js";
+import { clearAdminSession, getSession, isAdmin } from "./auth.js";
 import { getTrailer } from "./media.js";
 import {
   deleteReview,
@@ -67,6 +67,7 @@ let ratingLookupTimer;
 let ratingLookupController;
 let movieSearchTimer;
 let movieSearchController;
+let movieSearchRequestId = 0;
 let ratingManuallyEdited = false;
 let selectedRatingSource = null;
 
@@ -169,7 +170,7 @@ document.querySelector("#app").innerHTML = `
             <input id="fieldTitle" type="text" placeholder="Nhập ít nhất 1 ký tự để tìm và chọn phim" autocomplete="off" aria-autocomplete="list" aria-controls="movieSearchList" aria-expanded="false" required>
           </div>
           <div class="field full movie-search-field" id="movieSearchField" hidden>
-            <label>Chọn phim trong kho hoặc tìm phim trên TMDb</label>
+            <label>Chọn phim trong kho hoặc gợi ý từ API</label>
             <div class="related-movie-list" id="movieSearchList" role="listbox" aria-label="Kết quả tìm phim"></div>
             <small class="field-hint" id="movieSearchStatus" aria-live="polite"></small>
           </div>
@@ -379,9 +380,21 @@ function bindEvents() {
     movieSearchController?.abort();
     clearTimeout(ratingLookupTimer);
     hideMovieSearchResults();
-    lookupMovieDetails(titleInput.value);
+    lookupMovieDetails(titleInput.value, button.dataset.imdbId);
     titleInput.focus();
   });
+  document.querySelector("#movieSearchList").addEventListener(
+    "error",
+    (event) => {
+      if (!(event.target instanceof HTMLImageElement)) return;
+      const placeholder = document.createElement("span");
+      placeholder.className = "related-movie-poster-placeholder";
+      placeholder.setAttribute("aria-hidden", "true");
+      placeholder.textContent = "🎬";
+      event.target.replaceWith(placeholder);
+    },
+    true,
+  );
   document.querySelector("#fieldRating").addEventListener("input", () => {
     ratingManuallyEdited = true;
     selectedRatingSource = null;
@@ -580,6 +593,9 @@ function renderTable() {
 function openAddForm() {
   clearTimeout(ratingLookupTimer);
   ratingLookupController?.abort();
+  clearTimeout(movieSearchTimer);
+  movieSearchController?.abort();
+  movieSearchRequestId += 1;
   editingId = null;
   ratingManuallyEdited = false;
   selectedRatingSource = null;
@@ -603,6 +619,9 @@ function openEditForm(id) {
   if (!movie) return;
   clearTimeout(ratingLookupTimer);
   ratingLookupController?.abort();
+  clearTimeout(movieSearchTimer);
+  movieSearchController?.abort();
+  movieSearchRequestId += 1;
   editingId = id;
   ratingManuallyEdited = false;
   hideMovieSearchResults();
@@ -795,20 +814,26 @@ function scheduleRatingLookup() {
   clearTimeout(ratingLookupTimer);
   ratingLookupController?.abort();
   const title = document.querySelector("#fieldTitle").value.trim();
-  if (title.length < 2) {
-    setRatingLookupStatus("Nhập tên phim để tự điền thông tin từ OMDb. Trailer được bổ sung từ TMDb nếu có API key và ô còn trống.");
+  if (title.length < 3) {
+    setRatingLookupStatus("Nhập ít nhất 3 ký tự để tự điền thông tin từ OMDb. Trailer được bổ sung từ TMDb nếu có API key và ô còn trống.");
     return;
   }
   setRatingLookupStatus("Đang chờ nhập tên phim...");
-  ratingLookupTimer = setTimeout(() => lookupMovieDetails(title), 650);
+  ratingLookupTimer = setTimeout(() => lookupMovieDetails(title), 1200);
 }
 
 function scheduleMovieSearch() {
   clearTimeout(movieSearchTimer);
   movieSearchController?.abort();
-  const query = document.querySelector("#fieldTitle").value.trim();
+  const requestId = ++movieSearchRequestId;
+  const query = document
+    .querySelector("#fieldTitle")
+    .value.trim()
+    .replace(/\s+/g, " ");
   if (!query) {
     hideMovieSearchResults();
+    document.querySelector("#movieSearchList").replaceChildren();
+    setMovieSearchStatus("");
     return;
   }
   const localMatches = movies
@@ -819,16 +844,40 @@ function scheduleMovieSearch() {
     )
     .slice(0, 6);
   renderMovieSearchResults([], localMatches);
-  movieSearchTimer = setTimeout(() => searchMovies(query, localMatches), 350);
+  if (query.length < 3) {
+    setMovieSearchStatus(
+      localMatches.length
+        ? `${localMatches.length} phim trong kho · Nhập thêm ký tự để tìm từ API.`
+        : "Nhập ít nhất 3 ký tự để tìm phim từ API.",
+    );
+    return;
+  }
+  if (query.length > 120) {
+    setMovieSearchStatus(
+      `${localMatches.length ? `${localMatches.length} phim trong kho. ` : ""}Từ khóa tìm API không được vượt quá 120 ký tự.`,
+      "error",
+    );
+    return;
+  }
+  setMovieSearchStatus(
+    localMatches.length
+      ? `${localMatches.length} phim trong kho · Đang tìm thêm từ API...`
+      : "Đang tìm phim...",
+  );
+  movieSearchTimer = setTimeout(
+    () => searchMovies(query, localMatches, requestId),
+    450,
+  );
 }
 
-async function searchMovies(query, localMatches) {
+async function searchMovies(query, localMatches, requestId) {
   const session = getSession();
   if (!session?.adminToken) {
     setMovieSearchStatus(
       localMatches.length
-        ? `${localMatches.length} phim trong kho. Hãy đăng nhập lại để tìm thêm trên TMDb.`
-        : "Phiên quản trị không hợp lệ. Hãy đăng nhập lại để tìm phim trên TMDb.",
+        ? `${localMatches.length} phim trong kho. Bạn chưa đăng nhập quản trị; hãy đăng nhập để tìm thêm từ API.`
+        : "Bạn chưa đăng nhập quản trị. Hãy đăng nhập để tìm phim từ API.",
+      "error",
     );
     return;
   }
@@ -838,8 +887,8 @@ async function searchMovies(query, localMatches) {
   field.hidden = false;
   setMovieSearchStatus(
     localMatches.length
-      ? `${localMatches.length} phim trong kho · Đang tìm thêm trên TMDb...`
-      : "Đang tìm phim trên TMDb...",
+      ? `${localMatches.length} phim trong kho · Đang tìm thêm từ API...`
+      : "Đang tìm phim từ API...",
   );
   try {
     const response = await fetch(
@@ -850,27 +899,83 @@ async function searchMovies(query, localMatches) {
       },
     );
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Không tìm được phim.");
     if (
       controller.signal.aborted ||
-      document.querySelector("#fieldTitle").value.trim() !== query
+      requestId !== movieSearchRequestId ||
+      document
+        .querySelector("#fieldTitle")
+        .value.trim()
+        .replace(/\s+/g, " ") !== query
     ) {
       return;
     }
-    renderMovieSearchResults(result.movies, localMatches);
+    if (!response.ok) {
+      if (response.status === 403) {
+        clearAdminSession(session.adminToken);
+        renderMovieSearchResults([], localMatches, {
+          message: `${localMatches.length ? `${localMatches.length} phim trong kho · ` : ""}Phiên quản trị đã hết hạn hoặc không hợp lệ. Hãy đăng nhập lại tại /login.html; phim trong kho vẫn khả dụng.`,
+          state: "error",
+        });
+        return;
+      }
+      const message =
+        result && typeof result.error === "string"
+          ? result.error
+          : response.status === 429
+            ? "API đang giới hạn lượt tìm kiếm. Vui lòng chờ một phút rồi thử lại."
+            : response.status === 503
+              ? "Dịch vụ gợi ý bên ngoài hiện chưa sẵn sàng."
+              : response.status >= 500
+                ? "API phim tạm thời không phản hồi."
+                : "Không thể tìm phim với từ khóa này.";
+      renderMovieSearchResults([], localMatches, {
+        message: `${localMatches.length ? `${localMatches.length} phim trong kho · ` : ""}${message}`,
+        state: "error",
+      });
+      return;
+    }
+    if (!result || typeof result !== "object" || !Array.isArray(result.movies)) {
+      renderMovieSearchResults([], localMatches, {
+        message: `${localMatches.length ? `${localMatches.length} phim trong kho · ` : ""}API trả về dữ liệu không hợp lệ.`,
+        state: "error",
+      });
+      return;
+    }
+    const apiMovies = result.movies.filter(isValidMovieSearchResult);
+    const hasInvalidResults = apiMovies.length !== result.movies.length;
+    const partialWarning = typeof result.warning === "string" && result.warning;
+    const message = partialWarning
+      ? `${localMatches.length + apiMovies.length} kết quả. ${result.warning} Đang hiển thị các kết quả khả dụng.`
+      : hasInvalidResults
+        ? "Một số kết quả API không hợp lệ đã được bỏ qua."
+        : apiMovies.length === 0 && localMatches.length > 0
+          ? `${localMatches.length} phim trong kho. API không tìm thấy thêm phim.`
+          : undefined;
+    renderMovieSearchResults(apiMovies, localMatches, {
+      message,
+      state: partialWarning || hasInvalidResults ? "error" : "",
+    });
   } catch (error) {
     if (error.name === "AbortError") return;
-    setMovieSearchStatus(
-      localMatches.length
-        ? `${localMatches.length} phim trong kho. Không thể tìm thêm trên TMDb: ${error.message}`
-        : `Không thể tìm phim trên TMDb: ${error.message}`,
-    );
+    if (
+      requestId !== movieSearchRequestId ||
+      document
+        .querySelector("#fieldTitle")
+        .value.trim()
+        .replace(/\s+/g, " ") !== query
+    ) {
+      return;
+    }
+    renderMovieSearchResults([], localMatches, {
+      message: `${localMatches.length ? `${localMatches.length} phim trong kho · ` : ""}Không thể kết nối máy chủ tìm kiếm. Phim trong kho vẫn có thể được chọn.`,
+      state: "error",
+    });
   } finally {
     if (movieSearchController === controller) movieSearchController = null;
   }
 }
 
-async function lookupMovieDetails(title) {
+async function lookupMovieDetails(title, imdbId = "") {
   const session = getSession();
   if (!session?.adminToken) {
     setRatingLookupStatus("Phiên quản trị không hợp lệ. Hãy đăng nhập lại.", "error");
@@ -880,8 +985,10 @@ async function lookupMovieDetails(title) {
   ratingLookupController = controller;
   setRatingLookupStatus("Đang tra cứu thông tin phim...");
   try {
+    const queryParams = new URLSearchParams({ title });
+    if (imdbId) queryParams.set("imdbId", imdbId);
     const response = await fetch(
-      `/api/admin/movie-details?title=${encodeURIComponent(title)}`,
+      `/api/admin/movie-details?${queryParams.toString()}`,
       {
         headers: { Authorization: `Bearer ${session.adminToken}` },
         signal: controller.signal,
@@ -889,6 +996,12 @@ async function lookupMovieDetails(title) {
     );
     const result = await response.json();
     if (!response.ok) {
+      if (response.status === 403) {
+        clearAdminSession(session.adminToken);
+        throw new Error(
+          "Phiên quản trị đã hết hạn hoặc không hợp lệ. Hãy đăng nhập lại tại /login.html.",
+        );
+      }
       throw new Error(result.error || "Không tra cứu được thông tin phim.");
     }
     if (
@@ -1030,53 +1143,114 @@ async function lookupMovieDetails(title) {
 
 function normalizeMovieSearchText(value) {
   return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
     .normalize("NFD")
     .replace(/[đĐ]/g, "d")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("vi");
 }
 
-function renderMovieSearchResults(remoteMovies, localMovies = []) {
+function isValidMovieSearchResult(movie) {
+  if (!movie || typeof movie !== "object" || typeof movie.title !== "string") {
+    return false;
+  }
+  const title = movie.title.trim();
+  const hasId =
+    (typeof movie.id === "string" && movie.id.trim()) ||
+    (typeof movie.id === "number" && Number.isFinite(movie.id)) ||
+    (typeof movie.imdbId === "string" && movie.imdbId.trim());
+  return Boolean(title && hasId);
+}
+
+function renderMovieSearchResults(
+  remoteMovies,
+  localMovies = [],
+  { message, state = "" } = {},
+) {
   const list = document.querySelector("#movieSearchList");
-  const searchResults = Array.isArray(remoteMovies) ? remoteMovies : [];
-  const localTitles = new Set(
-    localMovies.map((movie) => normalizeMovieSearchText(movie.title)),
+  const searchResults = Array.isArray(remoteMovies)
+    ? remoteMovies.filter(isValidMovieSearchResult)
+    : [];
+  const localIds = new Set(
+    localMovies.map((movie) => String(movie.id ?? "")).filter(Boolean),
   );
-  const uniqueRemoteResults = searchResults.filter(
-    (movie) => !localTitles.has(normalizeMovieSearchText(movie.title)),
+  const localImdbIds = new Set(
+    localMovies
+      .map((movie) => String(movie.imdbId ?? "").toLowerCase())
+      .filter(Boolean),
   );
+  const localTitlesAndYears = new Set(
+    localMovies.map(
+      (movie) =>
+        `${normalizeMovieSearchText(movie.title)}|${String(movie.year || "")}`,
+    ),
+  );
+  const seenRemoteIds = new Set();
+  const uniqueRemoteResults = searchResults.filter((movie) => {
+    const remoteId = String(movie.id ?? movie.imdbId ?? "");
+    const imdbId = String(movie.imdbId ?? "").toLowerCase();
+    const titleYear = `${normalizeMovieSearchText(movie.title)}|${String(movie.year || "")}`;
+    if (
+      (remoteId && localIds.has(remoteId)) ||
+      (imdbId && localImdbIds.has(imdbId)) ||
+      localTitlesAndYears.has(titleYear) ||
+      (remoteId && seenRemoteIds.has(remoteId))
+    ) {
+      return false;
+    }
+    if (remoteId) seenRemoteIds.add(remoteId);
+    return true;
+  });
   document.querySelector("#movieSearchField").hidden = false;
   document.querySelector("#fieldTitle").setAttribute("aria-expanded", "true");
   list.innerHTML = [
     ...localMovies.map(
       (movie) => `
         <button class="btn btn-ghost related-movie-option" type="button" role="option" data-existing-id="${escapeHtml(movie.id)}">
-          ${movie.poster ? `<img src="${escapeHtml(movie.poster)}" alt="" loading="lazy">` : ""}
-          <span class="movie-search-copy"><span><strong>${escapeHtml(movie.title)}</strong>${movie.year ? ` <small>${escapeHtml(movie.year)}</small>` : ""}</span>
+          ${renderMovieSearchPoster(movie.poster)}
+          <span class="movie-search-copy"><span><strong>${escapeHtml(movie.title)}</strong>${formatMovieSearchYear(movie.year)}</span>
           <span class="related-movie-overview">Đang có trong kho · Chọn để chỉnh sửa</span>
           </span>
         </button>`,
     ),
     ...uniqueRemoteResults.map(
       (movie) => `
-        <button class="btn btn-ghost related-movie-option" type="button" role="option" data-search-title="${escapeHtml(movie.title)}">
-          ${movie.poster ? `<img src="${escapeHtml(movie.poster)}" alt="" loading="lazy">` : ""}
-          <span class="movie-search-copy"><span><strong>${escapeHtml(movie.title)}</strong>${movie.year ? ` <small>${escapeHtml(movie.year)}</small>` : ""}</span>
-          ${movie.overview ? `<span class="related-movie-overview">${escapeHtml(movie.overview)}</span>` : ""}
+        <button class="btn btn-ghost related-movie-option" type="button" role="option" data-search-title="${escapeHtml(movie.title)}" ${movie.imdbId ? `data-imdb-id="${escapeHtml(movie.imdbId)}"` : ""}>
+          ${renderMovieSearchPoster(movie.poster)}
+          <span class="movie-search-copy"><span><strong>${escapeHtml(movie.title.trim())}</strong>${formatMovieSearchYear(movie.year)}</span>
+          <span class="related-movie-overview">Tìm thấy từ API${movie.overview ? ` · ${escapeHtml(movie.overview)}` : ""}</span>
           </span>
         </button>`,
     ),
   ].join("");
   setMovieSearchStatus(
-    localMovies.length || uniqueRemoteResults.length
-      ? `${localMovies.length + uniqueRemoteResults.length} kết quả. Chọn phim để tiếp tục.`
-      : "Không tìm thấy phim phù hợp.",
+    message ||
+      (localMovies.length || uniqueRemoteResults.length
+        ? `${localMovies.length + uniqueRemoteResults.length} kết quả. Chọn phim để tiếp tục.`
+        : "Không tìm thấy phim phù hợp."),
+    state,
   );
 }
 
-function setMovieSearchStatus(message) {
+function formatMovieSearchYear(year) {
+  const value = String(year ?? "").trim();
+  return /^\d{4}$/.test(value) ? ` <small>${escapeHtml(value)}</small>` : "";
+}
+
+function renderMovieSearchPoster(poster) {
+  const value = typeof poster === "string" ? poster.trim() : "";
+  if (/^https?:\/\/\S+$/i.test(value)) {
+    return `<img src="${escapeHtml(value)}" alt="" loading="lazy">`;
+  }
+  return '<span class="related-movie-poster-placeholder" aria-hidden="true">🎬</span>';
+}
+
+function setMovieSearchStatus(message, state = "") {
   const status = document.querySelector("#movieSearchStatus");
+  if (!status) return;
   status.textContent = message;
+  status.classList.toggle("is-error", state === "error");
 }
 
 function hideMovieSearchResults() {
