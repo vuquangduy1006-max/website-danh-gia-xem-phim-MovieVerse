@@ -3338,3 +3338,19 @@ button {
     gap: 16px 12px;
   }
 }
+
+
+/* Top Scroll Reading Progress Bar */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, #ff7a59 0%, #f05b3c 60%, #e04222 100%);
+  box-shadow: 0 0 10px rgba(240, 91, 60, 0.75), 0 0 4px rgba(255, 122, 89, 0.9);
+  border-radius: 0 2px 2px 0;
+  z-index: 99999;
+  pointer-events: none;
+  transition: width 0.08s ease-out;
+}
