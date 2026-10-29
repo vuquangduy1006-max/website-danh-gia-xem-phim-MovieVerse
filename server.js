@@ -1685,9 +1685,9 @@ async function handleMovieRatingApi(request, response, url) {
       sendJson(response, 400, { error: "Tên phim cần tìm phải có từ 1 đến 120 ký tự." });
       return true;
     }
-    if (!tmdbApiKey) {
+    if (!tmdbApiKey && !omdbApiKey) {
       sendJson(response, 503, {
-        error: "Máy chủ chưa cấu hình TMDB_API_KEY để tìm phim.",
+        error: "Máy chủ chưa cấu hình API (OMDB_API_KEY hoặc TMDB_API_KEY) để tìm phim.",
       });
       return true;
     }
@@ -1699,24 +1699,78 @@ async function handleMovieRatingApi(request, response, url) {
       return true;
     }
     try {
-      sendJson(response, 200, { movies: await searchTmdbMovies(query) });
+      let movies = [];
+      let providerSucceeded = false;
+      const providerFailures = [];
+      if (tmdbApiKey) {
+        try {
+          movies = await searchTmdbMovies(query);
+          providerSucceeded = true;
+        } catch (tmdbError) {
+          providerFailures.push({ provider: "TMDb", error: tmdbError });
+          console.warn("TMDb search failed, falling back to OMDb:", tmdbError.message);
+        }
+      }
+      if ((movies.length === 0 || providerFailures.length > 0) && omdbApiKey) {
+        try {
+          const omdbMovies = await searchOmdbMovies(query);
+          providerSucceeded = true;
+          if (omdbMovies.length > 0) movies = omdbMovies;
+        } catch (omdbError) {
+          providerFailures.push({ provider: "OMDb", error: omdbError });
+          console.warn("OMDb search failed:", omdbError.message);
+        }
+      }
+      if (!providerSucceeded && providerFailures.length > 0) {
+        const rateLimited = providerFailures.some(
+          ({ error }) =>
+            error.status === 429 ||
+            /too many requests|returned HTTP 429/i.test(error.message),
+        );
+        sendJson(response, rateLimited ? 429 : 502, {
+          error: providerFailures
+            .map(({ provider, error }) =>
+              describeMovieProviderFailure(provider, error),
+            )
+            .join(" "),
+        });
+        return true;
+      }
+      sendJson(
+        response,
+        200,
+        providerFailures.length
+          ? {
+              movies,
+              warning: providerFailures
+                .map(({ provider, error }) =>
+                  describeMovieProviderFailure(provider, error),
+                )
+                .join(" "),
+            }
+          : { movies },
+      );
     } catch (error) {
-      console.error("Unable to search TMDb movies:", error);
+      console.error("Unable to search movies:", error);
       sendJson(response, 502, {
-        error: "Không thể tìm phim trên TMDb. Kiểm tra kết nối máy chủ rồi thử lại.",
+        error: "Không thể tìm phim từ API. Kiểm tra kết nối máy chủ rồi thử lại.",
       });
     }
     return true;
   }
-  if (!omdbApiKey) {
+  if (!omdbApiKey && !(isMovieDetailsLookup && tmdbApiKey)) {
     sendJson(response, 503, {
-      error: "Máy chủ chưa cấu hình OMDB_API_KEY. Hãy thêm khóa OMDb vào file .env rồi khởi động lại máy chủ.",
+      error: "Máy chủ chưa cấu hình dịch vụ API cần thiết để tra cứu thông tin phim.",
     });
     return true;
   }
 
+  const imdbId = url.searchParams.get("imdbId")?.trim();
   const title = url.searchParams.get("title")?.trim();
-  if (!validText(title, 120)) {
+  if (
+    (!imdbId && !validText(title, 120)) ||
+    (isMovieDetailsLookup && !validText(title, 120))
+  ) {
     sendJson(response, 400, {
       error: "Tên phim cần tra cứu phải dài từ 1 đến 120 ký tự.",
     });
@@ -1731,15 +1785,47 @@ async function handleMovieRatingApi(request, response, url) {
   }
 
   try {
+    if (isMovieDetailsLookup && !omdbApiKey && tmdbApiKey) {
+      const details = await fetchTmdbMovieDetails(title);
+      if (!details.title) {
+        sendJson(response, 404, {
+          error: "Không tìm thấy thông tin phim trên dịch vụ hiện có.",
+        });
+        return true;
+      }
+      sendJson(response, 200, {
+        ...details,
+        rating: null,
+        imdbId: "",
+        source: "TMDb",
+        notice: "TMDb không cung cấp rating IMDb; bạn có thể nhập rating thủ công.",
+      });
+      return true;
+    }
+
     const upstreamUrl = new URL(omdbApiUrl);
     upstreamUrl.searchParams.set("apikey", omdbApiKey);
-    upstreamUrl.searchParams.set("t", title);
-    upstreamUrl.searchParams.set("type", "movie");
+    if (imdbId) {
+      upstreamUrl.searchParams.set("i", imdbId);
+    } else {
+      upstreamUrl.searchParams.set("t", title);
+      upstreamUrl.searchParams.set("type", "movie");
+    }
     upstreamUrl.searchParams.set("r", "json");
-    const upstream = await fetch(upstreamUrl, {
+    let upstream = await fetch(upstreamUrl, {
       signal: AbortSignal.timeout(8_000),
     });
-    const result = await upstream.json();
+    let result = await upstream.json();
+    if (result.Response !== "True" && !imdbId) {
+      upstreamUrl.searchParams.delete("type");
+      const retryUpstream = await fetch(upstreamUrl, {
+        signal: AbortSignal.timeout(8_000),
+      });
+      const retryResult = await retryUpstream.json();
+      if (retryResult.Response === "True") {
+        result = retryResult;
+      }
+    }
     if (/invalid api key/i.test(String(result.Error))) {
       sendJson(response, 503, {
         error: "OMDb không chấp nhận API key. Hãy kiểm tra email xác nhận OMDb rồi cập nhật key còn hiệu lực vào OMDB_API_KEY trong file .env.",
@@ -2006,8 +2092,36 @@ async function fetchTmdbJson(endpoint) {
     headers,
     signal: AbortSignal.timeout(8_000),
   });
-  if (!upstream.ok) throw new Error(`TMDb returned HTTP ${upstream.status}.`);
+  if (!upstream.ok) {
+    const error = new Error(`TMDb returned HTTP ${upstream.status}.`);
+    error.status = upstream.status;
+    throw error;
+  }
   return upstream.json();
+}
+
+function describeMovieProviderFailure(provider, error) {
+  const status = Number(error?.status);
+  if (status === 401 || status === 403) {
+    return `${provider} từ chối xác thực (HTTP ${status}); kiểm tra API key trong .env.`;
+  }
+  if (status === 429) {
+    return `${provider} đang giới hạn lượt tìm kiếm (HTTP 429); hãy thử lại sau.`;
+  }
+  if (status >= 500) {
+    return `${provider} đang gặp lỗi dịch vụ (HTTP ${status}).`;
+  }
+  if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+    return `${provider} quá thời gian phản hồi.`;
+  }
+  if (error?.cause?.code === "ECONNREFUSED") {
+    return `${provider} bị từ chối kết nối (ECONNREFUSED); kiểm tra DNS, firewall và quyền truy cập HTTPS trên máy chạy backend.`;
+  }
+  if (error?.cause?.code) {
+    return `${provider} không thể kết nối (${error.cause.code}).`;
+  }
+  if (status) return `${provider} trả về lỗi HTTP ${status}.`;
+  return `${provider} trả về dữ liệu không hợp lệ hoặc không thể kết nối.`;
 }
 
 async function searchTmdbMovies(query) {
@@ -2030,6 +2144,51 @@ async function searchTmdbMovies(query) {
           poster: imageUrl(movie.poster_path),
         }))
     : [];
+}
+
+async function searchOmdbMovies(query) {
+  if (!omdbApiKey) return [];
+  const upstreamUrl = new URL(omdbApiUrl);
+  upstreamUrl.searchParams.set("apikey", omdbApiKey);
+  upstreamUrl.searchParams.set("s", query);
+  upstreamUrl.searchParams.set("r", "json");
+  const upstream = await fetch(upstreamUrl, {
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!upstream.ok) {
+    const error = new Error(`OMDb returned HTTP ${upstream.status}.`);
+    error.status = upstream.status;
+    throw error;
+  }
+  const result = await upstream.json();
+  if (/too many requests/i.test(String(result.Error))) {
+    const error = new Error("OMDb rate limited the movie search.");
+    error.status = 429;
+    throw error;
+  }
+  if (/invalid api key/i.test(String(result.Error))) {
+    const error = new Error("OMDb rejected the configured API key.");
+    error.status = 503;
+    throw error;
+  }
+  if (result.Response !== "True" || !Array.isArray(result.Search)) return [];
+  return result.Search
+    .filter((item) => item?.Title && typeof item.Title === "string")
+    .slice(0, 8)
+    .map((item) => ({
+      id: item.imdbID || item.Title,
+      imdbId: item.imdbID || "",
+      title: item.Title,
+      year: String(item.Year || "").slice(0, 4),
+      overview: item.Type
+        ? item.Type === "movie"
+          ? "Phim điện ảnh"
+          : item.Type === "series"
+            ? "Phim bộ"
+            : item.Type
+        : "",
+      poster: item.Poster && item.Poster !== "N/A" ? item.Poster : "",
+    }));
 }
 
 const server = createServer(async (request, response) => {

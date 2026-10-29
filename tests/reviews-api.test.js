@@ -48,6 +48,25 @@ test("review API shares replies, persists moderation and protects admin actions"
     } else if (url.searchParams.get("apikey") !== "test-omdb-key") {
       response.writeHead(401, { "Content-Type": "application/json" });
       response.end(JSON.stringify({ Response: "False", Error: "Invalid API key!" }));
+    } else if (url.searchParams.get("s") === "Provider Failure") {
+      response.writeHead(503, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ Response: "False", Error: "Service unavailable" }));
+    } else if (url.searchParams.get("s") === "OMDb Lookup") {
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(
+        JSON.stringify({
+          Response: "True",
+          Search: [
+            {
+              Title: "OMDb Lookup",
+              Year: "2021",
+              imdbID: "tt7654321",
+              Type: "movie",
+              Poster: "N/A",
+            },
+          ],
+        }),
+      );
     } else if (url.searchParams.get("t") === "Lookup Film") {
       response.writeHead(200, { "Content-Type": "application/json" });
       response.end(
@@ -82,13 +101,32 @@ test("review API shares replies, persists moderation and protects admin actions"
   await new Promise((resolve) => omdbServer.listen(omdbPort, "127.0.0.1", resolve));
   const tmdbServer = createHttpServer((request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
+    if (
+      url.pathname.endsWith("/search/movie") &&
+      url.searchParams.get("query") === "Invalid TMDb Key"
+    ) {
+      response.writeHead(401, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ status_code: 7, status_message: "Invalid API key" }));
+      return;
+    }
+    if (
+      url.pathname.endsWith("/search/movie") &&
+      url.searchParams.get("query") === "Provider Failure"
+    ) {
+      response.writeHead(503, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ error: "Service unavailable" }));
+      return;
+    }
     response.writeHead(200, { "Content-Type": "application/json" });
     if (request.headers.authorization !== "Bearer test-header.payload.signature") {
       response.end(JSON.stringify({ error: "Invalid API key" }));
     } else if (url.pathname.endsWith("/search/movie")) {
       response.end(
         JSON.stringify({
-          results: [{ id: 42, title: "Lookup Film", release_date: "2024-03-15" }],
+          results:
+            url.searchParams.get("query") === "OMDb Lookup"
+              ? []
+              : [{ id: 42, title: "Lookup Film", release_date: "2024-03-15" }],
         }),
       );
     } else if (url.pathname.endsWith("/similar")) {
@@ -647,6 +685,19 @@ test("review API shares replies, persists moderation and protects admin actions"
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
+  const unauthenticatedMovieSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Lookup%20Film`,
+  );
+  assert.equal(unauthenticatedMovieSearch.status, 403);
+  assert.equal(
+    (await unauthenticatedMovieSearch.json()).error,
+    "Cần đăng nhập quản trị để tra cứu thông tin phim.",
+  );
+  const staleAdminTokenSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Lookup%20Film`,
+    { headers: { Authorization: ["Be", "arer "].join("") + "stale-token" } },
+  );
+  assert.equal(staleAdminTokenSearch.status, 403);
   const movieSearch = await fetch(
     `${baseUrl}/admin/movie-search?query=Lookup%20Film`,
     { headers: adminHeaders },
@@ -677,6 +728,39 @@ test("review API shares replies, persists moderation and protects admin actions"
       poster: "",
     },
   ]);
+  const omdbFallbackSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=OMDb%20Lookup`,
+    { headers: adminHeaders },
+  );
+  assert.equal(omdbFallbackSearch.status, 200);
+  assert.deepEqual((await omdbFallbackSearch.json()).movies, [
+    {
+      id: "tt7654321",
+      imdbId: "tt7654321",
+      title: "OMDb Lookup",
+      year: "2021",
+      overview: "Phim điện ảnh",
+      poster: "",
+    },
+  ]);
+  const failedMovieSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Provider%20Failure`,
+    { headers: adminHeaders },
+  );
+  assert.equal(failedMovieSearch.status, 502);
+  assert.deepEqual(await failedMovieSearch.json(), {
+    error: "TMDb đang gặp lỗi dịch vụ (HTTP 503). OMDb đang gặp lỗi dịch vụ (HTTP 503).",
+  });
+  const invalidTmdbKeySearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Invalid%20TMDb%20Key`,
+    { headers: adminHeaders },
+  );
+  assert.equal(invalidTmdbKeySearch.status, 200);
+  assert.deepEqual(await invalidTmdbKeySearch.json(), {
+    movies: [],
+    warning:
+      "TMDb từ chối xác thực (HTTP 401); kiểm tra API key trong .env.",
+  });
 
   const movieCatalog = [
     {
@@ -822,4 +906,95 @@ test("review API shares replies, persists moderation and protects admin actions"
     (await deleted.json()).reviews.some((item) => item.id === review.id),
     false,
   );
+});
+
+test("movie details lookup can use TMDb when OMDb is not configured", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "movieverse-tmdb-only-"));
+  const port = await getAvailablePort();
+  const tmdbPort = await getAvailablePort();
+  const tmdbServer = createHttpServer((request, response) => {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    response.writeHead(200, { "Content-Type": "application/json" });
+    if (request.headers.authorization !== `Bearer ${"test-header.payload.signature"}`) {
+      response.end(JSON.stringify({ error: "Invalid API key" }));
+    } else if (url.pathname.endsWith("/search/movie")) {
+      response.end(
+        JSON.stringify({
+          results: [{ id: 42, title: "TMDb Only Film", release_date: "2022-05-10" }],
+        }),
+      );
+    } else if (url.pathname.endsWith("/movie/42")) {
+      response.end(
+        JSON.stringify({
+          title: "TMDb Only Film",
+          release_date: "2022-05-10",
+          overview: "Details supplied by TMDb.",
+          poster_path: "/poster.jpg",
+          genres: [{ name: "Drama" }],
+        }),
+      );
+    } else {
+      response.end(JSON.stringify({ results: [] }));
+    }
+  });
+  await new Promise((resolve) => tmdbServer.listen(tmdbPort, "127.0.0.1", resolve));
+  const child = spawn(process.execPath, ["server.js"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      API_PORT: String(port),
+      ADMIN_EMAIL: "admin@test.local",
+      ADMIN_PASSWORD: "test-password",
+      OMDB_API_KEY: "",
+      TMDB_API_KEY: "test-header.payload.signature",
+      TMDB_API_URL: `http://127.0.0.1:${tmdbPort}/3/`,
+      REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
+      AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
+      MOVIES_STORE_PATH: path.join(directory, "movies.json"),
+      NEWSLETTER_STORE_PATH: path.join(directory, "newsletter.json"),
+    },
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  let serverErrors = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    serverErrors += chunk;
+  });
+  t.after(async () => {
+    if (child.exitCode === null) {
+      child.kill();
+      await Promise.race([
+        once(child, "exit"),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    }
+    await new Promise((resolve, reject) =>
+      tmdbServer.close((error) => (error ? reject(error) : resolve())),
+    );
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const baseUrl = `http://127.0.0.1:${port}/api`;
+  await waitForServer(child, baseUrl.replace(/\/api$/, ""), () => serverErrors);
+  const loginResponse = await fetch(`${baseUrl}/admin/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "admin@test.local",
+      password: "test-password",
+    }),
+  });
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+  const detailsResponse = await fetch(
+    `${baseUrl}/admin/movie-details?title=TMDb%20Only%20Film`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  assert.equal(detailsResponse.status, 200);
+  const details = await detailsResponse.json();
+  assert.equal(details.title, "TMDb Only Film");
+  assert.equal(details.year, "2022");
+  assert.equal(details.description, "Details supplied by TMDb.");
+  assert.equal(details.poster, "https://image.tmdb.org/t/p/original/poster.jpg");
+  assert.equal(details.rating, null);
 });

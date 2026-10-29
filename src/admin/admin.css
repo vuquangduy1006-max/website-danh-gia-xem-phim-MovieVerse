@@ -627,6 +627,17 @@ select.input-field option {
   border-radius: 3px;
   background: var(--bg);
 }
+.related-movie-poster-placeholder {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 17px;
+}
 .movie-search-copy {
   display: grid;
   gap: 4px;
