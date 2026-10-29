@@ -380,6 +380,7 @@ export function bindAccountActions() {
   bindHeaderSearch();
   bindNotificationDropdown();
   updateNotificationCount();
+  initScrollProgressBar();
 
   const genreNav = document.querySelector(".genre-nav");
   if (genreNav) {
@@ -768,3 +769,43 @@ form.addEventListener("submit", (event) => {
   });
 }
 
+
+
+export function initScrollProgressBar() {
+  let bar = document.querySelector("#scrollProgressBar");
+  if (!bar) {
+    const header = document.querySelector(".site-header");
+    bar = document.createElement("div");
+    bar.id = "scrollProgressBar";
+    bar.className = "scroll-progress-bar";
+    bar.setAttribute("aria-hidden", "true");
+    if (header) {
+      header.prepend(bar);
+    } else {
+      document.body.prepend(bar);
+    }
+  }
+
+  const updateProgress = () => {
+    const currentBar = document.querySelector("#scrollProgressBar");
+    if (!currentBar) return;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+    const clientHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const docHeight = scrollHeight - clientHeight;
+    const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+    currentBar.style.width = `${progress}%`;
+  };
+
+  window.addEventListener("scroll", updateProgress, { passive: true });
+  window.addEventListener("resize", updateProgress);
+  requestAnimationFrame(updateProgress);
+}
+
+if (typeof window !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initScrollProgressBar);
+  } else {
+    requestAnimationFrame(initScrollProgressBar);
+  }
+}
