@@ -9,12 +9,7 @@ import {
 } from "./data.js";
 import { clearAdminSession, getSession, isAdmin } from "./auth.js";
 import { getTrailer } from "./media.js";
-import {
-  deleteReview,
-  loadReviews,
-  setReviewHidden,
-  syncReviews,
-} from "./reviews.js";
+import { syncReviews } from "./reviews.js";
 import {
   isValidMediaUrl,
   isValidReleaseYear,
@@ -62,8 +57,6 @@ let currentFilter = "all";
 let currentQuery = "";
 let editingId = null;
 let deleteId = null;
-let reviewQuery = "";
-let reviews = loadReviews();
 let ratingLookupTimer;
 let ratingLookupController;
 let movieSearchTimer;
@@ -87,10 +80,6 @@ ${renderAdminHeader("/admin/admin.html")}
     </div>
 
     <div class="stats-grid" id="statsGrid"></div>
-    <section class="admin-panel review-moderation" aria-label="Quản lý bình luận">
-      <div class="review-moderation-heading"><h2>Quản lý bình luận</h2><p>Ẩn hoặc hiện bình luận của người dùng.</p></div>
-      <div class="table-wrap"><table class="movie-table"><thead><tr><th>Người dùng</th><th>Phim</th><th>Bình luận</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="reviewTableBody"></tbody></table></div>
-    </section>
 
     <div class="admin-panel">
       <div class="panel-toolbar">
@@ -113,25 +102,6 @@ ${renderAdminHeader("/admin/admin.html")}
         </table>
       </div>
     </div>
-
-    <section class="admin-panel comment-admin-panel" aria-labelledby="commentAdminTitle">
-      <div class="comment-admin-head">
-        <div>
-          <p class="eyebrow">Kiểm duyệt cộng đồng</p>
-          <h2 id="commentAdminTitle">Quản lý bình luận</h2>
-        </div>
-        <span class="comment-admin-count" id="commentAdminCount"></span>
-      </div>
-      <div class="panel-toolbar">
-        <input class="toolbar-input" id="commentSearchInput" type="search" placeholder="Tìm theo phim hoặc người dùng...">
-      </div>
-      <div class="table-wrap">
-        <table class="movie-table comment-table">
-          <thead><tr><th>Người dùng</th><th>Phim</th><th>Đánh giá</th><th>Bình luận</th><th>Ngày</th><th style="text-align:right">Hành động</th></tr></thead>
-          <tbody id="commentTableBody"></tbody>
-        </table>
-      </div>
-    </section>
   </div>
 </main>
 
@@ -421,12 +391,6 @@ function bindEvents() {
     renderAll();
   });
   document
-    .querySelector("#commentSearchInput")
-    .addEventListener("input", (event) => {
-      reviewQuery = event.target.value;
-      renderComments();
-    });
-  document
     .querySelectorAll("[data-close]")
     .forEach((button) =>
       button.addEventListener("click", () =>
@@ -449,47 +413,6 @@ function bindEvents() {
 function renderAll() {
   renderStats();
   renderTable();
-  renderReviewTable();
-  renderComments();
-}
-
-function renderComments() {
-  const query = reviewQuery.trim().toLocaleLowerCase("vi");
-  const shown = reviews.filter(
-    (review) =>
-      !query ||
-      `${review.author} ${review.movieTitle} ${review.comment}`
-        .toLocaleLowerCase("vi")
-        .includes(query),
-  );
-  document.querySelector("#commentAdminCount").textContent =
-    `${shown.length}/${reviews.length} bình luận`;
-  document.querySelector("#commentTableBody").innerHTML = shown.length
-    ? shown
-        .map(
-          (review) =>
-            `<tr><td><strong>${escapeHtml(review.author)}</strong></td><td>${escapeHtml(review.movieTitle)}</td><td><span class="badge rating">★ ${review.rating}/5</span></td><td class="comment-table-text">${escapeHtml(review.comment)}</td><td>${escapeHtml(review.date)}</td><td><div class="row-actions"><button class="btn btn-danger btn-sm" data-delete-comment="${escapeHtml(review.id)}">Xóa</button></div></td></tr>`,
-        )
-        .join("")
-    : `<tr><td colspan="6"><div class="empty-state"><h3>Không tìm thấy bình luận</h3><p>Thử thay đổi từ khóa tìm kiếm.</p></div></td></tr>`;
-  document.querySelectorAll("[data-delete-comment]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const review = reviews.find(
-        (item) => item.id === button.dataset.deleteComment,
-      );
-      if (!review || !window.confirm(`Xóa bình luận của ${review.author}?`))
-        return;
-      try {
-        await deleteReview(review.id);
-      } catch (error) {
-        showToast(error.message, "error");
-        return;
-      }
-      reviews = loadReviews();
-      renderComments();
-      showToast("Đã xóa bình luận.", "success");
-    });
-  });
 }
 
 function escapeHtml(value) {
@@ -1345,38 +1268,3 @@ function escapeReviewText(value) {
   );
 }
 
-function renderReviewTable() {
-  const body = document.querySelector("#reviewTableBody");
-  if (!body) return;
-  const reviews = loadReviews();
-  body.innerHTML = reviews.length
-    ? reviews
-        .map(
-          (review) => `
-    <tr>
-      <td>${escapeReviewText(review.author)}</td>
-      <td>${escapeReviewText(review.movieTitle)}</td>
-      <td>${escapeReviewText(review.comment)}</td>
-      <td>${review.hidden ? "Đã ẩn" : "Đang hiển thị"}</td>
-      <td><button type="button" class="btn btn-ghost btn-sm" data-review-id="${escapeReviewText(review.id)}">${review.hidden ? "Hiện" : "Ẩn"}</button></td>
-    </tr>`,
-        )
-        .join("")
-    : '<tr><td colspan="5">Chưa có bình luận.</td></tr>';
-  body.querySelectorAll("[data-review-id]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const review = loadReviews().find(
-        (item) => String(item.id) === button.dataset.reviewId,
-      );
-      if (!review) return;
-      try {
-        if (await setReviewHidden(review.id, !review.hidden)) {
-          renderReviewTable();
-          showToast(review.hidden ? "Đã hiện bình luận." : "Đã ẩn bình luận.");
-        }
-      } catch (error) {
-        showToast(error.message, "error");
-      }
-    });
-  });
-}
