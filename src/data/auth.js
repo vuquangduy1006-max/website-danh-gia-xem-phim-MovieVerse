@@ -196,6 +196,9 @@ export async function loginUser(email, password, remember = false) {
       name: user.name,
       email: user.email,
       role: user.role,
+      bio: user.bio || "",
+      avatar: user.avatar || "",
+      createdAt: user.createdAt || "",
       token: result.payload.token,
       expiresAt: result.payload.expiresAt,
     };
@@ -216,6 +219,45 @@ export async function loginUser(email, password, remember = false) {
 
 export function getSession() {
   return readSession(localStorage) || readSession(sessionStorage);
+}
+
+export async function updateUserProfile({ name, bio, avatar }) {
+  const session = getSession();
+  if (!session || session.role !== "user" || !session.token) {
+    return {
+      ok: false,
+      message: "Hãy đăng nhập bằng tài khoản người dùng để sửa hồ sơ.",
+    };
+  }
+
+  let result;
+  try {
+    result = await requestJson("/api/auth/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ name, bio, avatar }),
+    });
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (!result.response.ok) {
+    return {
+      ok: false,
+      message: result.payload.error || "Không thể cập nhật hồ sơ.",
+    };
+  }
+
+  const remember = localStorage.getItem(SESSION_KEY) !== null;
+  saveSession({ ...session, ...result.payload.user }, remember);
+  return {
+    ok: true,
+    message: "Đã lưu thay đổi hồ sơ.",
+    session: getSession(),
+  };
 }
 
 export function isAdmin() {

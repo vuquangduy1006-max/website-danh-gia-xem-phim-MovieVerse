@@ -44,6 +44,7 @@ const PASSWORD_HASH_BYTES = 64;
 const scrypt = promisify(scryptCallback);
 const requestsByIp = new Map();
 const authRequestsByIp = new Map();
+const profileRequestsByIp = new Map();
 const passwordChangeRequestsByIp = new Map();
 const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
@@ -898,6 +899,93 @@ async function verifyPassword(password, saltHex, hashHex) {
 }
 
 async function handleAuthApi(request, response, pathname) {
+  if (request.method === "PATCH" && pathname === "/api/auth/profile") {
+    const ip = request.socket.remoteAddress || "unknown";
+    if (isRateLimited(ip, profileRequestsByIp)) {
+      sendJson(response, 429, {
+        error: "Bạn cập nhật quá nhanh. Vui lòng chờ một phút rồi thử lại.",
+      });
+      return true;
+    }
+
+    const token = getBearerToken(request);
+    const session = token ? userTokens.get(token) : null;
+    if (!session || session.expiresAt <= Date.now()) {
+      if (token) userTokens.delete(token);
+      sendJson(response, 401, {
+        error: "Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại.",
+      });
+      return true;
+    }
+
+    try {
+      const body = await readJson(request);
+      const name = typeof body?.name === "string" ? body.name.trim() : "";
+      const bio = typeof body?.bio === "string" ? body.bio.trim() : "";
+      const avatar = body?.avatar;
+      const validAvatar =
+        avatar === "" ||
+        avatar === null ||
+        (typeof avatar === "string" &&
+          avatar.length <= 36_000 &&
+          /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(
+            avatar,
+          ));
+
+      if (
+        !isRecord(body) ||
+        name.length < 2 ||
+        !validText(name, 30) ||
+        bio.length > 50 ||
+        !validAvatar
+      ) {
+        sendJson(response, 400, {
+          error: "Biệt danh, lời giới thiệu hoặc ảnh đại diện không hợp lệ.",
+        });
+        return true;
+      }
+
+      const result = await updateUsers((users) => {
+        const user = users.find((item) => item.id === session.userId);
+        if (!user || user.blocked === true) return { ok: false };
+        user.name = name;
+        user.bio = bio;
+        if (avatar !== undefined) user.avatar = avatar || "";
+        return {
+          ok: true,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            bio: user.bio || "",
+            avatar: user.avatar || "",
+            createdAt: user.createdAt || "",
+            role: "user",
+          },
+        };
+      });
+      if (!result.ok) {
+        sendJson(response, 403, {
+          error: "Không thể cập nhật tài khoản này.",
+        });
+        return true;
+      }
+
+      sendJson(response, 200, { ok: true, user: result.user });
+    } catch (error) {
+      const badInput =
+        error instanceof SyntaxError ||
+        error.message === "Request body is too large";
+      if (!badInput) console.error("Unable to update user profile:", error);
+      sendJson(response, badInput ? 400 : 500, {
+        error: badInput
+          ? "Dữ liệu hồ sơ không hợp lệ hoặc quá lớn."
+          : "Không thể cập nhật hồ sơ lúc này. Vui lòng thử lại sau.",
+      });
+    }
+    return true;
+  }
+
   if (request.method === "POST" && pathname === "/api/auth/password") {
     const ip = request.socket.remoteAddress || "unknown";
     if (isRateLimited(ip, passwordChangeRequestsByIp)) {
@@ -1025,6 +1113,8 @@ async function handleAuthApi(request, response, pathname) {
           id: `user-${randomBytes(16).toString("hex")}`,
           name,
           email,
+          bio: "",
+          avatar: "",
           passwordSalt: salt,
           passwordHash: hash,
           createdAt: new Date().toISOString(),
@@ -1088,7 +1178,15 @@ async function handleAuthApi(request, response, pathname) {
       sendJson(response, 200, {
         token,
         expiresAt,
-        user: { id: user.id, name: user.name, email: user.email, role: "user" },
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: "user",
+          bio: user.bio || "",
+          avatar: user.avatar || "",
+          createdAt: user.createdAt || "",
+        },
       });
     } catch (error) {
       const badInput =
