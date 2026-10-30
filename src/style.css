@@ -317,6 +317,13 @@ button {
     background 180ms ease,
     color 180ms ease;
 }
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
 .site-header .main-nav > .genre-nav {
   display: flex;
   align-items: center;

@@ -13,8 +13,8 @@
     />
     <link rel="stylesheet" href="/src/auth.css" />
   </head>
-  <body class="auth-page"> 
-    <main class="auth-layout">
+  <body class="auth-page account-page">
+    <main class="auth-layout account-layout">
       <section class="auth-scene" aria-label="MovieVerse">
         <a class="auth-brand" href="/" aria-label="MovieVerse trang chủ">
           <span class="auth-brand-mark">M</span>
@@ -27,42 +27,69 @@
         <span class="auth-scene-index" aria-hidden="true">MV / 02</span>
       </section>
 
-      <section class="auth-panel" aria-labelledby="authTitle">
+      <section class="auth-panel account-panel" aria-labelledby="authTitle">
         <a class="auth-home-link" href="/">← Trang chủ</a>
-        <div class="auth-content">
+        <div class="auth-content account-content">
           <p class="auth-eyebrow">Tài khoản MovieVerse</p>
-<h2 id="authTitle">Hồ sơ cá nhân</h2>
+          <h2 id="authTitle">Hồ sơ cá nhân</h2>
+          <p class="auth-subtitle">Quản lý thông tin và cá nhân hóa hồ sơ của bạn.</p>
 
-<p class="auth-subtitle">
-  Quản lý thông tin cá nhân và bảo mật tài khoản của bạn.
-</p>
+          <nav class="profile-links" aria-label="Điều hướng tài khoản">
+            <a class="is-current" href="/account.html" aria-current="page">♙ Hồ sơ</a>
+            <a href="/history.html">◷ Lịch sử xem</a>
+            <a href="/favorites.html">♡ Phim yêu thích</a>
+          </nav>
 
-<div class="profile-card">
-  <div class="profile-avatar" id="profileAvatar">U</div>
+          <section class="profile-card" aria-label="Thông tin thành viên">
+            <div class="profile-banner" aria-hidden="true"></div>
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="profileAvatar" aria-label="Ảnh đại diện">U</div>
+              <button class="profile-avatar-edit" id="chooseAvatarButton" type="button" aria-label="Chọn ảnh đại diện" title="Chọn ảnh đại diện">📷</button>
+            </div>
+            <div class="profile-info">
+              <h3 id="profileName">Đang tải...</h3>
+              <span class="profile-role">Thành viên MovieVerse</span>
+              <p id="profileJoined"></p>
+            </div>
+          </section>
 
-  <div class="profile-info">
-    <h3 id="profileName">Đang tải...</h3>
-    <p id="profileEmail"></p>
-    <span class="profile-role">Thành viên MovieVerse</span>
-  </div>
-</div>
+          <div class="profile-summary" aria-label="Thông tin tài khoản">
+            <div><span class="profile-summary-icon">✉</span><p><strong>Email</strong><span id="profileEmail"></span></p></div>
+            <div><span class="profile-summary-icon">◷</span><p><strong>Tham gia</strong><span id="profileJoinedSummary">MovieVerse</span></p></div>
+          </div>
 
-<div class="profile-links">
-  <a href="/favorites.html">♡ Phim yêu thích</a>
-  <a href="/history.html">◷ Lịch sử xem</a>
-</div>
+          <section class="profile-edit-card" aria-labelledby="profileEditTitle">
+            <h3 id="profileEditTitle">✎ &nbsp;Chỉnh sửa hồ sơ</h3>
+            <form class="auth-form profile-form" id="profileForm">
+              <input id="avatarInput" name="avatarFile" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+              <div class="auth-field">
+                <label for="profileNickname">Biệt danh</label>
+                <input id="profileNickname" name="name" type="text" minlength="2" maxlength="30" autocomplete="nickname" required />
+                <small>2–30 ký tự</small>
+              </div>
+              <div class="auth-field">
+                <label for="profileBio">Châm ngôn</label>
+                <input id="profileBio" name="bio" type="text" maxlength="50" placeholder="Một câu nói của bạn..." />
+                <small>Tối đa 50 ký tự</small>
+              </div>
+              <div class="auth-field">
+                <label for="profileEmailInput">Email</label>
+                <input id="profileEmailInput" name="email" type="email" readonly />
+              </div>
+              <p class="auth-message" id="profileMessage" aria-live="polite"></p>
+              <button class="auth-submit profile-save" type="submit">▣ &nbsp;Lưu thay đổi</button>
+            </form>
+          </section>
 
-<section class="profile-reviews-section">
-  <h3>Lịch sử bình luận</h3>
-  <p>Xem lại những đánh giá phim bạn đã đăng.</p>
+          <section class="profile-reviews-section">
+            <h3>Lịch sử bình luận</h3>
+            <p>Xem lại những đánh giá phim bạn đã đăng.</p>
+            <div id="myReviewHistory">Đang tải lịch sử bình luận...</div>
+          </section>
 
-  <div id="myReviewHistory">
-    Đang tải lịch sử bình luận...
-  </div>
-</section>
-
-<h3 class="profile-section-title">Đổi mật khẩu</h3>
-          <p class="auth-subtitle">Xác nhận mật khẩu hiện tại để đặt mật khẩu mới.</p>
+          <section class="profile-password-section" aria-labelledby="passwordTitle">
+            <h3 class="profile-section-title" id="passwordTitle">Đổi mật khẩu</h3>
+            <p class="auth-subtitle">Xác nhận mật khẩu hiện tại để đặt mật khẩu mới.</p>
 
           <form class="auth-form" id="passwordForm" method="post">
             <div class="auth-field">
@@ -121,7 +148,8 @@
             </div>
             <button class="auth-submit" type="submit">Cập nhật mật khẩu <span aria-hidden="true">→</span></button>
           </form>
-          <p class="auth-switch"><a href="/">Hủy và quay lại MovieVerse</a></p>
+          </section>
+          <p class="auth-switch"><a href="/">Quay lại MovieVerse</a></p>
         </div>
         <p class="auth-legal">Sau khi đổi, bạn cần đăng nhập lại trên các thiết bị.</p>
       </section>

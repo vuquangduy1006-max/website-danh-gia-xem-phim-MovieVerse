@@ -205,7 +205,69 @@ test("movie catalog is shared, persisted, admin-only to update, and rejects stal
     }),
   });
   assert.equal(userLoginResponse.status, 200);
-  const { token: userToken } = await userLoginResponse.json();
+  const userLogin = await userLoginResponse.json();
+  const { token: userToken } = userLogin;
+  assert.equal(userLogin.user.name, "Schedule Test");
+
+  const noAvatarProfileResponse = await fetch(`${baseUrl}/api/auth/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${userToken}`,
+    },
+    body: JSON.stringify({
+      name: "Movie Fan",
+      bio: "Thích phim hay",
+      avatar: "",
+    }),
+  });
+  assert.equal(noAvatarProfileResponse.status, 200);
+
+  const updatedProfileResponse = await fetch(`${baseUrl}/api/auth/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${userToken}`,
+    },
+    body: JSON.stringify({
+      name: "Movie Fan",
+      bio: "Thích phim hay",
+      avatar: "data:image/png;base64,iVBORw0KGgo=",
+    }),
+  });
+  assert.equal(updatedProfileResponse.status, 200);
+  const updatedProfile = await updatedProfileResponse.json();
+  assert.equal(updatedProfile.user.name, "Movie Fan");
+  assert.equal(updatedProfile.user.bio, "Thích phim hay");
+  assert.equal(
+    updatedProfile.user.avatar,
+    "data:image/png;base64,iVBORw0KGgo=",
+  );
+
+  const invalidProfileResponse = await fetch(`${baseUrl}/api/auth/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${userToken}`,
+    },
+    body: JSON.stringify({ name: "X", bio: "ok", avatar: "" }),
+  });
+  assert.equal(invalidProfileResponse.status, 400);
+
+  const updatedLogin = await fetch(`${baseUrl}/api/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "schedule@test.local",
+      password: "test-password",
+    }),
+  }).then((response) => response.json());
+  assert.equal(updatedLogin.user.name, "Movie Fan");
+  assert.equal(updatedLogin.user.bio, "Thích phim hay");
+  assert.equal(
+    updatedLogin.user.avatar,
+    "data:image/png;base64,iVBORw0KGgo=",
+  );
 
   const notificationsResponse = await fetch(`${baseUrl}/api/notifications`, {
     headers: { Authorization: `Bearer ${userToken}` },

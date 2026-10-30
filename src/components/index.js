@@ -117,6 +117,9 @@ export function renderAccountActions() {
   const initial = escapeHtml(
     session.name?.charAt(0).toUpperCase() || "U"
   );
+  const avatar = session.role === "user" && session.avatar
+    ? `<img src="${escapeHtml(session.avatar)}" alt="" />`
+    : initial;
 
   const adminLink =
     session.role === "admin"
@@ -162,7 +165,7 @@ export function renderAccountActions() {
 
   return `${notificationContainer}<details class="account-menu">
       <summary class="account-chip" aria-label="${safeName}" title="${safeName}">
-        <span class="account-avatar">${initial}</span>
+        <span class="account-avatar">${avatar}</span>
         <span>${safeName}</span>
       </summary>
 
