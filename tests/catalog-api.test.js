@@ -153,7 +153,7 @@ test("movie catalog is shared, persisted, admin-only to update, and rejects stal
       id: "schedule-film-test",
       movieId: "shared-catalog-test",
       type: "movie",
-      date: "2026-12-01",
+      date: "2099-12-01",
       time: "20:30",
       note: "Chiếu tại rạp",
     },
@@ -161,7 +161,7 @@ test("movie catalog is shared, persisted, admin-only to update, and rejects stal
       id: "schedule-episode-test",
       movieId: "shared-catalog-test",
       type: "episode",
-      date: "2026-12-08",
+      date: "2099-12-08",
       episodeNumber: 3,
     },
   ];
@@ -184,6 +184,60 @@ test("movie catalog is shared, persisted, admin-only to update, and rejects stal
     response.json(),
   );
   assert.deepEqual(publicSchedule.schedule, scheduleEvents);
+
+  const registrationResponse = await fetch(`${baseUrl}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Schedule Test",
+      email: "schedule@test.local",
+      password: "test-password",
+    }),
+  });
+  assert.equal(registrationResponse.status, 201);
+
+  const userLoginResponse = await fetch(`${baseUrl}/api/auth/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "schedule@test.local",
+      password: "test-password",
+    }),
+  });
+  assert.equal(userLoginResponse.status, 200);
+  const { token: userToken } = await userLoginResponse.json();
+
+  const notificationsResponse = await fetch(`${baseUrl}/api/notifications`, {
+    headers: { Authorization: `Bearer ${userToken}` },
+  });
+  assert.equal(notificationsResponse.status, 200);
+  const notifications = await notificationsResponse.json();
+  assert.deepEqual(
+    notifications.notifications.map(({ type, movieTitle, read }) => ({
+      type,
+      movieTitle,
+      read,
+    })),
+    [
+      { type: "schedule", movieTitle: "Shared catalog test", read: false },
+      { type: "schedule", movieTitle: "Shared catalog test", read: false },
+    ],
+  );
+  assert.equal(notifications.notifications[0].eventType, "movie");
+  assert.equal(notifications.notifications[1].eventType, "episode");
+
+  const markNotificationsReadResponse = await fetch(
+    `${baseUrl}/api/notifications/read`,
+    {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${userToken}` },
+    },
+  );
+  assert.equal(markNotificationsReadResponse.status, 200);
+  const readNotifications = await fetch(`${baseUrl}/api/notifications`, {
+    headers: { Authorization: `Bearer ${userToken}` },
+  }).then((response) => response.json());
+  assert.ok(readNotifications.notifications.every(({ read }) => read));
 
   const invalidScheduleResponse = await fetch(
     `${baseUrl}/api/admin/schedule`,

@@ -2910,29 +2910,6 @@ button {
   letter-spacing: -0.01em;
 }
 
-.notification-mark-all {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.18s ease;
-}
-
-.notification-mark-all:hover {
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
-}
-
-.notification-mark-all:disabled {
-  opacity: 0.45;
-  cursor: default;
-  background: none;
-}
-
 .notification-body {
   overflow-y: auto;
   max-height: 410px;
