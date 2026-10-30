@@ -75,6 +75,8 @@ test("release schedule is linked publicly and managed through the shared catalog
   assert.match(calendarPage, /GMT\+7/);
   assert.match(calendarPage, /Tập \$\{String\(event\.episodeNumber\)/);
   assert.match(adminPage, /saveSharedSchedule/);
+  assert.match(adminPage, /list="eventMovieOptions"/);
+  assert.match(adminPage, /movie\.title === document\.querySelector\("#eventMovie"\)\.value\.trim\(\)/);
   assert.match(viteConfig, /adminSchedule: fileURLToPath/);
   assert.match(infoPage, /Lịch do quản trị viên cập nhật/);
 });

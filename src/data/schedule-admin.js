@@ -48,9 +48,10 @@ if (!isAdmin()) {
                 </select>
               </label>
               <label>Phim
-                <select class="toolbar-select" id="eventMovie" required>
-                  ${movies.map((movie) => `<option value="${escapeHtml(movie.id)}">${escapeHtml(movie.title)}</option>`).join("")}
-                </select>
+                <input class="toolbar-input" id="eventMovie" type="text" list="eventMovieOptions" placeholder="Nhập tên phim để tìm..." autocomplete="off" required>
+                <datalist id="eventMovieOptions">
+                  ${movies.map((movie) => `<option value="${escapeHtml(movie.title)}"></option>`).join("")}
+                </datalist>
               </label>
               <label>Ngày phát hành
                 <input class="toolbar-input" id="eventDate" type="date" min="${currentDate}" required>
@@ -156,8 +157,10 @@ if (!isAdmin()) {
     typeInput.addEventListener("change", updateEpisodeField);
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const movieId = document.querySelector("#eventMovie").value;
-      if (!movies.some((movie) => movie.id === movieId)) {
+      const selectedMovie = movies.find(
+        (movie) => movie.title === document.querySelector("#eventMovie").value.trim(),
+      );
+      if (!selectedMovie) {
         showToast("Hãy chọn một phim trong danh mục.", "error");
         return;
       }
@@ -170,7 +173,7 @@ if (!isAdmin()) {
       }
       const newEvent = {
         id: uid(),
-        movieId,
+        movieId: selectedMovie.id,
         type,
         date: document.querySelector("#eventDate").value,
         time: document.querySelector("#eventTime").value || null,
