@@ -144,7 +144,6 @@ export function renderAccountActions() {
       <div class="notification-dropdown" id="notificationDropdown" role="region" aria-label="Khung thông báo" hidden>
         <div class="notification-header">
           <h3 class="notification-heading">Thông báo</h3>
-          <button type="button" class="notification-mark-all" id="notificationMarkAllBtn">Đánh dấu đã đọc</button>
         </div>
         <div class="notification-body" id="notificationDropdownList">
           <div class="notification-empty">Bạn chưa có thông báo nào.</div>
@@ -186,7 +185,6 @@ export function bindNotificationDropdown() {
   const bellBtn = document.querySelector("#notificationBellBtn");
   const dropdown = document.querySelector("#notificationDropdown");
   const listEl = document.querySelector("#notificationDropdownList");
-  const markAllBtn = document.querySelector("#notificationMarkAllBtn");
   const accountTriggerBtn = document.querySelector("#accountNotificationBtn");
   const accountMenu = document.querySelector(".account-menu");
 
@@ -229,30 +227,41 @@ export function bindNotificationDropdown() {
 
       if (notifications.length === 0) {
         listEl.innerHTML = '<div class="notification-empty">Bạn chưa có thông báo nào.</div>';
-        if (markAllBtn) markAllBtn.disabled = true;
         return;
-      }
-
-      if (markAllBtn) {
-        markAllBtn.disabled = unreadCount === 0;
       }
 
       const movies = getMovieDB();
 
       listEl.innerHTML = notifications
         .map((notification) => {
+          const isSchedule = notification.type === "schedule";
           const author = escapeHtml(notification.author || "Người dùng");
           const movieTitle = escapeHtml(notification.movieTitle || "");
-          const comment = escapeHtml(notification.comment || "");
-          const date = escapeHtml(notification.date || "");
+          const comment = escapeHtml(
+            isSchedule ? notification.note || "" : notification.comment || "",
+          );
+          const date = escapeHtml(
+            isSchedule
+              ? formatScheduleNotificationDate(
+                  notification.date,
+                  notification.time,
+                )
+              : notification.date || "",
+          );
           const isUnread = !notification.read;
+          const scheduleDescription =
+            notification.eventType === "episode"
+              ? `Tập mới · Tập ${notification.episodeNumber}`
+              : "Phim mới";
 
           return `
             <div class="notification-item ${isUnread ? "unread" : "read"}" role="button" tabindex="0" data-movie="${movieTitle}">
-              <div class="notification-item-icon" aria-hidden="true">💬</div>
+              <div class="notification-item-icon" aria-hidden="true">${isSchedule ? "📅" : "💬"}</div>
               <div class="notification-item-content">
                 <div class="notification-item-title">
-                  <strong>${author}</strong> đã trả lời bình luận của bạn
+                  ${isSchedule
+                    ? `<strong>Lịch phát hành</strong> · ${escapeHtml(scheduleDescription)}`
+                    : `<strong>${author}</strong> đã trả lời bình luận của bạn`}
                 </div>
                 ${movieTitle ? `<div class="notification-item-movie">Phim: <span>${movieTitle}</span></div>` : ""}
                 ${comment ? `<div class="notification-item-comment">${comment}</div>` : ""}
@@ -291,6 +300,35 @@ export function bindNotificationDropdown() {
           }
         });
       });
+
+      if (unreadCount > 0) {
+        try {
+          const markReadResponse = await fetch("/api/notifications/read", {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${session.token}`,
+            },
+          });
+
+          if (!markReadResponse.ok) {
+            throw new Error(`HTTP ${markReadResponse.status}`);
+          }
+
+          const badge = bellBtn.querySelector(".notification-count");
+          if (badge) {
+            badge.hidden = true;
+            badge.textContent = "";
+          }
+
+          listEl.querySelectorAll(".notification-item.unread").forEach((item) => {
+            item.classList.remove("unread");
+            item.classList.add("read");
+            item.querySelector(".notification-item-unread-dot")?.remove();
+          });
+        } catch (error) {
+          console.error("Lỗi khi tự động đánh dấu thông báo đã đọc:", error);
+        }
+      }
     } catch (error) {
       console.error("Lỗi khi tải thông báo:", error);
       listEl.innerHTML = '<div class="notification-empty">Không thể tải thông báo. Vui lòng thử lại sau.</div>';
@@ -323,42 +361,6 @@ export function bindNotificationDropdown() {
     });
   }
 
-  if (markAllBtn) {
-    markAllBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const session = getSession();
-      if (!session?.token) return;
-
-      try {
-        markAllBtn.disabled = true;
-        const res = await fetch("/api/notifications/read", {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${session.token}`,
-          },
-        });
-
-        if (res.ok) {
-          const badge = bellBtn.querySelector(".notification-count");
-          if (badge) {
-            badge.hidden = true;
-            badge.textContent = "";
-          }
-
-          listEl.querySelectorAll(".notification-item.unread").forEach((item) => {
-            item.classList.remove("unread");
-            item.classList.add("read");
-            item.querySelector(".notification-item-unread-dot")?.remove();
-          });
-        }
-      } catch (err) {
-        console.error("Lỗi khi đánh dấu thông báo đã đọc:", err);
-      } finally {
-        markAllBtn.disabled = false;
-      }
-    });
-  }
-
   document.addEventListener("click", (event) => {
     if (!dropdown.hidden && !container.contains(event.target)) {
       dropdown.hidden = true;
@@ -373,6 +375,20 @@ export function bindNotificationDropdown() {
       bellBtn.focus();
     }
   });
+}
+
+function formatScheduleNotificationDate(date, time) {
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return "";
+  }
+  const [year, month, day] = date.split("-").map(Number);
+  const formattedDate = new Intl.DateTimeFormat("vi-VN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(new Date(Date.UTC(year, month - 1, day, 5)));
+  return `${formattedDate}${time ? ` · ${time} GMT+7` : ""}`;
 }
 
 export function bindAccountActions() {

@@ -14,10 +14,13 @@ test("renderAccountActions renders notification dropdown frame instead of page l
   assert.match(indexJs, /id="notificationBellBtn"/);
   assert.match(indexJs, /id="notificationDropdown"/);
   assert.match(indexJs, /class="notification-heading">Thông báo<\/h3>/);
-  assert.match(indexJs, /id="notificationMarkAllBtn">Đánh dấu đã đọc<\/button>/);
+  assert.doesNotMatch(indexJs, /notificationMarkAllBtn|Đánh dấu đã đọc/);
   assert.match(indexJs, /id="notificationDropdownList"/);
   assert.match(indexJs, /Bạn chưa có thông báo nào\./);
   assert.match(indexJs, /bindNotificationDropdown/);
+  assert.match(indexJs, /if \(unreadCount > 0\)/);
+  assert.match(indexJs, /fetch\("\/api\/notifications\/read", \{\s*method: "PATCH"/);
+  assert.match(indexJs, /classList\.remove\("unread"\)/);
 });
 
 test("style.css contains styles for notification dropdown frame", async () => {
@@ -28,6 +31,5 @@ test("style.css contains styles for notification dropdown frame", async () => {
   assert.match(css, /\.notification-dropdown/);
   assert.match(css, /\.notification-header/);
   assert.match(css, /\.notification-heading/);
-  assert.match(css, /\.notification-mark-all/);
   assert.match(css, /\.notification-empty/);
 });

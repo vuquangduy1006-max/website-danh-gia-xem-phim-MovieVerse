@@ -1362,66 +1362,31 @@ async function handleReviewsApi(request, response, pathname) {
     return true;
   }
   if (request.method === "GET" && pathname === "/api/notifications") {
-    console.log("ĐÃ VÀO API THÔNG BÁO");
-  const currentUserId = getAuthenticatedUserId(request);
+    const currentUserId = getAuthenticatedUserId(request);
 
-  if (!currentUserId) {
-    sendJson(response, 401, {
-      error: "Vui lòng đăng nhập để xem thông báo.",
-    });
-    return true;
-  }
-
-  try {
-    const reviews = await readReviews();
-    const notifications = [];
-
-    for (const review of reviews) {
-      if (String(review.userId) !== String(currentUserId)) continue;
-
-      for (const reply of review.replies || []) {
-        if (
-          reply.userId &&
-          String(reply.userId) === String(currentUserId)
-        ) continue;
-
-        notifications.push({
-          id: reply.id,
-          reviewId: review.id,
-          movieTitle: review.movieTitle,
-          author: reply.author,
-          comment: reply.comment,
-          date: reply.date,
-          read: reply.read === true,
-        });
-      }
+    if (!currentUserId) {
+      sendJson(response, 401, {
+        error: "Vui lòng đăng nhập để xem thông báo.",
+      });
+      return true;
     }
 
-    sendJson(response, 200, { notifications });
-  } catch (error) {
-    console.error("Unable to load notifications:", error);
-    sendJson(response, 500, {
-      error: "Không thể tải thông báo.",
-    });
-  }
+    try {
+      const [reviews, catalog, users] = await Promise.all([
+        readReviews(),
+        readCatalog(),
+        readUsers(),
+      ]);
+      const currentUser = users.find(
+        (user) => String(user.id) === String(currentUserId),
+      );
+      const readScheduleNotifications = new Set(
+        Array.isArray(currentUser?.readScheduleNotifications)
+          ? currentUser.readScheduleNotifications
+          : [],
+      );
+      const notifications = [];
 
-  return true;
-}
-if (
-  request.method === "PATCH" &&
-  pathname === "/api/notifications/read"
-) {
-  const currentUserId = getAuthenticatedUserId(request);
-
-  if (!currentUserId) {
-    sendJson(response, 401, {
-      error: "Vui lòng đăng nhập.",
-    });
-    return true;
-  }
-
-  try {
-    await updateReviews((reviews) => {
       for (const review of reviews) {
         if (String(review.userId) !== String(currentUserId)) continue;
 
@@ -1431,23 +1396,114 @@ if (
             String(reply.userId) === String(currentUserId)
           ) continue;
 
-          reply.read = true;
+          notifications.push({
+            id: reply.id,
+            type: "reply",
+            reviewId: review.id,
+            movieTitle: review.movieTitle,
+            author: reply.author,
+            comment: reply.comment,
+            date: reply.date,
+            read: reply.read === true,
+          });
         }
       }
 
-      return { ok: true };
-    });
+      const todayInVietnam = new Date(Date.now() + 7 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      for (const event of catalog.schedule || []) {
+        if (event.date < todayInVietnam) continue;
+        const movie = catalog.movies.find(
+          (item) => item.id === event.movieId,
+        );
+        if (!movie) continue;
 
-    sendJson(response, 200, { ok: true });
-  } catch (error) {
-    console.error("Không thể đánh dấu thông báo đã đọc:", error);
-    sendJson(response, 500, {
-      error: "Không thể cập nhật thông báo.",
-    });
+        notifications.push({
+          id: `schedule-${event.id}`,
+          type: "schedule",
+          movieId: event.movieId,
+          movieTitle: movie.title,
+          eventType: event.type,
+          episodeNumber: event.episodeNumber,
+          date: event.date,
+          time: event.time || null,
+          note: event.note || "",
+          read: readScheduleNotifications.has(event.id),
+        });
+      }
+
+      sendJson(response, 200, { notifications });
+    } catch (error) {
+      console.error("Unable to load notifications:", error);
+      sendJson(response, 500, {
+        error: "Không thể tải thông báo.",
+      });
+    }
+
+    return true;
   }
+  if (
+    request.method === "PATCH" &&
+    pathname === "/api/notifications/read"
+  ) {
+    const currentUserId = getAuthenticatedUserId(request);
 
-  return true;
-}
+    if (!currentUserId) {
+      sendJson(response, 401, {
+        error: "Vui lòng đăng nhập.",
+      });
+      return true;
+    }
+
+    try {
+      const catalog = await readCatalog();
+      const scheduleIds = (catalog.schedule || [])
+        .filter((event) => event.date >= new Date(
+          Date.now() + 7 * 60 * 60 * 1000,
+        ).toISOString().slice(0, 10))
+        .map((event) => event.id);
+      const updatedUser = await updateUsers((users) => {
+        const user = users.find(
+          (item) => String(item.id) === String(currentUserId),
+        );
+        if (!user) return { ok: false };
+        user.readScheduleNotifications = scheduleIds;
+        return { ok: true };
+      });
+      if (!updatedUser.ok) {
+        sendJson(response, 401, {
+          error: "Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại.",
+        });
+        return true;
+      }
+      await updateReviews((reviews) => {
+        for (const review of reviews) {
+          if (String(review.userId) !== String(currentUserId)) continue;
+
+          for (const reply of review.replies || []) {
+            if (
+              reply.userId &&
+              String(reply.userId) === String(currentUserId)
+            ) continue;
+
+            reply.read = true;
+          }
+        }
+
+        return { ok: true };
+      });
+
+      sendJson(response, 200, { ok: true });
+    } catch (error) {
+      console.error("Không thể đánh dấu thông báo đã đọc:", error);
+      sendJson(response, 500, {
+        error: "Không thể cập nhật thông báo.",
+      });
+    }
+
+    return true;
+  }
 
   if (request.method === "GET" && pathname === "/api/reviews") {
     try {

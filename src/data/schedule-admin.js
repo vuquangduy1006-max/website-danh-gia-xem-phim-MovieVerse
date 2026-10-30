@@ -30,7 +30,7 @@ if (!isAdmin()) {
             <div>
               <p class="eyebrow">Quản trị</p>
               <h1>Lịch phát hành</h1>
-              <p>Lên lịch phim sắp chiếu và ngày phát hành tập mới để mọi người cùng theo dõi.</p>
+              <p>Lên lịch phim sắp chiếu và ngày phát hành tập mới; người dùng đã đăng nhập sẽ nhận thông báo trong ứng dụng.</p>
             </div>
           </div>
           <section class="admin-panel schedule-admin-form-panel" aria-labelledby="scheduleFormTitle">
@@ -85,7 +85,7 @@ if (!isAdmin()) {
               </table>
             </div>
           </section>
-          <p class="schedule-admin-storage-note">Lịch được lưu trên máy chủ và hiển thị công khai trong trang Lịch phát hành.</p>
+          <p class="schedule-admin-storage-note">Lịch được lưu trên máy chủ, hiển thị công khai và thông báo đến người dùng đã đăng nhập qua biểu tượng chuông.</p>
         </div>
       </main>
       <footer class="admin-footer"><div class="container"><span>© 2024 MovieVerse Admin.</span><span>Quản lý lịch phát hành</span></div></footer>
