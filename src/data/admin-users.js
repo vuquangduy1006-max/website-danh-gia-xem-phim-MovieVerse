@@ -1,6 +1,7 @@
 import "../admin/admin.css";
 import "./auth.js";
 import { getSession, isAdmin } from "./auth.js";
+import { renderAdminHeader } from "./admin-navigation.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/users.html");
@@ -28,22 +29,7 @@ function formatDate(iso) {
 
 // ---- Render shell ----
 document.querySelector("#app").innerHTML = `
-<header class="admin-header">
-  <div class="container header-inner">
-    <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-    <nav class="admin-nav" aria-label="Điều hướng quản trị">
-      <a href="/" class="back-link">← Trang chủ</a>
-      <a href="/admin/admin.html">Quản lý phim</a>
-      <a href="/admin/schedule.html">Lịch phát hành</a>
-      <a href="/admin/genres.html">Thể loại</a>
-      <a href="/admin/comments.html">Bình luận</a>
-      <a class="active" href="/admin/users.html">Người dùng</a>
-    </nav>
-    <div class="header-actions" style="margin-left:auto">
-      <button class="btn btn-secondary" id="refreshBtn">↻ Tải lại</button>
-    </div>
-  </div>
-</header>
+${renderAdminHeader("/admin/users.html")}
 
 <main class="admin-main">
   <div class="container">
@@ -53,6 +39,7 @@ document.querySelector("#app").innerHTML = `
         <h1>Quản lý người dùng</h1>
         <p>Xem, quản lý trạng thái hoạt động hoặc xóa tài khoản thành viên.</p>
       </div>
+      <button class="btn btn-secondary" id="refreshBtn">↻ Tải lại</button>
     </div>
 
     <div class="stats-grid" id="userStats"></div>

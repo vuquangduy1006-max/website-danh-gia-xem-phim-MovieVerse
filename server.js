@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
 import {
+  createHash,
   randomBytes,
   scrypt as scryptCallback,
   timingSafeEqual,
@@ -47,6 +48,7 @@ const passwordChangeRequestsByIp = new Map();
 const newsletterRequestsByIp = new Map();
 const movieRatingRequestsByIp = new Map();
 const adminTokens = new Map();
+let adminTokenWriteQueue = Promise.resolve();
 const userTokens = new Map();
 const passwordResetTokens = new Map();
 const passwordResetRequestsByIp = new Map();
@@ -69,6 +71,10 @@ const moviesFilePath = resolve(
 const newsletterFilePath = resolve(
   process.env.NEWSLETTER_STORE_PATH ||
     fileURLToPath(new URL("./.data/newsletter.json", import.meta.url)),
+);
+const adminTokensFilePath = resolve(
+  process.env.ADMIN_SESSIONS_STORE_PATH ||
+    fileURLToPath(new URL("./.data/admin-sessions.json", import.meta.url)),
 );
 let reviewWriteQueue = Promise.resolve();
 let reviewStoreInitialization;
@@ -567,12 +573,67 @@ function validText(value, maxLength) {
   );
 }
 
+function hashAdminToken(token) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function pruneAdminTokens() {
+  const now = Date.now();
+  for (const [tokenHash, expiresAt] of adminTokens) {
+    if (expiresAt <= now) adminTokens.delete(tokenHash);
+  }
+}
+
+async function initializeAdminTokens() {
+  try {
+    const saved = JSON.parse(await readFile(adminTokensFilePath, "utf8"));
+    if (!Array.isArray(saved)) {
+      throw new Error("Admin session storage is invalid");
+    }
+    for (const session of saved) {
+      if (
+        session &&
+        typeof session.tokenHash === "string" &&
+        /^[a-f0-9]{64}$/.test(session.tokenHash) &&
+        Number.isSafeInteger(session.expiresAt) &&
+        session.expiresAt > Date.now()
+      ) {
+        adminTokens.set(session.tokenHash, session.expiresAt);
+      }
+    }
+    pruneAdminTokens();
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+function persistAdminTokens() {
+  const operation = adminTokenWriteQueue.then(async () => {
+    pruneAdminTokens();
+    const sessions = [...adminTokens].map(([tokenHash, expiresAt]) => ({
+      tokenHash,
+      expiresAt,
+    }));
+    await mkdir(dirname(adminTokensFilePath), { recursive: true });
+    const temporaryPath = `${adminTokensFilePath}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
+    await writeFile(temporaryPath, JSON.stringify(sessions), "utf8");
+    await rename(temporaryPath, adminTokensFilePath);
+  });
+  adminTokenWriteQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 function isAdminRequest(request) {
   const token = request.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
-  const expiresAt = adminTokens.get(token);
+  if (!token) return false;
+  const tokenHash = hashAdminToken(token);
+  const expiresAt = adminTokens.get(tokenHash);
   if (!expiresAt) return false;
   if (expiresAt <= Date.now()) {
-    adminTokens.delete(token);
+    adminTokens.delete(tokenHash);
     return false;
   }
   return true;
@@ -1224,7 +1285,22 @@ async function handleAuthApi(request, response, pathname) {
 async function handleReviewsApi(request, response, pathname) {
   if (request.method === "DELETE" && pathname === "/api/admin/session") {
     const token = getBearerToken(request);
-    if (token) adminTokens.delete(token);
+    if (token) {
+      const tokenHash = hashAdminToken(token);
+      const expiresAt = adminTokens.get(tokenHash);
+      if (adminTokens.delete(tokenHash)) {
+        try {
+          await persistAdminTokens();
+        } catch (error) {
+          adminTokens.set(tokenHash, expiresAt);
+          console.error("Unable to revoke admin session:", error);
+          sendJson(response, 500, {
+            error: "Không thể thu hồi phiên quản trị.",
+          });
+          return true;
+        }
+      }
+    }
     sendJson(response, 200, { ok: true });
     return true;
   }
@@ -1258,7 +1334,14 @@ async function handleReviewsApi(request, response, pathname) {
       }
       const token = randomBytes(32).toString("base64url");
       const expiresAt = Date.now() + USER_SESSION_MS;
-      adminTokens.set(token, expiresAt);
+      const tokenHash = hashAdminToken(token);
+      adminTokens.set(tokenHash, expiresAt);
+      try {
+        await persistAdminTokens();
+      } catch (error) {
+        adminTokens.delete(tokenHash);
+        throw error;
+      }
       sendJson(response, 200, {
         token,
         expiresAt,
@@ -2370,6 +2453,7 @@ const server = createServer(async (request, response) => {
   }
 });
 
+await initializeAdminTokens();
 server.listen(port, host, () => {
   console.log(`MovieVerse server listening on http://${host}:${port}`);
 });

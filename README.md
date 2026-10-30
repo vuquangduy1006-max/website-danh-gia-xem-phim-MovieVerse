@@ -10,7 +10,7 @@
    [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api), rồi
    điền `TMDB_API_KEY` trong `.env`. Khóa này là tùy chọn; giữ khóa ở máy chủ.
 4. Chạy lại máy chủ sau khi thay đổi `.env`.
-5. Chạy `npm run dev` (hoặc `npm run dev:local`), sau đó mở `http://localhost:5173`.
+5. Chạy `npm run dev`, sau đó mở `http://localhost:5173`.
 
 Lệnh này khởi động đồng thời cả giao diện Vite và máy chủ API. Bình luận, đánh giá và tài khoản được chia
 sẻ qua API, lưu tại thư mục `.data/`. Có thể đặt `REVIEWS_STORE_PATH` để

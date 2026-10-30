@@ -2,6 +2,7 @@ import "../admin/admin.css";
 import "../admin/genres.css";
 import "../admin/schedule-admin.css";
 import { isAdmin } from "./auth.js";
+import { renderAdminHeader } from "./admin-navigation.js";
 import {
   getMovieDB,
   getReleaseSchedule,
@@ -22,18 +23,7 @@ if (!isAdmin()) {
     const currentDate = localDateKey(new Date());
 
     document.querySelector("#app").innerHTML = `
-      <header class="admin-header">
-        <div class="container header-inner">
-          <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-          <nav class="admin-nav" aria-label="Điều hướng quản trị">
-            <a href="/admin/admin.html">Quản lý phim</a>
-            <a class="active" href="/admin/schedule.html" aria-current="page">Lịch phát hành</a>
-            <a href="/admin/genres.html">Thể loại</a>
-            <a href="/admin/comments.html">Bình luận</a>
-          </nav>
-          <div class="header-actions"><span class="admin-role">ADMIN</span></div>
-        </div>
-      </header>
+      ${renderAdminHeader("/admin/schedule.html")}
       <main class="admin-main schedule-admin-main">
         <div class="container">
           <div class="admin-heading">

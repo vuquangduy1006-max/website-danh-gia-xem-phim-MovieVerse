@@ -39,6 +39,8 @@ test("server supports searching movie suggestions via OMDb when TMDb is unavaila
   assert.match(adminJs, /localTitlesAndYears/);
   assert.match(adminJs, /clearAdminSession\(session\.adminToken\)/);
   assert.match(adminJs, /Phiên quản trị đã hết hạn hoặc không hợp lệ/);
+  assert.match(adminJs, /function appendAdminLoginLink\(selector\)/);
+  assert.match(adminJs, /login\.html\?next=%2Fadmin%2Fadmin\.html/);
   assert.match(authJs, /export function clearAdminSession\(adminToken\)/);
   assert.match(authJs, /session\.adminToken !== adminToken/);
 });

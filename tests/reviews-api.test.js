@@ -998,3 +998,97 @@ test("movie details lookup can use TMDb when OMDb is not configured", async (t) 
   assert.equal(details.poster, "https://image.tmdb.org/t/p/original/poster.jpg");
   assert.equal(details.rating, null);
 });
+
+test("admin sessions survive server restarts and logout revokes persisted tokens", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "movieverse-admin-session-"));
+  const port = await getAvailablePort();
+  const baseUrl = `http://127.0.0.1:${port}/api`;
+  const sessionsPath = path.join(directory, "admin-sessions.json");
+  let serverErrors = "";
+  let child;
+  const startServer = () => {
+    const process = spawn(globalThis.process.execPath, ["server.js"], {
+      cwd: globalThis.process.cwd(),
+      env: {
+        ...globalThis.process.env,
+        API_PORT: String(port),
+        ADMIN_EMAIL: "admin@test.local",
+        ADMIN_PASSWORD: "test-password",
+        OMDB_API_KEY: "",
+        TMDB_API_KEY: "",
+        ADMIN_SESSIONS_STORE_PATH: sessionsPath,
+        MOVIE_CATALOG_STORE_PATH: path.join(directory, "catalog.json"),
+        REVIEWS_STORE_PATH: path.join(directory, "reviews.json"),
+        AUTH_USERS_STORE_PATH: path.join(directory, "users.json"),
+        MOVIES_STORE_PATH: path.join(directory, "movies.json"),
+        NEWSLETTER_STORE_PATH: path.join(directory, "newsletter.json"),
+      },
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    process.stderr.setEncoding("utf8");
+    process.stderr.on("data", (chunk) => {
+      serverErrors += chunk;
+    });
+    child = process;
+    return process;
+  };
+  const stopServer = async () => {
+    if (child.exitCode === null) {
+      child.kill();
+      await Promise.race([
+        once(child, "exit"),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    }
+  };
+  t.after(async () => {
+    await stopServer();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  child = startServer();
+  await waitForServer(child, baseUrl.replace(/\/api$/, ""), () => serverErrors);
+  const loginResponse = await fetch(`${baseUrl}/admin/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "admin@test.local",
+      password: "test-password",
+    }),
+  });
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+  const persistedSessions = JSON.parse(await readFile(sessionsPath, "utf8"));
+  assert.equal(persistedSessions.length, 1);
+  assert.equal(persistedSessions[0].tokenHash.length, 64);
+  assert.equal(JSON.stringify(persistedSessions).includes(token), false);
+
+  await stopServer();
+  child = startServer();
+  await waitForServer(child, baseUrl.replace(/\/api$/, ""), () => serverErrors);
+  const authenticatedSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Lookup%20Film`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  assert.equal(authenticatedSearch.status, 503);
+  assert.notEqual(
+    (await authenticatedSearch.json()).error,
+    "Cần đăng nhập quản trị để tra cứu thông tin phim.",
+  );
+
+  const logoutResponse = await fetch(`${baseUrl}/admin/session`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(logoutResponse.status, 200);
+  assert.deepEqual(JSON.parse(await readFile(sessionsPath, "utf8")), []);
+
+  await stopServer();
+  child = startServer();
+  await waitForServer(child, baseUrl.replace(/\/api$/, ""), () => serverErrors);
+  const revokedSearch = await fetch(
+    `${baseUrl}/admin/movie-search?query=Lookup%20Film`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  assert.equal(revokedSearch.status, 403);
+});

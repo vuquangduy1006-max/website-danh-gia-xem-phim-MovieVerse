@@ -1,5 +1,6 @@
 import "./admin/admin.css";
 import "./admin-comments.css";
+import { renderAdminHeader } from "./data/admin-navigation.js";
 import { isAdmin } from "./data/auth.js";
 import {
   addReviewReply,
@@ -23,20 +24,7 @@ if (!isAdmin()) {
   let ratingFilter = "all";
 
   document.querySelector("#app").innerHTML = `
-    <header class="admin-header">
-      <div class="container header-inner">
-        <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-        <nav class="admin-nav" aria-label="Điều hướng quản trị">
-          <a href="/admin/admin.html">Quản lý phim</a>
-          <a href="/admin/schedule.html">Lịch phát hành</a>
-          <a href="/admin/genres.html">Thể loại</a>
-          <a class="active" href="/admin/comments.html">Bình luận</a>
-          <a href="/admin/users.html">Người dùng</a>
-          <a href="/" class="back-link">← Trang chủ</a>
-        </nav>
-        <div class="header-actions"><span class="admin-role">ADMIN</span></div>
-      </div>
-    </header>
+    ${renderAdminHeader("/admin/comments.html")}
     <main class="admin-main comments-admin-main">
       <div class="container">
         <div class="admin-heading">

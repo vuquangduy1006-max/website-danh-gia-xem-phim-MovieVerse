@@ -19,6 +19,7 @@ import {
   isValidMediaUrl,
   isValidReleaseYear,
 } from "./movie-validation.js";
+import { renderAdminHeader } from "./admin-navigation.js";
 
 if (!isAdmin()) {
   window.location.replace("/login.html?next=/admin/admin.html");
@@ -72,23 +73,7 @@ let ratingManuallyEdited = false;
 let selectedRatingSource = null;
 
 document.querySelector("#app").innerHTML = `
-<header class="admin-header">
-  <div class="container header-inner">
-    <a class="brand" href="/" aria-label="MovieVerse trang chủ"><span class="brand-mark">M</span><span>movie<span>verse</span></span></a>
-    <nav class="admin-nav" aria-label="Điều hướng quản trị">
-      <a href="/" class="back-link">← Trang chủ</a>
-      <a class="active" href="/admin/admin.html">Quản lý phim</a>
-      <a href="/admin/schedule.html">Lịch phát hành</a>
-      <a href="/admin/genres.html">Thể loại</a>
-      <a href="/admin/comments.html">Bình luận</a>
-      <a href="/admin/users.html">Người dùng</a>
-    </nav>
-    <div class="header-actions">
-      <button class="btn btn-primary" id="addMovieBtn">+ Thêm phim</button>
-    </div>
-
-  </div>
-</header>
+${renderAdminHeader("/admin/admin.html")}
 
 <main class="admin-main">
   <div class="container">
@@ -98,6 +83,7 @@ document.querySelector("#app").innerHTML = `
         <h1>Quản lý phim</h1>
         <p>Thêm, chỉnh sửa và sắp xếp kho phim của MovieVerse.</p>
       </div>
+      <button class="btn btn-primary" id="addMovieBtn">+ Thêm phim</button>
     </div>
 
     <div class="stats-grid" id="statsGrid"></div>
@@ -348,8 +334,10 @@ function bindEvents() {
   document.querySelector("#addMovieBtn").addEventListener("click", openAddForm);
   document.querySelector("#movieForm").addEventListener("submit", onSave);
   document.querySelector("#fieldTitle").addEventListener("input", () => {
+    const titleInput = document.querySelector("#fieldTitle");
+    setFieldValidity(titleInput, false);
     hideMovieSearchResults();
-    const title = document.querySelector("#fieldTitle").value.trim();
+    const title = titleInput.value.trim();
     const originalTitle = editingId
       ? movies.find((movie) => movie.id === editingId)?.title
       : selectedRatingSource?.title;
@@ -364,7 +352,6 @@ function bindEvents() {
       selectedRatingSource = null;
     }
     scheduleMovieSearch();
-    scheduleRatingLookup();
   });
   document.querySelector("#movieSearchList").addEventListener("click", (event) => {
     const button = event.target.closest("[data-search-title], [data-existing-id]");
@@ -602,6 +589,7 @@ function openAddForm() {
   document.querySelector("#formTitle").textContent = "Thêm phim mới";
   document.querySelector("#movieForm").reset();
   hideMovieSearchResults();
+  setFieldValidity(document.querySelector("#fieldTitle"), false);
   setRatingLookupStatus("Nhập tên phim để tự điền thông tin tìm được từ OMDb. Trailer và tập phim không bị thay đổi.");
   document.querySelector("#fieldId").value = "";
   document.querySelector("#fieldYear").value = String(currentYear);
@@ -629,6 +617,7 @@ function openEditForm(id) {
   document.querySelector("#formTitle").textContent = "Chỉnh sửa phim";
   document.querySelector("#fieldId").value = movie.id;
   document.querySelector("#fieldTitle").value = movie.title;
+  setFieldValidity(document.querySelector("#fieldTitle"), false);
   document.querySelector("#fieldYear").value = movie.year || "";
   document.querySelector("#fieldReleaseDate").value = movie.releaseDate || "";
   document.querySelector("#fieldRuntime").value = movie.runtime || "";
@@ -683,14 +672,17 @@ function openEditForm(id) {
 async function onSave(event) {
   event.preventDefault();
   const form = document.querySelector("#movieForm");
-  const title = document.querySelector("#fieldTitle").value.trim();
+  const titleInput = document.querySelector("#fieldTitle");
+  const title = titleInput.value.trim();
   const yearInput = document.querySelector("#fieldYear");
   const year = yearInput.value.trim() || String(currentYear);
   if (!title) {
+    setFieldValidity(titleInput, true);
     showToast("Vui lòng nhập tên phim.", "error");
-    document.querySelector("#fieldTitle").focus();
+    titleInput.focus();
     return;
   }
+  setFieldValidity(titleInput, false);
   if (!isValidReleaseYear(year, currentYear)) {
     showYearError(`Năm phát hành phải từ 1900 đến ${currentYear}.`);
     yearInput.focus();
@@ -879,6 +871,7 @@ async function searchMovies(query, localMatches, requestId) {
         : "Bạn chưa đăng nhập quản trị. Hãy đăng nhập để tìm phim từ API.",
       "error",
     );
+    appendAdminLoginLink("#movieSearchStatus");
     return;
   }
   const controller = new AbortController();
@@ -913,9 +906,10 @@ async function searchMovies(query, localMatches, requestId) {
       if (response.status === 403) {
         clearAdminSession(session.adminToken);
         renderMovieSearchResults([], localMatches, {
-          message: `${localMatches.length ? `${localMatches.length} phim trong kho · ` : ""}Phiên quản trị đã hết hạn hoặc không hợp lệ. Hãy đăng nhập lại tại /login.html; phim trong kho vẫn khả dụng.`,
+          message: `${localMatches.length ? `${localMatches.length} phim trong kho · ` : ""}Phiên quản trị đã hết hạn hoặc không hợp lệ; phim trong kho vẫn khả dụng.`,
           state: "error",
         });
+        appendAdminLoginLink("#movieSearchStatus");
         return;
       }
       const message =
@@ -979,6 +973,7 @@ async function lookupMovieDetails(title, imdbId = "") {
   const session = getSession();
   if (!session?.adminToken) {
     setRatingLookupStatus("Phiên quản trị không hợp lệ. Hãy đăng nhập lại.", "error");
+    appendAdminLoginLink("#ratingLookupStatus");
     return;
   }
   const controller = new AbortController();
@@ -998,9 +993,12 @@ async function lookupMovieDetails(title, imdbId = "") {
     if (!response.ok) {
       if (response.status === 403) {
         clearAdminSession(session.adminToken);
-        throw new Error(
-          "Phiên quản trị đã hết hạn hoặc không hợp lệ. Hãy đăng nhập lại tại /login.html.",
+        setRatingLookupStatus(
+          "Phiên quản trị đã hết hạn hoặc không hợp lệ.",
+          "error",
         );
+        appendAdminLoginLink("#ratingLookupStatus");
+        return;
       }
       throw new Error(result.error || "Không tra cứu được thông tin phim.");
     }
@@ -1253,6 +1251,15 @@ function setMovieSearchStatus(message, state = "") {
   status.classList.toggle("is-error", state === "error");
 }
 
+function appendAdminLoginLink(selector) {
+  const status = document.querySelector(selector);
+  if (!status) return;
+  const link = document.createElement("a");
+  link.href = "/login.html?next=%2Fadmin%2Fadmin.html";
+  link.textContent = " Đăng nhập lại";
+  status.append(link);
+}
+
 function hideMovieSearchResults() {
   const field = document.querySelector("#movieSearchField");
   if (field) field.hidden = true;
@@ -1270,11 +1277,16 @@ function formatNames(value) {
   return Array.isArray(value) ? value.join(", ") : value || "";
 }
 
+function setFieldValidity(input, invalid) {
+  if (!input) return;
+  input.setAttribute("aria-invalid", String(Boolean(invalid)));
+}
+
 function showYearError(message) {
   const error = document.querySelector("#fieldYearError");
   error.textContent = message;
   error.classList.toggle("is-visible", Boolean(message));
-  document.querySelector("#fieldYear").setAttribute("aria-invalid", String(Boolean(message)));
+  setFieldValidity(document.querySelector("#fieldYear"), Boolean(message));
 }
 
 function openDeleteConfirm(id) {
