@@ -18,6 +18,9 @@
 * {
   box-sizing: border-box;
 }
+html {
+  scrollbar-gutter: stable;
+}
 body {
   margin: 0;
   background: var(--bg);
@@ -48,6 +51,7 @@ button {
   top: 0;
   z-index: 20;
   height: 76px;
+  overflow: hidden;
   background: rgba(11, 12, 14, 0.88);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(18px);
@@ -56,12 +60,14 @@ button {
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 44px;
+  gap: 20px;
 }
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 130px;
+  width: 130px;
   font: 700 20px var(--display);
   letter-spacing: -1px;
   white-space: nowrap;
@@ -82,14 +88,23 @@ button {
 }
 .admin-nav {
   display: flex;
-  gap: 26px;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: clamp(14px, 2vw, 26px);
   align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.admin-nav::-webkit-scrollbar {
+  display: none;
 }
 .admin-nav a {
   color: var(--muted);
+  flex: 0 0 auto;
   font-size: 14px;
   position: relative;
   padding: 26px 0;
+  white-space: nowrap;
 }
 .admin-nav a:hover {
   color: var(--text);
@@ -107,10 +122,16 @@ button {
   background: var(--accent);
 }
 .header-actions {
-  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 14px;
+  flex: 0 0 58px;
+  justify-content: flex-end;
+}
+.admin-role {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 .admin-main {
   padding: 44px 0 90px;
@@ -786,10 +807,13 @@ select.input-field option {
   .admin-header {
     height: 64px;
   }
-  .header-inner {
-    gap: 18px;
+  .admin-nav a {
+    padding: 20px 0;
   }
-  .admin-nav {
+  .header-inner {
+    gap: 12px;
+  }
+  .header-actions {
     display: none;
   }
   .admin-heading {

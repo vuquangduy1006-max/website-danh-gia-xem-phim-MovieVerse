@@ -79,7 +79,7 @@ document.querySelector("#app").innerHTML = `
           </article>
           <article>
             <h3>Đánh giá và bình luận</h3>
-            <p>Mở trang chi tiết phim để gửi đánh giá. Nếu API không kết nối được, hãy chạy cả giao diện và máy chủ bằng <code>npm run dev</code> (hoặc <code>npm run dev:local</code>).</p>
+            <p>Mở trang chi tiết phim để gửi đánh giá. Nếu API không kết nối được, hãy chạy cả giao diện và máy chủ bằng <code>npm run dev</code>.</p>
           </article>
           <article>
             <h3>Không phát được phim</h3>
