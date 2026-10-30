@@ -32,4 +32,6 @@ test("style.css contains styles for notification dropdown frame", async () => {
   assert.match(css, /\.notification-header/);
   assert.match(css, /\.notification-heading/);
   assert.match(css, /\.notification-empty/);
+  assert.match(css, /\.notification-dropdown\s*\{[^}]*max-height:\s*min\(490px,\s*calc\(100vh - 90px\)\)/s);
+  assert.match(css, /\.notification-body\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
 });
